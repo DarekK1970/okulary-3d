@@ -1466,3 +1466,10 @@ svg {
     color: inherit;
     text-decoration: none;
 }
+
+
+.home-section#history .archive-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}

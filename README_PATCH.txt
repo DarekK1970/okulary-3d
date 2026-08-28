@@ -1,136 +1,145 @@
-OKULARY3D — KROK 75
-Community Stereo Gallery
+OKULARY3D — KROK 76
+Stereoscopic Archive / History
 
 CEL:
-Uruchomienie moderowanej galerii stereoskopowej tworzonej
-przez użytkowników wortalu.
+Uruchomienie cyfrowego archiwum historycznej stereoskopii
+z naciskiem na źródła, prawa do materiałów i kontekst historyczny.
 
 PUBLICZNE ADRESY:
-http://okulary-3d.test/pl/gallery
-http://okulary-3d.test/en/gallery
+http://okulary-3d.test/pl/archive
+http://okulary-3d.test/en/archive
 
-DODAWANIE PRACY:
-http://okulary-3d.test/pl/gallery/submit
+ADMIN:
+http://okulary-3d.test/admin/archive
 
-Wymaga zalogowania.
-
-KONTO UŻYTKOWNIKA:
-http://okulary-3d.test/pl/account/gallery
-
-ADMIN / MODERACJA:
-http://okulary-3d.test/admin/gallery
-
-Dostęp:
+DOSTĘP ADMIN:
 editor / admin / super_admin
 
-FUNKCJONALNOŚCI PUBLICZNE:
-- lista opublikowanych prac,
-- miniatury par L/R,
-- szczegóły pracy,
-- autor,
+PUBLICZNE ARCHIWUM:
+- lista historycznych obiektów,
+- wyszukiwanie tekstowe,
+- filtrowanie po technice,
+- filtrowanie po kraju / regionie,
+- zakres lat OD / DO,
+- sortowanie chronologiczne,
+- karta obiektu,
+- źródło cyfrowe,
+- status prawny,
+- metadane historyczne,
 - opis,
-- licencja,
-- data publikacji,
-- viewer stereo działający lokalnie w przeglądarce.
+- rozszerzony kontekst historyczny,
+- wersje PL / EN.
 
-TRYBY VIEWERA:
+OBSŁUGIWANE TECHNIKI:
+- karta stereoskopowa,
+- fotografia stereoskopowa,
+- anaglif,
+- View-Master / krążek stereo,
+- obraz lentikularny,
+- inne.
+
+STATUSY PRAW:
+- Public Domain,
+- CC0,
+- CC BY,
+- CC BY-SA,
+- publikacja za zgodą właściciela praw.
+
+WAŻNE:
+KROK 76 nie pobiera automatycznie materiałów z Internetu.
+Admin dodaje tylko materiały, dla których istnieje właściwa
+podstawa do publikacji.
+
+METADANE:
+- rok OD,
+- rok DO,
+- ca. / datowanie przybliżone,
+- autor / fotograf,
+- wydawca,
+- kraj / region,
+- nazwa kolekcji,
+- źródło / instytucja,
+- URL źródła,
+- status prawny,
+- informacja o prawach.
+
+OBRAZY:
+Każdy rekord ma:
+1. obowiązkowy oryginalny skan / obraz,
+2. opcjonalną rozdzieloną parę L / R.
+
+Jeśli istnieje para L/R, publiczny viewer udostępnia:
+- Original,
 - Parallel,
 - Cross-eye,
-- Anaglyph czerwono-cyjanowy,
+- Anaglyph red/cyan,
 - Wiggle,
-- Zamień L / R.
+- Swap L/R.
 
-ZGŁASZANIE PRACY:
-Zalogowany użytkownik podaje:
-- lewy obraz,
-- prawy obraz,
-- tytuł,
-- nazwę autora wyświetlaną publicznie,
-- opis,
-- licencję,
-- potwierdzenie prawa do publikacji.
+Jeżeli L/R nie istnieje:
+viewer pokazuje tylko oryginalny skan.
 
-FORMATY:
-- JPG
-- PNG
-- WEBP
+WERSJE JĘZYKOWE:
+Model:
+archive_items
++
+archive_item_translations
 
-LIMIT:
-10 MB na jeden obraz.
+Każdy obiekt ma:
+source_locale = pl lub en.
 
-LICENCJE:
-- Wszelkie prawa zastrzeżone
-- CC BY
-- CC BY-SA
-- CC0
+Statusy tłumaczenia:
+- source
+- draft
+- review
+- ready
 
-WORKFLOW:
-1. User przesyła pracę.
-2. Status:
-   Oczekuje na moderację.
-3. Praca NIE jest publiczna.
-4. Editor/Admin/Super Admin otwiera:
-   /admin/gallery
-5. Moderator wybiera:
-   - Oczekuje
-   - Opublikowana
-   - Odrzucona
-6. Może dodać uwagę moderacyjną.
-7. Po publikacji praca pojawia się publicznie.
+Publiczne są:
+- source
+- ready
 
-KONTO UŻYTKOWNIKA:
-User widzi:
-- wszystkie własne zgłoszenia,
-- status,
-- uwagi moderatora.
+Przykład:
+source_locale = pl
 
-Zgłoszenie Pending lub Rejected:
-- można usunąć.
+PL:
+Source -> publiczne
 
-Publikacja Published:
-- nie może być samodzielnie usunięta przez Usera.
-  Chroni to moderowany zasób przed przypadkowym zniknięciem.
+EN:
+Draft -> NIEPUBLICZNE
+Ready -> publiczne
+
+SLUG:
+Oddzielny dla PL i EN.
+
+ADMIN:
+Można:
+- tworzyć rekord,
+- edytować rekord,
+- publikować / wycofać publikację,
+- uzupełniać PL i EN,
+- zmieniać status tłumaczenia,
+- wymieniać skan,
+- dodać / wymienić / usunąć parę L/R,
+- usunąć cały rekord.
 
 PLIKI:
-Obrazy zapisywane są na dysku Laravel:
-storage/app/public/gallery/{USER_ID}/{UUID}/
+storage/app/public/archive/{UUID}/
 
-Wymagany istniejący symlink:
-public/storage -> storage/app/public
-
-Symlink był już przygotowany na wcześniejszym etapie projektu.
+Np.:
+original.jpg
+left.jpg
+right.jpg
 
 STRONA GŁÓWNA:
-Sekcja galerii nie zawiera już atrap przycisków:
-Parallel / Cross-eye / Anaglyph / Wiggle.
-
-Zamiast tego:
-- Otwórz galerię
-- Dodaj pracę
-lub dla gościa:
-- Zaloguj i dodaj
-
-Główna nawigacja "Galeria" prowadzi teraz do:
-/{locale}/gallery
+Naprawiono istniejące elementy Historia / Archiwum:
+- link "Zobacz całe archiwum" prowadzi teraz do /{locale}/archive,
+- statyczne karty archiwalne prowadzą do archiwum,
+- pozycja "Historia" w głównym menu prowadzi do /{locale}/archive.
 
 BAZA:
-Nowa tabela:
-stereo_gallery_items
-
-Przechowuje m.in.:
-- user_id
-- slug
-- title
-- description
-- author_name
-- license
-- status
-- ścieżki L/R
-- wymiary obrazów
-- rights_confirmed_at
-- published_at
-- moderator
-- moderation_note
+Nowe tabele:
+- archive_items
+- archive_item_translations
 
 WDROŻENIE:
 1. Rozpakuj patch do:
@@ -143,48 +152,56 @@ WDROŻENIE:
    php artisan test
 
 TEST RĘCZNY:
-1. Otwórz:
-   http://okulary-3d.test/pl/gallery
+1. Zaloguj się jako Editor/Admin.
 
-2. Zaloguj się zwykłym kontem.
+2. Otwórz:
+   http://okulary-3d.test/admin/archive
 
-3. Kliknij:
-   Dodaj własną pracę.
+3. Dodaj przykładową historyczną kartę:
+   - source_locale: PL
+   - technika: Karta stereoskopowa
+   - rok: np. 1900
+   - źródło: wpisz rzeczywiste źródło
+   - prawa: wybierz zgodny status
+   - dodaj skan
+   - uzupełnij tytuł PL
+   - zaznacz Publikuj
 
-4. Dodaj parę L/R i wyślij.
+4. Zapisz i otwórz:
+   http://okulary-3d.test/pl/archive
 
 5. Sprawdź:
-   /pl/account/gallery
+   - filtrowanie,
+   - kartę obiektu,
+   - źródło,
+   - prawa,
+   - metadane.
 
-6. Praca powinna mieć status:
-   Oczekuje na moderację.
+6. Dodaj do obiektu dwa obrazy L/R.
 
-7. Zaloguj się jako Editor/Admin/Super Admin.
+7. Sprawdź viewer:
+   - Original
+   - Parallel
+   - Cross-eye
+   - Anaglyph
+   - Wiggle
+   - Zamień L/R
 
-8. Otwórz:
-   /admin/gallery
+8. Dodaj wersję EN:
+   - najpierw Draft,
+   - sprawdź że EN nie jest publiczne,
+   - zmień na Ready,
+   - sprawdź /en/archive.
 
-9. Otwórz zgłoszenie i ustaw:
-   Opublikowana
-
-10. Wróć do:
-    /pl/gallery
-
-11. Otwórz pracę i sprawdź:
-    - Parallel
-    - Cross-eye
-    - Anaglyph
-    - Wiggle
-    - Zamień L/R
-
-12. Sprawdź stronę główną:
-    - przycisk Otwórz galerię
-    - główne menu Galeria
+9. Sprawdź stronę główną:
+   - Historia w menu,
+   - Zobacz całe archiwum,
+   - karty sekcji archiwum.
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add community stereo gallery"
+git commit -m "Add stereoscopic archive"
 git push
 
 NASTĘPNY KROK:
-KROK 76 — Stereoscopic Archive / History.
+KROK 77 — AI Translator.

@@ -17,10 +17,12 @@
         'resources/css/admin-orders.css',
         'resources/css/admin-settings.css',
         'resources/css/admin-gallery.css',
+        'resources/css/admin-archive.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
-        'resources/js/admin-shop.js'
+        'resources/js/admin-shop.js',
+        'resources/js/archive-admin.js'
     ])
 </head>
 <body class="admin-body">
@@ -80,6 +82,15 @@
                     </a>
                 @endif
 
+
+
+                <a
+                    class="admin-nav-link {{ request()->routeIs('admin.archive.*') ? 'is-active' : '' }}"
+                    href="{{ route('admin.archive.index') }}"
+                >
+                    <span>▧</span>
+                    {{ __('archive.admin.menu') }}
+                </a>
 
                 <a
                     class="admin-nav-link {{ request()->routeIs('admin.gallery.*') ? 'is-active' : '' }}"

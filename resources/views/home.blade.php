@@ -311,7 +311,10 @@
                     <p class="section-intro">{{ __('home.archive.description') }}</p>
                 </div>
 
-                <a class="section-link" href="#">
+                <a
+                    class="section-link"
+                    href="{{ route('archive.index', ['locale' => app()->getLocale()]) }}"
+                >
                     {{ __('home.archive.all') }}
                     <span aria-hidden="true">→</span>
                 </a>
@@ -319,7 +322,10 @@
 
             <div class="archive-grid">
                 @foreach (__('home.archive.items') as $index => $item)
-                    <article class="archive-card">
+                    <a
+                        class="archive-card"
+                        href="{{ route('archive.index', ['locale' => app()->getLocale()]) }}"
+                    >
                         <div class="archive-image">
                             <img
                                 src="{{ asset('images/home/archive-' . ($index + 1) . '.svg') }}"
@@ -334,7 +340,7 @@
                             <h3>{{ $item['title'] }}</h3>
                             <p>{{ $item['year'] }}</p>
                         </div>
-                    </article>
+                    </a>
                 @endforeach
             </div>
         </div>

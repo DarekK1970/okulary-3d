@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
+use App\Http\Controllers\Admin\ArchiveController as AdminArchiveController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\CommerceSettingsController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StereoGalleryController as AdminStereoGalleryController;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -74,6 +76,13 @@ Route::prefix('{locale}')
         Route::get('/lab/wigglegram-maker', [LabController::class, 'wigglegram'])
             ->name('lab.wigglegram');
 
+
+
+        Route::get('/archive', [ArchiveController::class, 'index'])
+            ->name('archive.index');
+
+        Route::get('/archive/{slug}', [ArchiveController::class, 'show'])
+            ->name('archive.show');
 
         Route::get('/gallery', [StereoGalleryController::class, 'index'])
             ->name('gallery.index');
@@ -188,6 +197,11 @@ Route::prefix('admin')
         Route::resource('media', MediaController::class)
             ->only(['index', 'store', 'edit', 'update', 'destroy'])
             ->parameters(['media' => 'media']);
+
+
+        Route::resource('archive', AdminArchiveController::class)
+            ->except(['show'])
+            ->parameters(['archive' => 'archiveItem']);
 
 
         Route::get('/gallery', [AdminStereoGalleryController::class, 'index'])
