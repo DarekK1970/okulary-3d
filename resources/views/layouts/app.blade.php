@@ -9,7 +9,12 @@
 
     <meta name="theme-color" content="#ffffff">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite([
+        'resources/css/app.css',
+        'resources/css/mobile.css',
+        'resources/css/auth.css',
+        'resources/js/app.js'
+    ])
 
     @stack('head')
 </head>

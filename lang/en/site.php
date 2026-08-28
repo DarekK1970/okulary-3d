@@ -11,9 +11,11 @@ return [
     'brand_logo_alt' => '3D Glasses Portal',
     'main_navigation' => 'Main navigation',
     'open_menu' => 'Open menu',
+    'close_menu' => 'Close menu',
+    'mobile_menu_title' => 'Menu',
     'search' => 'Search',
-    'account' => 'User account',
-    'cart' => 'Shopping cart',
+    'account' => 'Account',
+    'cart' => 'Cart',
 
     'nav' => [
         'home' => 'Home',

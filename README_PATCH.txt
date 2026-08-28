@@ -1,25 +1,32 @@
-OKULARY3D — KROK 62 — poprawka testu lokalizacji
+OKULARY3D — KROK 66 — FIX OPTIONAL FIELDS
 
 PRZYCZYNA:
-KROK 62 zastąpił demonstracyjny homepage pełną stroną główną.
-Stary test LocalizationTest nadal oczekiwał tekstów z wersji demonstracyjnej.
+Pola nullable/optional po walidacji Laravel nie zawsze występują w tablicy
+$validated. Kontrolery odwoływały się bezpośrednio m.in. do:
+$validated['excerpt']
 
-ZMIANA:
-- testy PL/EN zostały dostosowane do aktualnego homepage
-- testy nadal weryfikują:
-  * / -> /pl
-  * lang="pl" oraz lang="en"
-  * polskie i angielskie treści
-  * 404 dla /de
+Test sanitizacji HTML celowo nie przekazywał excerpt, dlatego artykuł nie
+dochodził do zapisu i test kończył się ModelNotFoundException.
+
+POPRAWIONO:
+- ArticleController:
+  * slug
+  * excerpt
+  * published_at
+- ArticleCategoryController:
+  * slug
+  * description
+  * sort_order
 
 WDROŻENIE:
-1. Rozpakuj paczkę do katalogu projektu.
-2. Zezwól na nadpisanie:
-   tests/Feature/LocalizationTest.php
-3. Wykonaj:
+1. Rozpakuj do katalogu projektu i nadpisz 2 kontrolery.
+2. Wykonaj:
+   php artisan optimize:clear
    php artisan test
 
-Jeśli wszystkie testy przejdą:
+Nie wykonuj ponownie migracji — nie jest potrzebna.
+
+Jeżeli wszystkie testy przejdą:
 git add .
-git commit -m "Build portal homepage"
+git commit -m "Add article CMS"
 git push

@@ -11,8 +11,10 @@ return [
     'brand_logo_alt' => 'Wortal Okulary 3D',
     'main_navigation' => 'Nawigacja główna',
     'open_menu' => 'Otwórz menu',
+    'close_menu' => 'Zamknij menu',
+    'mobile_menu_title' => 'Menu',
     'search' => 'Szukaj',
-    'account' => 'Konto użytkownika',
+    'account' => 'Konto',
     'cart' => 'Koszyk',
 
     'nav' => [

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAdminAccess;
+use App\Http\Middleware\RequireRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,10 +14,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'admin.access' => EnsureAdminAccess::class,
+            'role' => RequireRole::class,
+        ]);
+
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            return route('login', [
+                'locale' => $request->route('locale') ?? config('locales.default', 'pl'),
+            ]);
+        });
+
+        $middleware->redirectUsersTo(function (Request $request): string {
+            return route('account', [
+                'locale' => $request->route('locale') ?? config('locales.default', 'pl'),
+            ]);
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
-        );
+        //
     })->create();

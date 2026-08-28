@@ -1,6 +1,8 @@
 const initNavigation = () => {
     const toggle = document.querySelector('[data-menu-toggle]');
     const navigation = document.querySelector('[data-primary-navigation]');
+    const closeButton = document.querySelector('[data-menu-close]');
+    const backdrop = document.querySelector('[data-menu-backdrop]');
 
     if (!toggle || !navigation) {
         return;
@@ -8,25 +10,25 @@ const initNavigation = () => {
 
     const closeMenu = () => {
         navigation.classList.remove('is-open');
+        backdrop?.classList.remove('is-visible');
         toggle.setAttribute('aria-expanded', 'false');
         document.body.classList.remove('menu-open');
     };
 
     const openMenu = () => {
         navigation.classList.add('is-open');
+        backdrop?.classList.add('is-visible');
         toggle.setAttribute('aria-expanded', 'true');
         document.body.classList.add('menu-open');
     };
 
     toggle.addEventListener('click', () => {
         const isOpen = toggle.getAttribute('aria-expanded') === 'true';
-
-        if (isOpen) {
-            closeMenu();
-        } else {
-            openMenu();
-        }
+        isOpen ? closeMenu() : openMenu();
     });
+
+    closeButton?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
 
     navigation.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', closeMenu);
