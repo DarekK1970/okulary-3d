@@ -1,0 +1,356 @@
+import {
+    drawCover,
+} from './mpo-utils';
+
+class CommunityStereoViewer {
+    constructor(root) {
+        this.root = root;
+        this.canvas = root.querySelector(
+            '[data-gallery-canvas]'
+        );
+        this.left = null;
+        this.right = null;
+        this.swapped = false;
+        this.wiggleFrame = 0;
+        this.wiggleTimer = null;
+
+        this.bind();
+        this.load();
+    }
+
+    bind() {
+        this.root.querySelector(
+            '[data-gallery-mode]'
+        )?.addEventListener('change', () => {
+            this.updateWiggle();
+            this.render();
+        });
+
+        this.root.querySelector(
+            '[data-gallery-action="swap"]'
+        )?.addEventListener('click', () => {
+            this.swapped = !this.swapped;
+            this.render();
+        });
+    }
+
+    async loadImage(url) {
+        return await new Promise((resolve, reject) => {
+            const image = new Image();
+
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = url;
+        });
+    }
+
+    async load() {
+        this.setStatus(
+            this.root.dataset.loading || 'Loading…'
+        );
+
+        try {
+            [this.left, this.right] =
+                await Promise.all([
+                    this.loadImage(
+                        this.root.dataset.leftUrl
+                    ),
+                    this.loadImage(
+                        this.root.dataset.rightUrl
+                    ),
+                ]);
+
+            this.root.querySelector(
+                '[data-gallery-empty]'
+            )?.classList.add('is-hidden');
+
+            this.setStatus(
+                this.root.dataset.ready || 'Ready'
+            );
+
+            this.updateWiggle();
+            this.render();
+        } catch (error) {
+            console.error(error);
+
+            this.setStatus(
+                this.root.dataset.error
+                || 'Image loading failed.'
+            );
+        }
+    }
+
+    images() {
+        return this.swapped
+            ? [this.right, this.left]
+            : [this.left, this.right];
+    }
+
+    mode() {
+        return (
+            this.root.querySelector(
+                '[data-gallery-mode]'
+            )?.value
+            || 'parallel'
+        );
+    }
+
+    frameSize() {
+        const [left, right] = this.images();
+
+        const width = Math.min(
+            left.width,
+            right.width
+        );
+
+        const height = Math.min(
+            left.height,
+            right.height
+        );
+
+        const maxDimension = 1600;
+        const pairMultiplier =
+            ['parallel', 'cross']
+                .includes(this.mode())
+                ? 2
+                : 1;
+
+        const scale = Math.min(
+            1,
+            maxDimension
+                / Math.max(
+                    width * pairMultiplier,
+                    height
+                )
+        );
+
+        return {
+            width: Math.max(
+                1,
+                Math.round(width * scale)
+            ),
+            height: Math.max(
+                1,
+                Math.round(height * scale)
+            ),
+        };
+    }
+
+    layers(width, height) {
+        return this.images().map((image) => {
+            const canvas =
+                document.createElement('canvas');
+
+            canvas.width = width;
+            canvas.height = height;
+
+            drawCover(
+                canvas.getContext('2d'),
+                image,
+                width,
+                height
+            );
+
+            return canvas;
+        });
+    }
+
+    render() {
+        if (!this.left || !this.right) {
+            return;
+        }
+
+        const mode = this.mode();
+        const size = this.frameSize();
+        const layers =
+            this.layers(
+                size.width,
+                size.height
+            );
+
+        const ctx = this.canvas.getContext(
+            '2d',
+            {
+                willReadFrequently:
+                    mode === 'anaglyph',
+            }
+        );
+
+        if (
+            mode === 'parallel'
+            || mode === 'cross'
+        ) {
+            this.canvas.width =
+                size.width * 2;
+
+            this.canvas.height =
+                size.height;
+
+            const first =
+                mode === 'cross'
+                    ? layers[1]
+                    : layers[0];
+
+            const second =
+                mode === 'cross'
+                    ? layers[0]
+                    : layers[1];
+
+            ctx.drawImage(first, 0, 0);
+            ctx.drawImage(
+                second,
+                size.width,
+                0
+            );
+        } else if (mode === 'wiggle') {
+            this.canvas.width =
+                size.width;
+
+            this.canvas.height =
+                size.height;
+
+            ctx.drawImage(
+                layers[this.wiggleFrame],
+                0,
+                0
+            );
+        } else {
+            this.canvas.width =
+                size.width;
+
+            this.canvas.height =
+                size.height;
+
+            const leftCtx =
+                layers[0].getContext(
+                    '2d',
+                    { willReadFrequently: true }
+                );
+
+            const rightCtx =
+                layers[1].getContext(
+                    '2d',
+                    { willReadFrequently: true }
+                );
+
+            const left =
+                leftCtx.getImageData(
+                    0,
+                    0,
+                    size.width,
+                    size.height
+                );
+
+            const right =
+                rightCtx.getImageData(
+                    0,
+                    0,
+                    size.width,
+                    size.height
+                );
+
+            const output =
+                ctx.createImageData(
+                    size.width,
+                    size.height
+                );
+
+            for (
+                let i = 0;
+                i < output.data.length;
+                i += 4
+            ) {
+                output.data[i] =
+                    left.data[i];
+
+                output.data[i + 1] =
+                    right.data[i + 1];
+
+                output.data[i + 2] =
+                    right.data[i + 2];
+
+                output.data[i + 3] = 255;
+            }
+
+            ctx.putImageData(
+                output,
+                0,
+                0
+            );
+        }
+
+        const sizeText =
+            this.root.querySelector(
+                '[data-gallery-size]'
+            );
+
+        if (sizeText) {
+            sizeText.textContent =
+                `${this.canvas.width}`
+                + ` × `
+                + `${this.canvas.height} px`;
+        }
+    }
+
+    updateWiggle() {
+        if (this.wiggleTimer) {
+            window.clearInterval(
+                this.wiggleTimer
+            );
+
+            this.wiggleTimer = null;
+        }
+
+        this.wiggleFrame = 0;
+
+        if (
+            this.mode() !== 'wiggle'
+            || !this.left
+            || !this.right
+        ) {
+            return;
+        }
+
+        this.wiggleTimer =
+            window.setInterval(
+                () => {
+                    this.wiggleFrame =
+                        this.wiggleFrame
+                            === 0
+                            ? 1
+                            : 0;
+
+                    this.render();
+                },
+                650
+            );
+    }
+
+    setStatus(text) {
+        const status =
+            this.root.querySelector(
+                '[data-gallery-status]'
+            );
+
+        if (status) {
+            status.textContent = text;
+        }
+    }
+}
+
+const initializeCommunityGallery = () => {
+    document.querySelectorAll(
+        '[data-community-viewer]'
+    ).forEach((root) => {
+        new CommunityStereoViewer(root);
+    });
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeCommunityGallery
+    );
+} else {
+    initializeCommunityGallery();
+}

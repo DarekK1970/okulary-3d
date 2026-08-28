@@ -55,6 +55,7 @@ return [
         'title' => '3D LAB — narzędzia online',
         'description' => 'Praktyczne narzędzia działające bezpośrednio w przeglądarce. Wgraj materiały, ustaw parametry i pobierz gotowy efekt.',
         'run' => 'Uruchom',
+        'soon' => 'Wkrótce',
         'tools' => [
             [
                 'title' => 'Anaglif Maker',

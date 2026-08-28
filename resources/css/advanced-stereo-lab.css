@@ -1,0 +1,316 @@
+/* KROK 74 — MPO Viewer + Wigglegram Maker */
+
+.advanced-stereo-tool {
+    display: grid;
+    gap: 16px;
+}
+
+.advanced-panel,
+.advanced-preview-card {
+    border: 1px solid #e0e6ed;
+    border-radius: 15px;
+    background: #fff;
+}
+
+.advanced-panel {
+    padding: 16px;
+}
+
+.advanced-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+}
+
+.advanced-panel-heading.compact {
+    display: block;
+}
+
+.advanced-panel-heading h2 {
+    margin: 4px 0 4px;
+    color: #3d4b61;
+    font-size: .78rem;
+}
+
+.advanced-panel-heading p {
+    max-width: 670px;
+    margin: 0;
+    color: #8b96a7;
+    font-size: .54rem;
+    line-height: 1.5;
+}
+
+.advanced-panel-heading > strong {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #edfaff;
+    color: #0a86ae;
+    font-size: .52rem;
+}
+
+.advanced-dropzone {
+    position: relative;
+    min-height: 115px;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 2px 12px;
+    align-content: center;
+    padding: 16px;
+    border: 1px dashed #c8d3df;
+    border-radius: 12px;
+    background: #fbfcfd;
+    cursor: pointer;
+    transition: .15s ease;
+}
+
+.advanced-dropzone:hover,
+.advanced-dropzone.is-dragover {
+    border-color: #0da8d8;
+    background: #f2fbfe;
+}
+
+.advanced-dropzone input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.advanced-drop-icon {
+    grid-row: 1 / 4;
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #17233a, #0aa7df);
+    color: #fff;
+    font-size: .63rem;
+    font-weight: 900;
+}
+
+.advanced-dropzone strong {
+    color: #455268;
+    font-size: .66rem;
+}
+
+.advanced-dropzone > span:not(.advanced-drop-icon) {
+    color: #8c97a8;
+    font-size: .54rem;
+}
+
+.advanced-dropzone small {
+    overflow: hidden;
+    color: #0a8eb8;
+    font-size: .5rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.advanced-workspace-grid {
+    display: grid;
+    grid-template-columns: 310px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.advanced-controls {
+    display: grid;
+    gap: 12px;
+}
+
+.advanced-field {
+    display: grid;
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.advanced-field label {
+    color: #607086;
+    font-size: .54rem;
+    font-weight: 800;
+}
+
+.advanced-field input,
+.advanced-field select {
+    min-height: 40px;
+    width: 100%;
+    padding: 0 9px;
+    border: 1px solid #dce3eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #445168;
+    font: inherit;
+    font-size: .59rem;
+}
+
+.advanced-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.advanced-metrics-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.advanced-metrics > div {
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid #e5eaf0;
+    border-radius: 8px;
+    background: #fbfcfd;
+}
+
+.advanced-metrics span {
+    display: block;
+    color: #99a3b3;
+    font-size: .46rem;
+    text-transform: uppercase;
+}
+
+.advanced-metrics strong {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+    color: #435168;
+    font-size: .59rem;
+}
+
+.advanced-action-stack {
+    display: grid;
+    gap: 7px;
+}
+
+.advanced-action-stack .lab-primary-button,
+.advanced-action-stack .lab-secondary-button {
+    width: 100%;
+}
+
+.advanced-note {
+    margin: 10px 0 0;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: #f7f9fb;
+    color: #8a96a7;
+    font-size: .49rem;
+    line-height: 1.5;
+}
+
+.advanced-preview-card {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.advanced-preview-head {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 13px;
+    border-bottom: 1px solid #e6ebf0;
+    color: #7c8899;
+    font-size: .52rem;
+}
+
+.advanced-canvas-stage {
+    position: relative;
+    min-height: 520px;
+    display: grid;
+    place-items: center;
+    overflow: auto;
+    padding: 15px;
+    background:
+        linear-gradient(45deg, #e8ecf1 25%, transparent 25%) 0 0/20px 20px,
+        linear-gradient(45deg, transparent 75%, #e8ecf1 75%) 0 0/20px 20px,
+        #f4f6f8;
+}
+
+.advanced-canvas-stage canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    background: #111;
+    box-shadow: 0 10px 28px rgba(16,24,44,.16);
+}
+
+.advanced-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    padding: 28px;
+    background: rgba(247,249,251,.88);
+    text-align: center;
+}
+
+.advanced-empty.is-hidden {
+    display: none;
+}
+
+.advanced-empty-symbol {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #e9faff, #fff0f3);
+    color: #516077;
+    font-size: .72rem;
+    font-weight: 900;
+}
+
+.advanced-empty strong {
+    color: #59667a;
+    font-size: .69rem;
+}
+
+.advanced-empty p {
+    max-width: 360px;
+    margin: 5px 0 0;
+    color: #909bac;
+    font-size: .54rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 880px) {
+    .advanced-workspace-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .advanced-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .advanced-canvas-stage {
+        min-height: 420px;
+    }
+}
+
+@media (max-width: 620px) {
+    .advanced-controls,
+    .advanced-metrics,
+    .advanced-metrics-three {
+        grid-template-columns: 1fr;
+    }
+
+    .advanced-panel-heading {
+        flex-direction: column;
+    }
+
+    .advanced-canvas-stage {
+        min-height: 310px;
+        padding: 8px;
+    }
+}

@@ -806,3 +806,97 @@
         flex-direction: column;
     }
 }
+
+/* KROK 74 — landing cards for current LAB tools */
+
+.lab-tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab-tool-icon-lenticular {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 4px;
+    padding: 38px 28px;
+}
+
+.lab-tool-icon-lenticular span {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 0;
+    max-width: 24px;
+    min-height: 95px;
+    border: 2px solid rgba(23, 34, 56, .5);
+    border-radius: 50% / 8%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,.86),
+        rgba(0,182,228,.28),
+        rgba(255,255,255,.9)
+    );
+}
+
+.lab-tool-icon-mpo,
+.lab-tool-icon-wiggle {
+    min-height: 175px;
+}
+
+.lab-mpo-stack {
+    position: relative;
+    z-index: 2;
+    width: 125px;
+    height: 95px;
+}
+
+.lab-mpo-stack span {
+    position: absolute;
+    width: 88px;
+    height: 68px;
+    display: grid;
+    place-items: center;
+    border: 7px solid #fff;
+    border-radius: 9px;
+    box-shadow: 0 9px 22px rgba(16,24,44,.16);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 900;
+}
+
+.lab-mpo-stack span:first-child {
+    left: 2px;
+    top: 2px;
+    transform: rotate(-7deg);
+    background: #ff4055;
+}
+
+.lab-mpo-stack span:last-child {
+    right: 2px;
+    bottom: 2px;
+    transform: rotate(7deg);
+    background: #0aa7df;
+}
+
+.lab-wiggle-symbol {
+    position: relative;
+    z-index: 2;
+    color: #253249;
+    font-size: 3.6rem;
+    font-weight: 300;
+    letter-spacing: -.12em;
+    text-shadow:
+        -8px 0 rgba(255,64,85,.25),
+        8px 0 rgba(0,167,223,.25);
+}
+
+@media (max-width: 1050px) {
+    .lab-tool-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .lab-tool-grid {
+        grid-template-columns: 1fr;
+    }
+}

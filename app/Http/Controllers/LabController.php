@@ -20,4 +20,19 @@ class LabController extends Controller
     {
         return view('lab.stereo-alignment');
     }
+
+    public function lenticular(string $locale): View
+    {
+        return view('lab.lenticular');
+    }
+
+    public function mpo(string $locale): View
+    {
+        return view('lab.mpo');
+    }
+
+    public function wigglegram(string $locale): View
+    {
+        return view('lab.wigglegram');
+    }
 }

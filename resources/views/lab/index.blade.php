@@ -74,6 +74,88 @@
                     </a>
                 </div>
             </article>
+
+            <article class="lab-tool-card">
+                <div class="lab-tool-icon lab-tool-icon-lenticular">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <div class="lab-tool-copy">
+                    <span class="lab-tool-number">03</span>
+                    <h2>{{ __('lab.index.lenticular.title') }}</h2>
+                    <p>{{ __('lab.index.lenticular.description') }}</p>
+
+                    <ul>
+                        <li>{{ __('lab.index.lenticular.feature_1') }}</li>
+                        <li>{{ __('lab.index.lenticular.feature_2') }}</li>
+                        <li>{{ __('lab.index.lenticular.feature_3') }}</li>
+                    </ul>
+
+                    <a
+                        class="lab-primary-button"
+                        href="{{ route('lab.lenticular', ['locale' => app()->getLocale()]) }}"
+                    >
+                        {{ __('lab.index.open_tool') }} →
+                    </a>
+                </div>
+            </article>
+
+            <article class="lab-tool-card">
+                <div class="lab-tool-icon lab-tool-icon-mpo">
+                    <span class="lab-mpo-stack">
+                        <span>L</span>
+                        <span>R</span>
+                    </span>
+                </div>
+
+                <div class="lab-tool-copy">
+                    <span class="lab-tool-number">04</span>
+                    <h2>{{ __('lab.index.mpo.title') }}</h2>
+                    <p>{{ __('lab.index.mpo.description') }}</p>
+
+                    <ul>
+                        <li>{{ __('lab.index.mpo.feature_1') }}</li>
+                        <li>{{ __('lab.index.mpo.feature_2') }}</li>
+                        <li>{{ __('lab.index.mpo.feature_3') }}</li>
+                    </ul>
+
+                    <a
+                        class="lab-primary-button"
+                        href="{{ route('lab.mpo', ['locale' => app()->getLocale()]) }}"
+                    >
+                        {{ __('lab.index.open_tool') }} →
+                    </a>
+                </div>
+            </article>
+
+            <article class="lab-tool-card">
+                <div class="lab-tool-icon lab-tool-icon-wiggle">
+                    <span class="lab-wiggle-symbol">≋</span>
+                </div>
+
+                <div class="lab-tool-copy">
+                    <span class="lab-tool-number">05</span>
+                    <h2>{{ __('lab.index.wigglegram.title') }}</h2>
+                    <p>{{ __('lab.index.wigglegram.description') }}</p>
+
+                    <ul>
+                        <li>{{ __('lab.index.wigglegram.feature_1') }}</li>
+                        <li>{{ __('lab.index.wigglegram.feature_2') }}</li>
+                        <li>{{ __('lab.index.wigglegram.feature_3') }}</li>
+                    </ul>
+
+                    <a
+                        class="lab-primary-button"
+                        href="{{ route('lab.wigglegram', ['locale' => app()->getLocale()]) }}"
+                    >
+                        {{ __('lab.index.open_tool') }} →
+                    </a>
+                </div>
+            </article>
         </div>
 
         <section class="lab-how">

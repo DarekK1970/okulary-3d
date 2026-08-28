@@ -19,17 +19,17 @@
                 </p>
 
                 <div class="hero-actions">
-                    <a class="button button-primary" href="#lab">
+                    <a class="button button-primary" href="{{ route('lab.anaglyph', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">◉</span>
                         {{ __('home.hero.cta_anaglyph') }}
                     </a>
 
-                    <a class="button button-secondary" href="#lab">
+                    <a class="button button-secondary" href="{{ route('lab.lenticular', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">▥</span>
                         {{ __('home.hero.cta_lenticular') }}
                     </a>
 
-                    <a class="button button-light" href="#shop">
+                    <a class="button button-light" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">🛒</span>
                         {{ __('home.hero.cta_shop') }}
                     </a>
@@ -121,8 +121,19 @@
                 </div>
             </div>
 
+            @php
+                $labToolRoutes = [
+                    route('lab.anaglyph', ['locale' => app()->getLocale()]),
+                    route('lab.lenticular', ['locale' => app()->getLocale()]),
+                    route('lab.stereo-alignment', ['locale' => app()->getLocale()]),
+                    route('lab.wigglegram', ['locale' => app()->getLocale()]),
+                    null,
+                    route('lab.mpo', ['locale' => app()->getLocale()]),
+                ];
+            @endphp
+
             <div class="lab-grid">
-                @foreach (__('home.lab.tools') as $tool)
+                @foreach (__('home.lab.tools') as $index => $tool)
                     <article class="lab-card">
                         <div class="lab-icon" aria-hidden="true">
                             {!! $tool['icon'] !!}
@@ -133,10 +144,16 @@
                             <p>{{ $tool['description'] }}</p>
                         </div>
 
-                        <a class="lab-action" href="#">
-                            {{ __('home.lab.run') }}
-                            <span aria-hidden="true">→</span>
-                        </a>
+                        @if ($labToolRoutes[$index] ?? null)
+                            <a class="lab-action" href="{{ $labToolRoutes[$index] }}">
+                                {{ __('home.lab.run') }}
+                                <span aria-hidden="true">→</span>
+                            </a>
+                        @else
+                            <span class="lab-action is-disabled" aria-disabled="true">
+                                {{ __('home.lab.soon') }}
+                            </span>
+                        @endif
                     </article>
                 @endforeach
             </div>
@@ -151,7 +168,7 @@
                     <h2>{{ __('home.shop.title') }}</h2>
                 </div>
 
-                <a class="section-link" href="#">
+                <a class="section-link" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
                     {{ __('home.shop.all') }}
                     <span aria-hidden="true">→</span>
                 </a>
@@ -183,7 +200,7 @@
 
                             <div class="shop-card-footer">
                                 <span class="shop-price">{{ $category['price'] }}</span>
-                                <a class="shop-link" href="#">
+                                <a class="shop-link" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
                                     {{ __('home.shop.products') }}
                                 </a>
                             </div>
@@ -232,17 +249,38 @@
                     <h2>{{ __('home.gallery.title') }}</h2>
                 </div>
 
-                <div class="gallery-tabs" role="group" aria-label="{{ __('home.gallery.tabs_label') }}">
-                    <button class="gallery-tab is-active" type="button">Parallel</button>
-                    <button class="gallery-tab" type="button">Cross-eye</button>
-                    <button class="gallery-tab" type="button">Anaglif</button>
-                    <button class="gallery-tab" type="button">Wiggle</button>
+                <div class="home-gallery-actions">
+                    <a
+                        class="gallery-tab is-active"
+                        href="{{ route('gallery.index', ['locale' => app()->getLocale()]) }}"
+                    >
+                        {{ __('gallery.home.open') }}
+                    </a>
+
+                    @auth
+                        <a
+                            class="gallery-tab"
+                            href="{{ route('gallery.create', ['locale' => app()->getLocale()]) }}"
+                        >
+                            {{ __('gallery.home.submit') }}
+                        </a>
+                    @else
+                        <a
+                            class="gallery-tab"
+                            href="{{ route('login', ['locale' => app()->getLocale()]) }}"
+                        >
+                            {{ __('gallery.home.login_to_submit') }}
+                        </a>
+                    @endauth
                 </div>
             </div>
 
             <div class="gallery-grid">
                 @foreach (__('home.gallery.items') as $index => $item)
-                    <article class="gallery-card">
+                    <a
+                        class="gallery-card"
+                        href="{{ route('gallery.index', ['locale' => app()->getLocale()]) }}"
+                    >
                         <div class="gallery-image">
                             <img
                                 src="{{ asset('images/home/gallery-' . ($index + 1) . '.svg') }}"
@@ -258,7 +296,7 @@
                             <span class="gallery-user">{{ $item['user'] }}</span>
                             <span class="gallery-likes">♡ {{ $item['likes'] }}</span>
                         </div>
-                    </article>
+                    </a>
                 @endforeach
             </div>
         </div>

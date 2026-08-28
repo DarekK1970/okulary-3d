@@ -1438,3 +1438,31 @@ svg {
         gap: 3px;
     }
 }
+
+
+/* KROK 74 — homepage links to implemented tools */
+.lab-action.is-disabled {
+    opacity: .48;
+    cursor: default;
+    pointer-events: none;
+}
+
+
+.home-gallery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.home-gallery-actions .gallery-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.home-section#gallery .gallery-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}

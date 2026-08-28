@@ -1,0 +1,532 @@
+/* KROK 73 — Lenticular LAB */
+
+.lab-tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab-tool-grid .lab-tool-card {
+    grid-template-columns: 1fr;
+}
+
+.lab-tool-grid .lab-tool-icon {
+    min-height: 175px;
+}
+
+.lab-tool-icon-lenticular {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 4px;
+    padding: 36px 28px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(0, 174, 234, .11),
+            rgba(255, 48, 72, .08)
+        ),
+        #f6f9fb;
+}
+
+.lab-tool-icon-lenticular span {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 0;
+    max-width: 25px;
+    border: 2px solid rgba(23, 34, 56, .55);
+    border-radius: 50% / 8%;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.85),
+            rgba(0,182,228,.25),
+            rgba(255,255,255,.9)
+        );
+    box-shadow:
+        inset 0 0 10px rgba(255,255,255,.8),
+        0 6px 16px rgba(16,24,44,.08);
+}
+
+.lenticular-page {
+    scroll-behavior: smooth;
+}
+
+.lenticular-section-nav {
+    position: sticky;
+    top: 74px;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 7px;
+    border: 1px solid #e0e6ed;
+    border-radius: 12px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 8px 24px rgba(16,24,44,.05);
+    backdrop-filter: blur(8px);
+}
+
+.lenticular-section-nav a {
+    min-height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: #657186;
+    font-size: .56rem;
+    font-weight: 900;
+    text-align: center;
+}
+
+.lenticular-section-nav a:hover {
+    background: #eefaff;
+    color: #0789b3;
+}
+
+.lenticular-panel {
+    margin-bottom: 18px;
+    padding: 20px;
+    scroll-margin-top: 130px;
+    border: 1px solid #e0e6ed;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.lenticular-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 17px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #edf1f5;
+}
+
+.lenticular-panel-heading h2 {
+    margin: 4px 0 5px;
+    color: #334158;
+    font-size: 1rem;
+}
+
+.lenticular-panel-heading p {
+    max-width: 720px;
+    margin: 0;
+    color: #8792a4;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+.lenticular-panel-heading > strong {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #eefaff;
+    color: #0a86ae;
+    font-size: .53rem;
+}
+
+.lenticular-dropzone {
+    position: relative;
+    min-height: 120px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 2px 12px;
+    align-content: center;
+    padding: 16px;
+    border: 1px dashed #c8d3df;
+    border-radius: 12px;
+    background: #fbfcfd;
+    cursor: pointer;
+    transition: .15s ease;
+}
+
+.lenticular-dropzone:hover,
+.lenticular-dropzone.is-dragover {
+    border-color: #0da8d8;
+    background: #f1fbfe;
+}
+
+.lenticular-dropzone input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.lenticular-drop-icon {
+    grid-row: 1 / 4;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    border-radius: 11px;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #0aa7df 0 5px,
+            #ff4055 5px 10px
+        );
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 900;
+}
+
+.lenticular-dropzone strong {
+    color: #425168;
+    font-size: .68rem;
+}
+
+.lenticular-dropzone > span:not(.lenticular-drop-icon) {
+    color: #8a95a6;
+    font-size: .55rem;
+}
+
+.lenticular-dropzone small {
+    overflow: hidden;
+    color: #078bb6;
+    font-size: .51rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lenticular-file-help {
+    margin: 7px 2px 16px;
+    color: #99a3b2;
+    font-size: .51rem;
+}
+
+.lenticular-tool-grid,
+.lenticular-two-column {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.lenticular-controls,
+.lenticular-wizard-card {
+    padding: 15px;
+    border: 1px solid #e3e8ee;
+    border-radius: 12px;
+    background: #fbfcfd;
+}
+
+.lenticular-control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.lenticular-control-grid .lab-control {
+    margin: 0;
+}
+
+.lenticular-control-grid input,
+.lenticular-control-grid select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 9px;
+    border: 1px solid #dce3eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #445168;
+    font: inherit;
+    font-size: .59rem;
+}
+
+.lenticular-metrics,
+.lenticular-result-grid,
+.lenticular-wizard-results {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.lenticular-metrics {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.lenticular-result-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.lenticular-wizard-results {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.lenticular-metrics > div,
+.lenticular-result-grid > div,
+.lenticular-wizard-results > div {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #e5eaf0;
+    border-radius: 9px;
+    background: #fff;
+}
+
+.lenticular-metrics span,
+.lenticular-result-grid span,
+.lenticular-wizard-results span {
+    display: block;
+    color: #98a2b3;
+    font-size: .47rem;
+    text-transform: uppercase;
+}
+
+.lenticular-metrics strong,
+.lenticular-result-grid strong,
+.lenticular-wizard-results strong {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+    color: #3f4d63;
+    font-size: .63rem;
+}
+
+.lenticular-note {
+    margin: 12px 0 0;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: #f4f8fa;
+    color: #7d899b;
+    font-size: .5rem;
+    line-height: 1.5;
+}
+
+.lenticular-actions {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.lenticular-actions .lab-primary-button,
+.lenticular-actions .lab-secondary-button {
+    width: 100%;
+}
+
+.lenticular-warning {
+    min-height: 18px;
+    margin: 8px 0 0;
+    color: #b64e5d;
+    font-size: .51rem;
+    line-height: 1.45;
+}
+
+.lenticular-preview-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #e3e8ee;
+    border-radius: 12px;
+    background: #f5f7f9;
+}
+
+.lenticular-preview-head {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e7ed;
+    background: #fff;
+    color: #7b8798;
+    font-size: .52rem;
+}
+
+.lenticular-canvas-stage,
+.lenticular-pitch-stage {
+    position: relative;
+    min-height: 400px;
+    display: grid;
+    place-items: center;
+    overflow: auto;
+    padding: 14px;
+    background:
+        linear-gradient(
+            45deg,
+            #e6eaf0 25%,
+            transparent 25%
+        ) 0 0 / 20px 20px,
+        linear-gradient(
+            45deg,
+            transparent 75%,
+            #e6eaf0 75%
+        ) 0 0 / 20px 20px,
+        #f4f6f8;
+}
+
+.lenticular-pitch-stage {
+    min-height: 470px;
+    background: #e9edf2;
+}
+
+.lenticular-canvas-stage canvas,
+.lenticular-pitch-stage canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    background: #fff;
+    box-shadow: 0 9px 26px rgba(16,24,44,.15);
+}
+
+.lenticular-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 25px;
+    background: rgba(247,249,251,.86);
+    color: #8792a4;
+    font-size: .63rem;
+    text-align: center;
+}
+
+.lenticular-empty.is-hidden {
+    display: none;
+}
+
+.lenticular-calculator {
+    display: grid;
+    gap: 15px;
+}
+
+.lenticular-wizard-grid {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 16px;
+}
+
+.lenticular-wizard-steps {
+    display: grid;
+    gap: 8px;
+}
+
+.lenticular-wizard-steps > div {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 9px;
+    align-items: center;
+    padding: 11px;
+    border: 1px solid #e3e8ee;
+    border-radius: 10px;
+    background: #fbfcfd;
+}
+
+.lenticular-wizard-steps span {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #edfaff;
+    color: #008fbd;
+    font-size: .52rem;
+    font-weight: 900;
+}
+
+.lenticular-wizard-steps strong {
+    color: #546177;
+    font-size: .58rem;
+    line-height: 1.4;
+}
+
+.lenticular-wizard-card > .lab-primary-button {
+    width: 100%;
+    margin-top: 12px;
+}
+
+@media (max-width: 1050px) {
+    .lab-tool-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lab-tool-grid .lab-tool-card {
+        grid-template-columns: 170px minmax(0, 1fr);
+    }
+
+    .lab-tool-grid .lab-tool-icon {
+        min-height: 100%;
+    }
+
+    .lenticular-tool-grid,
+    .lenticular-two-column {
+        grid-template-columns: 300px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 850px) {
+    .lenticular-section-nav {
+        top: 66px;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lenticular-tool-grid,
+    .lenticular-two-column,
+    .lenticular-wizard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lenticular-result-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 620px) {
+    .lab-tool-grid .lab-tool-card {
+        grid-template-columns: 1fr;
+    }
+
+    .lab-tool-grid .lab-tool-icon {
+        min-height: 170px;
+    }
+
+    .lenticular-panel {
+        padding: 14px;
+    }
+
+    .lenticular-panel-heading {
+        flex-direction: column;
+    }
+
+    .lenticular-section-nav {
+        position: static;
+    }
+
+    .lenticular-control-grid,
+    .lenticular-metrics,
+    .lenticular-result-grid,
+    .lenticular-wizard-results {
+        grid-template-columns: 1fr;
+    }
+
+    .lenticular-canvas-stage,
+    .lenticular-pitch-stage {
+        min-height: 300px;
+        padding: 8px;
+    }
+}
+
+
+.lab-primary-button.is-pdf {
+    background: #1e7f5f;
+}
+
+.lenticular-export-note {
+    margin: 10px 0 0;
+    padding: 10px 11px;
+    border: 1px solid #dce7de;
+    border-radius: 9px;
+    background: #f4fbf6;
+    color: #637186;
+    font-size: .52rem;
+    line-height: 1.55;
+}
+
+.lenticular-export-note strong {
+    display: inline-block;
+    margin-right: 4px;
+    color: #2e7658;
+}

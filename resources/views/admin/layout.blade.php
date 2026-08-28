@@ -16,6 +16,7 @@
         'resources/css/admin-shop.css',
         'resources/css/admin-orders.css',
         'resources/css/admin-settings.css',
+        'resources/css/admin-gallery.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -78,6 +79,15 @@
                         {{ __('admin.menu.users') }}
                     </a>
                 @endif
+
+
+                <a
+                    class="admin-nav-link {{ request()->routeIs('admin.gallery.*') ? 'is-active' : '' }}"
+                    href="{{ route('admin.gallery.index') }}"
+                >
+                    <span>◫</span>
+                    {{ __('gallery.admin.menu') }}
+                </a>
 
                 <a class="admin-nav-link {{ request()->routeIs('admin.translations') ? 'is-active' : '' }}" href="{{ route('admin.translations') }}">
                     <span>文</span>

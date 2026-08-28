@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StereoGalleryController as AdminStereoGalleryController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
 use App\Http\Controllers\SalesDocumentController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\StereoGalleryController;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +64,30 @@ Route::prefix('{locale}')
 
         Route::get('/lab/stereo-alignment', [LabController::class, 'stereoAlignment'])
             ->name('lab.stereo-alignment');
+
+        Route::get('/lab/lenticular', [LabController::class, 'lenticular'])
+            ->name('lab.lenticular');
+
+        Route::get('/lab/mpo-viewer', [LabController::class, 'mpo'])
+            ->name('lab.mpo');
+
+        Route::get('/lab/wigglegram-maker', [LabController::class, 'wigglegram'])
+            ->name('lab.wigglegram');
+
+
+        Route::get('/gallery', [StereoGalleryController::class, 'index'])
+            ->name('gallery.index');
+
+        Route::get('/gallery/submit', [StereoGalleryController::class, 'create'])
+            ->middleware('auth')
+            ->name('gallery.create');
+
+        Route::post('/gallery', [StereoGalleryController::class, 'store'])
+            ->middleware('auth')
+            ->name('gallery.store');
+
+        Route::get('/gallery/{galleryItem}', [StereoGalleryController::class, 'show'])
+            ->name('gallery.show');
 
         Route::get('/cart', [CartController::class, 'index'])
             ->name('cart.index');
@@ -124,6 +150,13 @@ Route::prefix('{locale}')
             Route::put('/account/password', [AccountController::class, 'updatePassword'])
                 ->name('account.password.update');
 
+
+            Route::get('/account/gallery', [StereoGalleryController::class, 'accountIndex'])
+                ->name('account.gallery.index');
+
+            Route::delete('/account/gallery/{galleryItem}', [StereoGalleryController::class, 'destroy'])
+                ->name('account.gallery.destroy');
+
             Route::get('/account/orders', [AccountOrderController::class, 'index'])
                 ->name('account.orders.index');
             Route::get('/account/orders/{order}', [AccountOrderController::class, 'show'])
@@ -155,6 +188,16 @@ Route::prefix('admin')
         Route::resource('media', MediaController::class)
             ->only(['index', 'store', 'edit', 'update', 'destroy'])
             ->parameters(['media' => 'media']);
+
+
+        Route::get('/gallery', [AdminStereoGalleryController::class, 'index'])
+            ->name('gallery.index');
+
+        Route::get('/gallery/{galleryItem}', [AdminStereoGalleryController::class, 'show'])
+            ->name('gallery.show');
+
+        Route::patch('/gallery/{galleryItem}', [AdminStereoGalleryController::class, 'update'])
+            ->name('gallery.update');
 
         Route::get('/translations', [PlaceholderController::class, 'show'])
             ->defaults('section', 'translations')

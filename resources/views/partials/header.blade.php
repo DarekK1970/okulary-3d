@@ -70,7 +70,12 @@
             >
                 {{ __('site.nav.lab') }}
             </a>
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#gallery">{{ __('site.nav.gallery') }}</a>
+            <a
+                class="nav-link {{ request()->routeIs('gallery.*') || request()->routeIs('account.gallery.*') ? 'is-active' : '' }}"
+                href="{{ route('gallery.index', ['locale' => $locale]) }}"
+            >
+                {{ __('site.nav.gallery') }}
+            </a>
 
             <a
                 class="nav-link {{ request()->routeIs('shop.*') ? 'is-active' : '' }}"

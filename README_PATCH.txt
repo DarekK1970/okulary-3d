@@ -1,83 +1,136 @@
-OKULARY3D — KROK 72
-3D LAB v1 — Anaglyph Maker + Stereo Alignment / Converter
+OKULARY3D — KROK 75
+Community Stereo Gallery
 
 CEL:
-Uruchomienie pierwszych realnych narzędzi stereoskopowych wortalu.
+Uruchomienie moderowanej galerii stereoskopowej tworzonej
+przez użytkowników wortalu.
 
-NOWE ADRESY:
-http://okulary-3d.test/pl/lab
-http://okulary-3d.test/pl/lab/anaglyph-maker
-http://okulary-3d.test/pl/lab/stereo-alignment
+PUBLICZNE ADRESY:
+http://okulary-3d.test/pl/gallery
+http://okulary-3d.test/en/gallery
 
-Odpowiedniki EN:
-http://okulary-3d.test/en/lab
-http://okulary-3d.test/en/lab/anaglyph-maker
-http://okulary-3d.test/en/lab/stereo-alignment
+DODAWANIE PRACY:
+http://okulary-3d.test/pl/gallery/submit
 
-ARCHITEKTURA:
-- przetwarzanie wykonywane jest wyłącznie w przeglądarce,
-- Canvas API,
-- obrazy NIE są wysyłane na serwer,
-- brak nowych tabel bazy danych,
-- brak migracji,
-- brak backendowego przechowywania zdjęć,
-- eksport przez wygenerowanie lokalnego pliku PNG.
+Wymaga zalogowania.
 
-ANAGLYPH MAKER:
-1. Wczytanie lewego zdjęcia.
-2. Wczytanie prawego zdjęcia.
-3. Drag & drop lub wybór pliku.
-4. Zamiana L/R.
-5. Korekcja geometrii prawego obrazu:
-   - X od -150 do +150 px,
-   - Y od -100 do +100 px,
-   - skala 92–108%,
-   - rotacja -3 do +3 stopni.
-6. Tryby anaglifu:
-   - Color,
-   - Half-color,
-   - Gray,
-   - Optimized.
-7. Podgląd na żywo.
-8. Eksport PNG:
-   - 1200 px,
-   - 2400 px,
-   - 4096 px,
-   - rozdzielczość źródłowa.
+KONTO UŻYTKOWNIKA:
+http://okulary-3d.test/pl/account/gallery
 
-STEREO ALIGNMENT / CONVERTER:
-Obsługuje podgląd:
+ADMIN / MODERACJA:
+http://okulary-3d.test/admin/gallery
+
+Dostęp:
+editor / admin / super_admin
+
+FUNKCJONALNOŚCI PUBLICZNE:
+- lista opublikowanych prac,
+- miniatury par L/R,
+- szczegóły pracy,
+- autor,
+- opis,
+- licencja,
+- data publikacji,
+- viewer stereo działający lokalnie w przeglądarce.
+
+TRYBY VIEWERA:
 - Parallel,
 - Cross-eye,
-- Anaglyph,
-- Overlay 50%,
-- Blink L/R.
+- Anaglyph czerwono-cyjanowy,
+- Wiggle,
+- Zamień L / R.
 
-Geometria jest wspólna dla wszystkich trybów,
-więc można np.:
-1. wyrównać zdjęcia w Overlay,
-2. sprawdzić pion w Blink,
-3. zobaczyć efekt w Anaglyph,
-4. przełączyć na Parallel,
-bez utraty ustawień.
+ZGŁASZANIE PRACY:
+Zalogowany użytkownik podaje:
+- lewy obraz,
+- prawy obraz,
+- tytuł,
+- nazwę autora wyświetlaną publicznie,
+- opis,
+- licencję,
+- potwierdzenie prawa do publikacji.
 
-EKSPORT:
-- Anaglyph -> pojedynczy obraz PNG,
-- Parallel -> para L | R,
-- Cross-eye -> para R | L,
-- Overlay/Blink -> finalna para side-by-side.
+FORMATY:
+- JPG
+- PNG
+- WEBP
 
-PRYWATNOŚĆ:
-Zdjęcia użytkownika pozostają lokalnie w przeglądarce.
-Aplikacja nie wykonuje POST/UPLOAD zdjęć do Laravel.
+LIMIT:
+10 MB na jeden obraz.
 
-NAV:
-Pozycja "3D LAB" w głównym menu prowadzi teraz do:
-/{locale}/lab
+LICENCJE:
+- Wszelkie prawa zastrzeżone
+- CC BY
+- CC BY-SA
+- CC0
 
-TESTY:
-Dodano:
-tests/Feature/LabToolsTest.php
+WORKFLOW:
+1. User przesyła pracę.
+2. Status:
+   Oczekuje na moderację.
+3. Praca NIE jest publiczna.
+4. Editor/Admin/Super Admin otwiera:
+   /admin/gallery
+5. Moderator wybiera:
+   - Oczekuje
+   - Opublikowana
+   - Odrzucona
+6. Może dodać uwagę moderacyjną.
+7. Po publikacji praca pojawia się publicznie.
+
+KONTO UŻYTKOWNIKA:
+User widzi:
+- wszystkie własne zgłoszenia,
+- status,
+- uwagi moderatora.
+
+Zgłoszenie Pending lub Rejected:
+- można usunąć.
+
+Publikacja Published:
+- nie może być samodzielnie usunięta przez Usera.
+  Chroni to moderowany zasób przed przypadkowym zniknięciem.
+
+PLIKI:
+Obrazy zapisywane są na dysku Laravel:
+storage/app/public/gallery/{USER_ID}/{UUID}/
+
+Wymagany istniejący symlink:
+public/storage -> storage/app/public
+
+Symlink był już przygotowany na wcześniejszym etapie projektu.
+
+STRONA GŁÓWNA:
+Sekcja galerii nie zawiera już atrap przycisków:
+Parallel / Cross-eye / Anaglyph / Wiggle.
+
+Zamiast tego:
+- Otwórz galerię
+- Dodaj pracę
+lub dla gościa:
+- Zaloguj i dodaj
+
+Główna nawigacja "Galeria" prowadzi teraz do:
+/{locale}/gallery
+
+BAZA:
+Nowa tabela:
+stereo_gallery_items
+
+Przechowuje m.in.:
+- user_id
+- slug
+- title
+- description
+- author_name
+- license
+- status
+- ścieżki L/R
+- wymiary obrazów
+- rights_confirmed_at
+- published_at
+- moderator
+- moderation_note
 
 WDROŻENIE:
 1. Rozpakuj patch do:
@@ -85,45 +138,53 @@ WDROŻENIE:
 
 2. Wykonaj:
    php artisan optimize:clear
+   php artisan migrate
    npm run build
    php artisan test
 
-UWAGA:
-Nie ma migracji w KROKU 72, dlatego php artisan migrate
-nie jest wymagane.
-
 TEST RĘCZNY:
 1. Otwórz:
-   http://okulary-3d.test/pl/lab
+   http://okulary-3d.test/pl/gallery
 
-2. Anaglyph Maker:
-   - wczytaj dwa zdjęcia,
-   - przesuń suwak Y,
-   - przesuń X,
-   - sprawdź Color / Gray / Half-color / Optimized,
-   - kliknij Zamień L/R,
-   - wyeksportuj PNG.
+2. Zaloguj się zwykłym kontem.
 
-3. Stereo Alignment:
-   - wczytaj tę samą parę,
-   - sprawdź Parallel,
-   - Cross-eye,
-   - Anaglyph,
-   - Overlay,
-   - Blink,
-   - dokonaj korekcji geometrii,
-   - wyeksportuj wynik.
+3. Kliknij:
+   Dodaj własną pracę.
 
-4. Sprawdź wersję EN.
+4. Dodaj parę L/R i wyślij.
+
+5. Sprawdź:
+   /pl/account/gallery
+
+6. Praca powinna mieć status:
+   Oczekuje na moderację.
+
+7. Zaloguj się jako Editor/Admin/Super Admin.
+
+8. Otwórz:
+   /admin/gallery
+
+9. Otwórz zgłoszenie i ustaw:
+   Opublikowana
+
+10. Wróć do:
+    /pl/gallery
+
+11. Otwórz pracę i sprawdź:
+    - Parallel
+    - Cross-eye
+    - Anaglyph
+    - Wiggle
+    - Zamień L/R
+
+12. Sprawdź stronę główną:
+    - przycisk Otwórz galerię
+    - główne menu Galeria
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add Stereo 3D Lab tools"
+git commit -m "Add community stereo gallery"
 git push
 
 NASTĘPNY KROK:
-KROK 73 — Lenticular LAB v1:
-- Lenticular Interlacer,
-- Pitch Test Generator,
-- Lenticular Calculator,
-- przygotowanie workflow pod A4 Lenticular Wizard 60 LPI.
+KROK 76 — Stereoscopic Archive / History.

@@ -55,6 +55,7 @@ return [
         'title' => '3D LAB — online tools',
         'description' => 'Practical browser-based tools. Upload your media, set parameters and download the final result.',
         'run' => 'Launch',
+        'soon' => 'Coming soon',
         'tools' => [
             [
                 'title' => 'Anaglyph Maker',
