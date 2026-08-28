@@ -6,11 +6,14 @@ use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PlaceholderController;
+use App\Http\Controllers\Admin\ProductCategoryController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\ShopController;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,12 @@ Route::prefix('{locale}')
 
         Route::get('/articles/{slug}', [ArticleController::class, 'show'])
             ->name('articles.show');
+
+        Route::get('/shop', [ShopController::class, 'index'])
+            ->name('shop.index');
+
+        Route::get('/shop/{slug}', [ShopController::class, 'show'])
+            ->name('shop.show');
 
         Route::middleware('guest')->group(function () {
             Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -99,9 +108,20 @@ Route::prefix('admin')
 
         Route::middleware('role:' . User::ROLE_ADMIN . ',' . User::ROLE_SUPER_ADMIN)
             ->group(function () {
-                Route::get('/shop', [PlaceholderController::class, 'show'])
-                    ->defaults('section', 'shop')
+                Route::get('/shop', fn () => redirect()->route('admin.products.index'))
                     ->name('shop');
+
+                Route::resource('products', ProductController::class)
+                    ->except(['show']);
+
+                Route::get('/product-categories', [ProductCategoryController::class, 'index'])
+                    ->name('product-categories.index');
+                Route::post('/product-categories', [ProductCategoryController::class, 'store'])
+                    ->name('product-categories.store');
+                Route::put('/product-categories/{productCategory}', [ProductCategoryController::class, 'update'])
+                    ->name('product-categories.update');
+                Route::delete('/product-categories/{productCategory}', [ProductCategoryController::class, 'destroy'])
+                    ->name('product-categories.destroy');
 
                 Route::get('/users', [PlaceholderController::class, 'show'])
                     ->defaults('section', 'users')

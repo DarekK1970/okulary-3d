@@ -13,9 +13,11 @@
         'resources/css/admin-cms.css',
         'resources/css/admin-multilang.css',
         'resources/css/admin-media.css',
+        'resources/css/admin-shop.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
-        'resources/js/admin-media.js'
+        'resources/js/admin-media.js',
+        'resources/js/admin-shop.js'
     ])
 </head>
 <body class="admin-body">
@@ -53,7 +55,10 @@
                 </a>
 
                 @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_SUPER_ADMIN], true))
-                    <a class="admin-nav-link {{ request()->routeIs('admin.shop') ? 'is-active' : '' }}" href="{{ route('admin.shop') }}">
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.product-categories.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.products.index') }}"
+                    >
                         <span>▣</span>
                         {{ __('admin.menu.shop') }}
                     </a>

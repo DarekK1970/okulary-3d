@@ -7,7 +7,6 @@ use App\Models\MediaAsset;
 use App\Services\MediaAssetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MediaController extends Controller
@@ -16,7 +15,7 @@ class MediaController extends Controller
     {
         $query = MediaAsset::query()
             ->with('uploader')
-            ->withCount('heroArticles')
+            ->withCount(['heroArticles', 'products'])
             ->latest('id');
 
         if ($request->filled('q')) {
@@ -51,12 +50,7 @@ class MediaController extends Controller
     ): RedirectResponse {
         $validated = $request->validate([
             'files' => ['required', 'array', 'min:1', 'max:10'],
-            'files.*' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
+            'files.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'folder' => ['nullable', 'string', 'max:120'],
         ]);
 
@@ -80,7 +74,7 @@ class MediaController extends Controller
 
     public function edit(MediaAsset $media): View
     {
-        $media->loadCount('heroArticles');
+        $media->loadCount(['heroArticles', 'products']);
 
         return view('admin.media.edit', [
             'media' => $media,
@@ -111,17 +105,17 @@ class MediaController extends Controller
             'folder' => $service->normalizeFolder($validated['folder']),
         ]);
 
-        return back()->with(
-            'status',
-            __('media.messages.updated')
-        );
+        return back()->with('status', __('media.messages.updated'));
     }
 
     public function destroy(
         MediaAsset $media,
         MediaAssetService $service
     ): RedirectResponse {
-        if ($media->heroArticles()->exists()) {
+        if (
+            $media->heroArticles()->exists()
+            || $media->products()->exists()
+        ) {
             return back()->withErrors([
                 'media_delete' => __('media.messages.in_use'),
             ]);

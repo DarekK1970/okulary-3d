@@ -1,0 +1,155 @@
+<?php
+
+return [
+    'product_statuses' => [
+        'draft' => 'Draft',
+        'active' => 'Active',
+        'archived' => 'Archived',
+    ],
+
+    'translation_statuses' => [
+        'source' => 'Source',
+        'draft' => 'Draft',
+        'review' => 'Needs review',
+        'ready' => 'Ready',
+    ],
+
+    'validation' => [
+        'translation_complete' => 'When adding a product translation, provide both name and description.',
+        'variant_not_owned' => 'The variant does not belong to the edited product.',
+        'primary_must_be_selected' => 'The primary image must be selected for the product gallery.',
+    ],
+
+    'admin' => [
+        'kicker' => 'E-commerce',
+
+        'common' => [
+            'active' => 'Active',
+            'inactive' => 'Inactive',
+            'source_locale' => 'Source language',
+            'translation_status' => 'Translation status',
+            'edit' => 'Edit',
+            'delete' => 'Delete',
+            'save' => 'Save',
+            'cancel' => 'Cancel',
+        ],
+
+        'categories' => [
+            'title' => 'Product categories',
+            'description' => 'Multilingual structure of the shop catalog.',
+            'new' => 'New category',
+            'existing' => 'Existing categories',
+            'empty' => 'There are no product categories yet.',
+            'products_short' => 'products',
+            'delete_confirm' => 'Delete this category?',
+
+            'form' => [
+                'name' => 'Category name',
+                'slug' => 'URL slug',
+                'description' => 'Description',
+                'order' => 'Order',
+                'active' => 'Category active',
+                'create' => 'Create category',
+            ],
+
+            'messages' => [
+                'created' => 'Product category created.',
+                'updated' => 'Product category saved.',
+                'deleted' => 'Product category deleted.',
+                'in_use' => 'The category cannot be deleted because it contains products.',
+            ],
+        ],
+
+        'products' => [
+            'title' => 'Products',
+            'description' => 'Products, SKU variants, prices, stock and image galleries.',
+            'new' => 'New product',
+            'create_title' => 'New product',
+            'create_description' => 'Add PL/EN versions, variants, pricing, stock and images.',
+            'edit_title' => 'Edit product',
+            'preview' => 'Preview',
+            'empty' => 'There are no products yet.',
+            'no_brand' => 'no brand',
+            'delete_confirm' => 'Delete this product with its variants and translations?',
+
+            'filters' => [
+                'search' => 'Search name, brand or SKU…',
+                'all_statuses' => 'All statuses',
+                'all_categories' => 'All categories',
+                'apply' => 'Filter',
+                'clear' => 'Clear',
+            ],
+
+            'table' => [
+                'product' => 'Product',
+                'category' => 'Category',
+                'variants' => 'Variants',
+                'price' => 'Price from',
+                'stock' => 'Stock',
+                'status' => 'Status',
+                'languages' => 'Languages',
+                'actions' => 'Actions',
+            ],
+
+            'form' => [
+                'languages' => 'Language versions',
+                'localized_content' => 'Product description and SEO',
+                'name' => 'Product name',
+                'slug' => 'URL slug',
+                'short_description' => 'Short description',
+                'description' => 'Full product description',
+                'variants' => 'Product variants',
+                'variants_help' => 'Each variant has its own SKU, price, VAT and stock quantity.',
+                'add_variant' => 'Add variant',
+                'variant_name' => 'Variant name',
+                'price_gross' => 'Gross price',
+                'currency' => 'Currency',
+                'stock' => 'Stock',
+                'track_stock' => 'Track stock',
+                'gallery' => 'Product gallery',
+                'gallery_help' => 'Choose images from the central media library and mark the primary image.',
+                'manage_media' => 'Media library',
+                'use_image' => 'Use',
+                'primary_image' => 'Primary',
+                'no_media' => 'The media library is empty.',
+                'upload_new' => 'Add new images',
+                'upload_new_help' => 'Up to 5 JPG/PNG/WEBP files, max 5 MB. They will be added to the media library.',
+                'settings' => 'Product settings',
+                'category' => 'Category',
+                'choose_category' => 'Choose category',
+                'status' => 'Product status',
+                'brand' => 'Brand / manufacturer',
+                'featured' => 'Featured product',
+                'create' => 'Create product',
+            ],
+
+            'messages' => [
+                'created' => 'Product created.',
+                'updated' => 'Product saved.',
+                'deleted' => 'Product deleted.',
+            ],
+        ],
+    ],
+
+    'public' => [
+        'kicker' => 'Specialist 3D shop',
+        'shop_title' => '3D Shop',
+        'shop_description' => '3D glasses, lenticular sheets, stereoscopes, cameras and spatial-imaging accessories.',
+        'categories' => 'Categories',
+        'all_products' => 'All products',
+        'catalog' => 'Catalog',
+        'products_count' => 'products',
+        'featured' => 'Featured',
+        'from' => 'from',
+        'in_stock' => 'In stock',
+        'out_of_stock' => 'Out of stock',
+        'empty_title' => 'No products',
+        'empty_description' => 'The catalog is still being populated.',
+        'home' => 'Home',
+        'brand' => 'Brand',
+        'variants' => 'Choose variant',
+        'other_languages' => 'Other versions:',
+        'cart_step70' => 'Add to cart — Step 70',
+        'cart_step70_note' => 'The catalog is active. Cart and checkout are implemented in the next step.',
+    ],
+];

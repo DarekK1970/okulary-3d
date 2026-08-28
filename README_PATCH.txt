@@ -1,50 +1,50 @@
-OKULARY3D — KROK 68
-Biblioteka mediów
+OKULARY3D — KROK 69
+Katalog sklepu
 
 ZAKRES:
-- nowa tabela media_assets
-- centralny moduł /admin/media
-- upload do 10 obrazów jednocześnie
-- JPG / PNG / WEBP
-- limit 5 MB na plik
-- foldery / kolekcje
-- metadane:
-  * tytuł
-  * ALT
-  * podpis
-  * typ MIME
-  * rozmiar
-  * szerokość / wysokość
-  * uploader
-- filtrowanie i wyszukiwanie
-- podgląd w gridzie
-- edycja metadanych
-- fizyczne usuwanie nieużywanych plików
-- blokada usunięcia pliku używanego przez artykuł
+- wielojęzyczne kategorie produktów PL/EN
+- wielojęzyczne produkty PL/EN
+- niezależne slugi per język
+- status tłumaczenia: source / draft / review / ready
+- status produktu: draft / active / archived
+- marka / producent
+- produkt wyróżniony
+- warianty SKU
+- cena brutto
+- VAT
+- waluta PLN / EUR
+- stan magazynowy
+- opcjonalne śledzenie stanu
+- aktywność wariantu
+- galerie produktów z biblioteki mediów
+- możliwość przesłania nowych obrazów podczas edycji produktu
+- ochrona mediów używanych przez produkty przed usunięciem
 
-INTEGRACJA Z CMS:
-- articles.hero_media_id
-- wybór zdjęcia z biblioteki w edytorze artykułu
-- wizualny modal z ostatnimi 100 zasobami
-- wyszukiwarka wewnątrz selektora
-- nowy upload wykonany z formularza artykułu automatycznie trafia do biblioteki
-- media są współdzielone i NIE są usuwane razem z artykułem
+RBAC:
+- editor: brak dostępu do katalogu handlowego
+- admin: dostęp
+- super_admin: dostęp
 
-ZGODNOŚĆ WSTECZ:
-- hero_image_path pozostaje jako snapshot ścieżki
-- publiczny artykuł używa hero_media, z fallbackiem do hero_image_path
+BACKEND:
+http://okulary-3d.test/admin/product-categories
+http://okulary-3d.test/admin/products
 
-MIGRACJA ISTNIEJĄCYCH ZDJĘĆ:
-- istniejące hero_image_path z KROKU 66/67 są automatycznie rejestrowane
-  w media_assets
-- pliki NIE są kopiowane i NIE są przenoszone
-- artykuł dostaje hero_media_id wskazujące nowy rekord biblioteki
-- takie pliki trafiają do folderu: legacy-articles
+FRONTEND:
+http://okulary-3d.test/pl/shop
+http://okulary-3d.test/en/shop
+
+Produkt publiczny musi:
+1. mieć status active,
+2. posiadać aktywny wariant,
+3. posiadać wersję językową source albo ready.
+
+UWAGA:
+Koszyk jest jeszcze celowo nieaktywny.
+KROK 70 uruchomi koszyk, checkout, zamówienia i historię zamówień klienta.
 
 WDROŻENIE:
 1. Rozpakuj paczkę do:
    C:\laragon\www\okulary-3d
-   ze zgodą na nadpisanie.
 
 2. Wykonaj:
    php artisan optimize:clear
@@ -52,29 +52,32 @@ WDROŻENIE:
    npm run build
    php artisan test
 
-3. Sprawdź:
-   http://okulary-3d.test/admin/media
+3. Najpierw utwórz kategorię produktu:
+   /admin/product-categories
 
-4. Prześlij 2-3 testowe obrazy.
-5. Edytuj ich:
-   - tytuł
-   - ALT
-   - folder
+4. Następnie utwórz produkt:
+   /admin/products
 
-6. Wejdź:
-   http://okulary-3d.test/admin/articles
+   Uzupełnij:
+   - PL
+   - opcjonalnie EN + status Gotowa
+   - co najmniej 1 SKU
+   - cenę
+   - VAT
+   - stan magazynowy
+   - zdjęcia z biblioteki
 
-7. Edytuj artykuł i użyj:
-   [Wybierz z biblioteki]
+5. Ustaw produkt jako Aktywny.
 
-8. Zapisz artykuł i sprawdź publiczny podgląd.
+6. Sprawdź publiczny katalog:
+   /pl/shop
+   /en/shop
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add media library"
+git commit -m "Add shop catalog"
 git push
 
 NASTĘPNY KROK:
-KROK 69 — katalog sklepu:
-kategorie, produkty, warianty, ceny, stany magazynowe,
-zdjęcia z biblioteki mediów i wielojęzyczne opisy PL/EN.
+KROK 70 — koszyk, checkout, zamówienia, statusy zamówień
+i historia zamówień na koncie klienta.

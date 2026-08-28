@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MediaAsset extends Model
@@ -45,6 +46,12 @@ class MediaAsset extends Model
     public function heroArticles(): HasMany
     {
         return $this->hasMany(Article::class, 'hero_media_id');
+    }
+
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_media')
+            ->withTimestamps();
     }
 
     public function url(): string

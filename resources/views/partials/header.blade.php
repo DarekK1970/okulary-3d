@@ -9,6 +9,10 @@
         }
 
         try {
+            if (in_array($routeName, ['articles.show', 'shop.show'], true)) {
+                return url('/' . $code);
+            }
+
             return route($routeName, array_merge($routeParameters, ['locale' => $code]));
         } catch (\Throwable) {
             return url('/' . $code);
@@ -62,7 +66,14 @@
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#techniques">{{ __('site.nav.techniques') }}</a>
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#lab">{{ __('site.nav.lab') }}</a>
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#gallery">{{ __('site.nav.gallery') }}</a>
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#shop">{{ __('site.nav.shop') }}</a>
+
+            <a
+                class="nav-link {{ request()->routeIs('shop.*') ? 'is-active' : '' }}"
+                href="{{ route('shop.index', ['locale' => $locale]) }}"
+            >
+                {{ __('site.nav.shop') }}
+            </a>
+
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#about">{{ __('site.nav.about') }}</a>
 
             <div class="mobile-nav-actions">
