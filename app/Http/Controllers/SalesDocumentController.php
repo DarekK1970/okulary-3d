@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\SalesDocument;
+use App\Services\CommerceSettingsService;
 use Illuminate\View\View;
 
 class SalesDocumentController extends Controller
 {
+    public function __construct(
+        private readonly CommerceSettingsService $settings
+    ) {
+    }
+
     public function publicShow(
         string $locale,
         Order $order,
@@ -44,7 +50,7 @@ class SalesDocumentController extends Controller
             [
                 'order' => $order,
                 'document' => $document,
-                'seller' => config('shop.seller', []),
+                'seller' => $this->settings->seller(),
             ]
         );
     }

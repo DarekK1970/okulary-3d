@@ -15,6 +15,7 @@ use App\Models\ProductTranslation;
 use App\Models\ProductVariant;
 use App\Models\SalesDocument;
 use App\Models\User;
+use App\Services\CommerceSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -232,11 +233,22 @@ class PaymentShippingTest extends TestCase
 
     public function test_paynow_checkout_redirects_to_gateway(): void
     {
-        config()->set('paynow.enabled', true);
-        config()->set('paynow.sandbox', true);
-        config()->set('paynow.api_key', 'test-api-key');
-        config()->set('paynow.signature_key', 'test-signature-key');
-        config()->set('shop.payments.paynow.active', true);
+        $settings = app(CommerceSettingsService::class);
+        $settings->setMany([
+            'paynow.enabled' => '1',
+            'paynow.sandbox' => '1',
+            'paynow.timeout' => '15',
+        ]);
+        $settings->set(
+            'paynow.api_key',
+            'test-api-key',
+            true
+        );
+        $settings->set(
+            'paynow.signature_key',
+            'test-signature-key',
+            true
+        );
 
         Http::fake([
             'https://api.sandbox.paynow.pl/v3/payments' =>
@@ -283,8 +295,16 @@ class PaymentShippingTest extends TestCase
 
     public function test_valid_paynow_notification_marks_order_paid(): void
     {
-        config()->set('paynow.enabled', true);
-        config()->set('paynow.signature_key', 'notification-secret');
+        $settings = app(CommerceSettingsService::class);
+        $settings->setMany([
+            'paynow.enabled' => '1',
+            'paynow.sandbox' => '1',
+        ]);
+        $settings->set(
+            'paynow.signature_key',
+            'notification-secret',
+            true
+        );
 
         $variant = $this->variant();
 

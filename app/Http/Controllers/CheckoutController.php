@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\CartService;
+use App\Services\CommerceSettingsService;
 use App\Services\CheckoutService;
 use App\Services\PaymentMethodService;
 use App\Services\PayNowService;
@@ -166,7 +167,8 @@ class CheckoutController extends Controller
 
     public function success(
         string $locale,
-        \App\Models\Order $order
+        \App\Models\Order $order,
+        CommerceSettingsService $settings
     ): View {
         $order->load([
             'items',
@@ -175,7 +177,7 @@ class CheckoutController extends Controller
 
         return view('checkout.success', [
             'order' => $order,
-            'bankTransfer' => config('shop.bank_transfer', []),
+            'bankTransfer' => $settings->bankTransfer(),
         ]);
     }
 }

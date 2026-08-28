@@ -10,11 +10,14 @@ use RuntimeException;
 
 class PayNowService
 {
+    public function __construct(
+        private readonly CommerceSettingsService $settings
+    ) {
+    }
+
     public function enabled(): bool
     {
-        return (bool) config('paynow.enabled')
-            && filled(config('paynow.api_key'))
-            && filled(config('paynow.signature_key'));
+        return $this->settings->payNowEnabled();
     }
 
     /**
@@ -114,7 +117,7 @@ class PayNowService
         );
 
         $response = Http::timeout(
-            (int) config('paynow.timeout', 15)
+            $this->settings->payNowTimeout()
         )
             ->acceptJson()
             ->withHeaders(
@@ -181,7 +184,7 @@ class PayNowService
         $bodyJson = '';
 
         $response = Http::timeout(
-            (int) config('paynow.timeout', 15)
+            $this->settings->payNowTimeout()
         )
             ->acceptJson()
             ->withHeaders(
@@ -212,7 +215,9 @@ class PayNowService
         string $rawBody,
         ?string $signature
     ): bool {
-        if (! $signature || ! filled(config('paynow.signature_key'))) {
+        $signatureKey = $this->settings->payNowSignatureKey();
+
+        if (! $signature || ! filled($signatureKey)) {
             return false;
         }
 
@@ -220,7 +225,7 @@ class PayNowService
             hash_hmac(
                 'sha256',
                 $rawBody,
-                (string) config('paynow.signature_key'),
+                $signatureKey,
                 true
             )
         );
@@ -283,7 +288,7 @@ class PayNowService
 
     private function baseUrl(): string
     {
-        return (bool) config('paynow.sandbox', true)
+        return $this->settings->payNowSandbox()
             ? (string) config('paynow.sandbox_url')
             : (string) config('paynow.production_url');
     }
@@ -295,14 +300,16 @@ class PayNowService
         string $idempotencyKey,
         string $bodyJson
     ): array {
-        $apiKey = (string) config('paynow.api_key');
+        $apiKey = (string) $this->settings->payNowApiKey();
+        $signatureKey = (string)
+            $this->settings->payNowSignatureKey();
 
         return [
             'Api-Key' => $apiKey,
             'Idempotency-Key' => $idempotencyKey,
             'Signature' => $this->signature(
                 $apiKey,
-                (string) config('paynow.signature_key'),
+                $signatureKey,
                 $idempotencyKey,
                 $bodyJson
             ),

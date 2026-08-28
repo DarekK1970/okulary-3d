@@ -15,6 +15,7 @@
         'resources/css/admin-media.css',
         'resources/css/admin-shop.css',
         'resources/css/admin-orders.css',
+        'resources/css/admin-settings.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',

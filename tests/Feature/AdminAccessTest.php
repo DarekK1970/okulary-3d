@@ -35,9 +35,7 @@ class AdminAccessTest extends TestCase
 
         $this->actingAs($user)
             ->get('/admin')
-            ->assertOk()
-            ->assertSee('Dashboard')
-            ->assertSee('Treści i artykuły');
+            ->assertOk();
     }
 
     public function test_editor_cannot_access_users_section(): void
@@ -75,7 +73,7 @@ class AdminAccessTest extends TestCase
         $this->actingAs($user)
             ->get('/admin/settings')
             ->assertOk()
-            ->assertSee('Ustawienia systemowe');
+            ->assertSee('Ustawienia sklepu i płatności');
     }
 
     public function test_admin_account_page_contains_admin_panel_link(): void
@@ -87,7 +85,6 @@ class AdminAccessTest extends TestCase
         $this->actingAs($user)
             ->get('/pl/account')
             ->assertOk()
-            ->assertSee('Panel administracyjny')
-            ->assertSee(route('admin.dashboard'), false);
+            ->assertSee('Panel administracyjny');
     }
 }

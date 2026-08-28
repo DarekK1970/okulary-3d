@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\Admin\CommerceSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -194,10 +195,14 @@ Route::prefix('admin')
                     ->name('orchestrator');
             });
 
-        Route::get('/settings', [PlaceholderController::class, 'show'])
-            ->defaults('section', 'settings')
-            ->middleware('role:' . User::ROLE_SUPER_ADMIN)
-            ->name('settings');
+        Route::middleware('role:' . User::ROLE_SUPER_ADMIN)
+            ->group(function () {
+                Route::get('/settings', [CommerceSettingsController::class, 'index'])
+                    ->name('settings');
+
+                Route::put('/settings', [CommerceSettingsController::class, 'update'])
+                    ->name('settings.update');
+            });
     });
 
 

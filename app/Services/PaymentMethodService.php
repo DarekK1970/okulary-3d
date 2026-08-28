@@ -6,6 +6,11 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentMethodService
 {
+    public function __construct(
+        private readonly CommerceSettingsService $settings
+    ) {
+    }
+
     /**
      * @return array<string, array<string, mixed>>
      */
@@ -22,10 +27,7 @@ class PaymentMethodService
 
             if (
                 $key === 'paynow'
-                && (
-                    ! filled(config('paynow.api_key'))
-                    || ! filled(config('paynow.signature_key'))
-                )
+                && ! $this->settings->payNowEnabled()
             ) {
                 continue;
             }
