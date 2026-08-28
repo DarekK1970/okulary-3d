@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 390">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3e342b"/><stop offset="1" stop-color="#b89b75"/></linearGradient></defs>
+<rect width="640" height="390" fill="url(#g)"/>
+<circle cx="520" cy="92" r="78" fill="#6b5744" opacity=".20"/>
+<circle cx="110" cy="330" r="118" fill="#b89b75" opacity=".22"/>
+<path d="M0 300 130 190l86 60 108-134 110 120 77-68 129 132v90H0Z" fill="#fff" opacity=".16"/>
+<path d="M-10 298 130 188l86 60" fill="none" stroke="#00d2ff" stroke-width="11" opacity=".55"/>
+<path d="m216 248 108-134 110 120" fill="none" stroke="#ff4962" stroke-width="10" opacity=".48"/>
+<rect x="52" y="42" width="218" height="105" rx="16" fill="#fff" opacity=".10"/>
+<circle cx="114" cy="94" r="29" fill="#00c4ef" opacity=".72"/><circle cx="184" cy="94" r="29" fill="#ff435b" opacity=".72"/>
+<text x="52" y="354" font-family="Arial" font-size="18" font-weight="700" fill="#fff" opacity=".85">STEREOSCOPY</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 340">
+<defs><linearGradient id="a3" x1="0" x2="1"><stop stop-color="#d7c5a9"/><stop offset="1" stop-color="#8b7358"/></linearGradient></defs>
+<rect width="520" height="340" fill="#e9dfcf"/>
+<rect x="22" y="22" width="476" height="296" rx="10" fill="#f8f1e6" stroke="#b7a58d" stroke-width="3"/>
+<rect x="42" y="48" width="204" height="208" rx="7" fill="url(#a3)"/>
+<rect x="274" y="48" width="204" height="208" rx="7" fill="url(#a3)"/>
+<path d="M42 224 99 155l43 40 51-88 53 117v32H42Z" fill="#54493d" opacity=".62"/>
+<path d="M274 224 331 155l43 40 51-88 53 117v32H274Z" fill="#54493d" opacity=".62"/>
+<circle cx="197" cy="92" r="16" fill="#ece0c7" opacity=".72"/><circle cx="429" cy="92" r="16" fill="#ece0c7" opacity=".72"/>
+<text x="260" y="292" text-anchor="middle" font-family="Georgia,serif" font-size="18" font-weight="700" fill="#6b5846">CATHEDRAL 1910</text>
+</svg>

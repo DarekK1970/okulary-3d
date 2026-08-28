@@ -39,14 +39,30 @@ const initNavigation = () => {
     });
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 1180) {
+        if (window.innerWidth > 1220) {
             closeMenu();
         }
     });
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNavigation);
-} else {
+const initGalleryTabs = () => {
+    const tabs = document.querySelectorAll('.gallery-tab');
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            tabs.forEach((item) => item.classList.remove('is-active'));
+            tab.classList.add('is-active');
+        });
+    });
+};
+
+const initApp = () => {
     initNavigation();
+    initGalleryTabs();
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
 }

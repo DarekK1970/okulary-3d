@@ -1,48 +1,25 @@
-OKULARY3D — KROK 61
-Globalny layout publicznej aplikacji
+OKULARY3D — KROK 62 — poprawka testu lokalizacji
 
-ZAKRES:
-- wspólny layout Blade
-- desktopowy i mobilny header
-- główne menu wortalu
-- przełącznik PL/EN
-- ikony wyszukiwarki, konta i koszyka
-- responsywne menu mobilne
-- wspólna stopka
-- pasek newslettera
-- autorskie logo SVG Okulary 3D
-- globalne CSS
-- JavaScript obsługujący menu mobilne
-- tłumaczenia PL/EN elementów layoutu
-- testy Feature layoutu
+PRZYCZYNA:
+KROK 62 zastąpił demonstracyjny homepage pełną stroną główną.
+Stary test LocalizationTest nadal oczekiwał tekstów z wersji demonstracyjnej.
 
-UWAGA:
-Strona główna jest na tym etapie celowo tylko przestrzenią demonstracyjną.
-Pełny homepage zgodny z zaakceptowaną wizualizacją powstaje w KROKU 62.
+ZMIANA:
+- testy PL/EN zostały dostosowane do aktualnego homepage
+- testy nadal weryfikują:
+  * / -> /pl
+  * lang="pl" oraz lang="en"
+  * polskie i angielskie treści
+  * 404 dla /de
 
 WDROŻENIE:
-1. Rozpakuj paczkę do katalogu:
-   C:\laragon\www\okulary-3d
-   i zezwól na nadpisanie plików.
-
-2. Wykonaj:
-   php artisan optimize:clear
-   npm run build
+1. Rozpakuj paczkę do katalogu projektu.
+2. Zezwól na nadpisanie:
+   tests/Feature/LocalizationTest.php
+3. Wykonaj:
    php artisan test
 
-3. Sprawdź:
-   http://okulary-3d.test/pl
-   http://okulary-3d.test/en
-
-OCZEKIWANY REZULTAT:
-- wspólny header i footer na obu wersjach językowych
-- przełącznik PL/EN
-- menu desktopowe
-- menu hamburger na małej szerokości
-- poprawne logo SVG
-- teksty layoutu zmieniają język
-
-COMMIT PO ZALICZENIU:
+Jeśli wszystkie testy przejdą:
 git add .
-git commit -m "Add public application layout"
+git commit -m "Build portal homepage"
 git push

@@ -8,29 +8,39 @@ class LocalizationTest extends TestCase
 {
     public function test_root_redirects_to_default_locale(): void
     {
-        $this->get('/')->assertRedirect('/pl');
+        $response = $this->get('/');
+
+        $response->assertRedirect('/pl');
     }
 
     public function test_polish_homepage_uses_polish_locale(): void
     {
-        $this->get('/pl')
+        $response = $this->get('/pl');
+
+        $response
             ->assertOk()
-            ->assertSee('Zobacz świat w trzech wymiarach')
-            ->assertSee('Aktualny język')
-            ->assertSee('pl');
+            ->assertSee('lang="pl"', false)
+            ->assertSee('Zobacz świat')
+            ->assertSee('Najnowsze w świecie 3D')
+            ->assertSee('Kategorie sklepu');
     }
 
     public function test_english_homepage_uses_english_locale(): void
     {
-        $this->get('/en')
+        $response = $this->get('/en');
+
+        $response
             ->assertOk()
-            ->assertSee('See the world in three dimensions')
-            ->assertSee('Current language')
-            ->assertSee('en');
+            ->assertSee('lang="en"', false)
+            ->assertSee('See the world')
+            ->assertSee('Latest from the 3D world')
+            ->assertSee('Shop categories');
     }
 
     public function test_unsupported_locale_returns_404(): void
     {
-        $this->get('/de')->assertNotFound();
+        $response = $this->get('/de');
+
+        $response->assertNotFound();
     }
 }
