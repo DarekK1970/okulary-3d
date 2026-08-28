@@ -3,17 +3,25 @@
 namespace App\Models;
 
 use App\Enums\ArticleStatus;
+use App\Enums\ArticleTranslationStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Article extends Model
 {
     use HasFactory;
 
+    /**
+     * Legacy localized columns (title/slug/excerpt/body_html) are intentionally
+     * still populated for migration compatibility after KROK 66.
+     * Public rendering uses article_translations.
+     */
     protected $fillable = [
         'category_id',
+        'source_locale',
         'title',
         'slug',
         'excerpt',
@@ -46,6 +54,46 @@ class Article extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function translations(): HasMany
+    {
+        return $this->hasMany(ArticleTranslation::class);
+    }
+
+    public function translation(string $locale): ?ArticleTranslation
+    {
+        if ($this->relationLoaded('translations')) {
+            return $this->translations->firstWhere('locale', $locale);
+        }
+
+        return $this->translations()
+            ->where('locale', $locale)
+            ->first();
+    }
+
+    public function sourceTranslation(): ?ArticleTranslation
+    {
+        return $this->translation($this->source_locale);
+    }
+
+    public function publicTranslation(string $locale): ?ArticleTranslation
+    {
+        if ($this->relationLoaded('translations')) {
+            return $this->translations
+                ->where('locale', $locale)
+                ->first(
+                    fn (ArticleTranslation $translation) => $translation->isPubliclyReady()
+                );
+        }
+
+        return $this->translations()
+            ->where('locale', $locale)
+            ->whereIn(
+                'translation_status',
+                ArticleTranslationStatus::publicValues()
+            )
+            ->first();
     }
 
     public function scopePublished(Builder $query): Builder

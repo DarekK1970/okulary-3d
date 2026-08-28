@@ -11,7 +11,9 @@
     @vite([
         'resources/css/admin.css',
         'resources/css/admin-cms.css',
-        'resources/js/admin-cms.js'
+        'resources/css/admin-multilang.css',
+        'resources/js/admin-cms.js',
+        'resources/js/admin-multilang.js'
     ])
 </head>
 <body class="admin-body">

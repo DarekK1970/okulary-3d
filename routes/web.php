@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
-use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlaceholderController;
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -29,6 +30,9 @@ Route::prefix('{locale}')
         Route::get('/', function () {
             return view('home');
         })->name('home');
+
+        Route::get('/articles/{slug}', [ArticleController::class, 'show'])
+            ->name('articles.show');
 
         Route::middleware('guest')->group(function () {
             Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -68,7 +72,7 @@ Route::prefix('admin')
         Route::get('/content', fn () => redirect()->route('admin.articles.index'))
             ->name('content');
 
-        Route::resource('articles', ArticleController::class)
+        Route::resource('articles', AdminArticleController::class)
             ->except(['show']);
 
         Route::get('/article-categories', [ArticleCategoryController::class, 'index'])

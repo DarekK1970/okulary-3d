@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ArticleStatus;
+use App\Enums\ArticleTranslationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\ArticleCategory;
+use App\Models\ArticleTranslation;
 use App\Services\ArticleHtmlSanitizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ArticleController extends Controller
@@ -19,21 +22,26 @@ class ArticleController extends Controller
     public function index(Request $request): View
     {
         $query = Article::query()
-            ->with(['category', 'creator'])
+            ->with(['category', 'creator', 'translations'])
             ->latest('id');
 
         if ($request->filled('q')) {
             $search = trim((string) $request->input('q'));
 
-            $query->where(function ($builder) use ($search) {
-                $builder
-                    ->where('title', 'like', '%' . $search . '%')
-                    ->orWhere('slug', 'like', '%' . $search . '%')
-                    ->orWhere('excerpt', 'like', '%' . $search . '%');
+            $query->whereHas('translations', function ($builder) use ($search) {
+                $builder->where(function ($translationQuery) use ($search) {
+                    $translationQuery
+                        ->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('excerpt', 'like', '%' . $search . '%');
+                });
             });
         }
 
-        if ($request->filled('status') && in_array($request->input('status'), ArticleStatus::values(), true)) {
+        if (
+            $request->filled('status')
+            && in_array($request->input('status'), ArticleStatus::values(), true)
+        ) {
             $query->where('status', $request->input('status'));
         }
 
@@ -48,6 +56,7 @@ class ArticleController extends Controller
                 ->orderBy('name')
                 ->get(),
             'statuses' => ArticleStatus::cases(),
+            'supportedLocales' => config('locales.supported', []),
         ]);
     }
 
@@ -56,25 +65,39 @@ class ArticleController extends Controller
         return view('admin.articles.create', [
             'article' => new Article([
                 'status' => ArticleStatus::Draft,
+                'source_locale' => config('locales.default', 'pl'),
             ]),
             'categories' => $this->categories(),
             'statuses' => ArticleStatus::cases(),
+            'translationStatuses' => ArticleTranslationStatus::cases(),
+            'supportedLocales' => config('locales.supported', []),
         ]);
     }
 
-    public function store(Request $request, ArticleHtmlSanitizer $sanitizer): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        ArticleHtmlSanitizer $sanitizer
+    ): RedirectResponse {
         $validated = $this->validateArticle($request);
         $status = ArticleStatus::from($validated['status']);
+        $sourceLocale = $validated['source_locale'];
+        $source = $validated['translations'][$sourceLocale];
+
+        $sourceTranslationSlug = $this->uniqueTranslationSlug(
+            $sourceLocale,
+            ($source['slug'] ?? null) ?: $source['title']
+        );
 
         $article = new Article();
         $article->category_id = (int) $validated['category_id'];
-        $article->title = $validated['title'];
-        $article->slug = $this->uniqueSlug(
-            ($validated['slug'] ?? null) ?: $validated['title']
-        );
-        $article->excerpt = ($validated['excerpt'] ?? null) ?: null;
-        $article->body_html = $sanitizer->sanitize($validated['body_html']);
+        $article->source_locale = $sourceLocale;
+
+        // Legacy source snapshot kept until a later cleanup migration.
+        $article->title = $source['title'];
+        $article->slug = $this->uniqueLegacySlug($sourceTranslationSlug);
+        $article->excerpt = ($source['excerpt'] ?? null) ?: null;
+        $article->body_html = $sanitizer->sanitize($source['body_html']);
+
         $article->status = $status;
         $article->published_at = $this->publishedAt(
             $status,
@@ -90,17 +113,28 @@ class ArticleController extends Controller
 
         $article->save();
 
+        $this->syncTranslations(
+            $article,
+            $validated,
+            $sanitizer,
+            [$sourceLocale => $sourceTranslationSlug]
+        );
+
         return redirect()
             ->route('admin.articles.edit', $article)
-            ->with('status', __('admin.articles.messages.created'));
+            ->with('status', __('cms.articles.messages.created'));
     }
 
     public function edit(Article $article): View
     {
+        $article->load('translations');
+
         return view('admin.articles.edit', [
             'article' => $article,
             'categories' => $this->categories(),
             'statuses' => ArticleStatus::cases(),
+            'translationStatuses' => ArticleTranslationStatus::cases(),
+            'supportedLocales' => config('locales.supported', []),
         ]);
     }
 
@@ -109,17 +143,29 @@ class ArticleController extends Controller
         Article $article,
         ArticleHtmlSanitizer $sanitizer
     ): RedirectResponse {
-        $validated = $this->validateArticle($request, $article);
+        $validated = $this->validateArticle($request);
         $status = ArticleStatus::from($validated['status']);
+        $sourceLocale = $validated['source_locale'];
+        $source = $validated['translations'][$sourceLocale];
+
+        $sourceTranslationSlug = $this->uniqueTranslationSlug(
+            $sourceLocale,
+            ($source['slug'] ?? null) ?: $source['title'],
+            $article->translation($sourceLocale)
+        );
 
         $article->category_id = (int) $validated['category_id'];
-        $article->title = $validated['title'];
-        $article->slug = $this->uniqueSlug(
-            ($validated['slug'] ?? null) ?: $validated['title'],
+        $article->source_locale = $sourceLocale;
+
+        // Keep legacy source snapshot synchronized.
+        $article->title = $source['title'];
+        $article->slug = $this->uniqueLegacySlug(
+            $sourceTranslationSlug,
             $article
         );
-        $article->excerpt = ($validated['excerpt'] ?? null) ?: null;
-        $article->body_html = $sanitizer->sanitize($validated['body_html']);
+        $article->excerpt = ($source['excerpt'] ?? null) ?: null;
+        $article->body_html = $sanitizer->sanitize($source['body_html']);
+
         $article->status = $status;
         $article->published_at = $this->publishedAt(
             $status,
@@ -136,14 +182,24 @@ class ArticleController extends Controller
                 ->store('articles/heroes', 'public');
         }
 
-        if ($request->boolean('remove_hero_image') && $article->hero_image_path) {
+        if (
+            $request->boolean('remove_hero_image')
+            && $article->hero_image_path
+        ) {
             Storage::disk('public')->delete($article->hero_image_path);
             $article->hero_image_path = null;
         }
 
         $article->save();
 
-        return back()->with('status', __('admin.articles.messages.updated'));
+        $this->syncTranslations(
+            $article,
+            $validated,
+            $sanitizer,
+            [$sourceLocale => $sourceTranslationSlug]
+        );
+
+        return back()->with('status', __('cms.articles.messages.updated'));
     }
 
     public function destroy(Article $article): RedirectResponse
@@ -156,40 +212,187 @@ class ArticleController extends Controller
 
         return redirect()
             ->route('admin.articles.index')
-            ->with('status', __('admin.articles.messages.deleted'));
+            ->with('status', __('cms.articles.messages.deleted'));
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function validateArticle(Request $request, ?Article $article = null): array
+    private function validateArticle(Request $request): array
     {
+        $supportedLocales = array_keys(
+            config('locales.supported', ['pl' => []])
+        );
+
+        $sourceLocale = (string) $request->input(
+            'source_locale',
+            config('locales.default', 'pl')
+        );
+
         $publishedAtRules = ['nullable', 'date'];
 
         if ($request->input('status') === ArticleStatus::Scheduled->value) {
             $publishedAtRules = ['required', 'date', 'after:now'];
         }
 
-        return $request->validate([
+        $rules = [
             'category_id' => [
                 'required',
                 'integer',
                 Rule::exists('article_categories', 'id')
                     ->where(fn ($query) => $query->where('is_active', true)),
             ],
-            'title' => ['required', 'string', 'min:3', 'max:220'],
-            'slug' => ['nullable', 'string', 'max:240', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
-            'excerpt' => ['nullable', 'string', 'max:1000'],
-            'body_html' => ['required', 'string', 'min:3'],
-            'status' => ['required', Rule::in(ArticleStatus::values())],
+            'source_locale' => [
+                'required',
+                Rule::in($supportedLocales),
+            ],
+            'status' => [
+                'required',
+                Rule::in(ArticleStatus::values()),
+            ],
             'published_at' => $publishedAtRules,
-            'hero_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'hero_image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
             'remove_hero_image' => ['nullable', 'boolean'],
-        ]);
+            'translations' => ['required', 'array'],
+        ];
+
+        foreach ($supportedLocales as $locale) {
+            $requiredForSource = $locale === $sourceLocale
+                ? 'required'
+                : 'nullable';
+
+            $rules["translations.{$locale}.title"] = [
+                $requiredForSource,
+                'string',
+                'max:220',
+            ];
+
+            $rules["translations.{$locale}.slug"] = [
+                'nullable',
+                'string',
+                'max:240',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+            ];
+
+            $rules["translations.{$locale}.excerpt"] = [
+                'nullable',
+                'string',
+                'max:1000',
+            ];
+
+            $rules["translations.{$locale}.body_html"] = [
+                $requiredForSource,
+                'string',
+            ];
+
+            $rules["translations.{$locale}.seo_title"] = [
+                'nullable',
+                'string',
+                'max:70',
+            ];
+
+            $rules["translations.{$locale}.seo_description"] = [
+                'nullable',
+                'string',
+                'max:180',
+            ];
+
+            $rules["translations.{$locale}.translation_status"] = [
+                'nullable',
+                Rule::in(ArticleTranslationStatus::values()),
+            ];
+        }
+
+        $validated = $request->validate($rules);
+
+        foreach ($supportedLocales as $locale) {
+            if ($locale === $sourceLocale) {
+                continue;
+            }
+
+            $translation = $validated['translations'][$locale] ?? [];
+            $title = trim((string) ($translation['title'] ?? ''));
+            $body = trim((string) ($translation['body_html'] ?? ''));
+
+            if (($title === '') xor ($body === '')) {
+                throw ValidationException::withMessages([
+                    "translations.{$locale}.title" => __(
+                        'cms.articles.validation.translation_complete'
+                    ),
+                ]);
+            }
+        }
+
+        return $validated;
     }
 
-    private function publishedAt(ArticleStatus $status, mixed $value): mixed
-    {
+    /**
+     * @param array<string, mixed> $validated
+     * @param array<string, string> $reservedSlugs
+     */
+    private function syncTranslations(
+        Article $article,
+        array $validated,
+        ArticleHtmlSanitizer $sanitizer,
+        array $reservedSlugs = []
+    ): void {
+        $supportedLocales = array_keys(
+            config('locales.supported', ['pl' => []])
+        );
+
+        foreach ($supportedLocales as $locale) {
+            $data = $validated['translations'][$locale] ?? [];
+
+            $title = trim((string) ($data['title'] ?? ''));
+            $body = trim((string) ($data['body_html'] ?? ''));
+
+            $existing = $article->translations()
+                ->where('locale', $locale)
+                ->first();
+
+            if ($locale !== $article->source_locale && $title === '' && $body === '') {
+                $existing?->delete();
+                continue;
+            }
+
+            $translationStatus = $locale === $article->source_locale
+                ? ArticleTranslationStatus::Source
+                : ArticleTranslationStatus::from(
+                    $data['translation_status']
+                        ?? ArticleTranslationStatus::Draft->value
+                );
+
+            $slug = $reservedSlugs[$locale]
+                ?? $this->uniqueTranslationSlug(
+                    $locale,
+                    ($data['slug'] ?? null) ?: $title,
+                    $existing
+                );
+
+            $article->translations()->updateOrCreate(
+                ['locale' => $locale],
+                [
+                    'title' => $title,
+                    'slug' => $slug,
+                    'excerpt' => ($data['excerpt'] ?? null) ?: null,
+                    'body_html' => $sanitizer->sanitize($body),
+                    'seo_title' => ($data['seo_title'] ?? null) ?: null,
+                    'seo_description' => ($data['seo_description'] ?? null) ?: null,
+                    'translation_status' => $translationStatus,
+                ]
+            );
+        }
+    }
+
+    private function publishedAt(
+        ArticleStatus $status,
+        mixed $value
+    ): mixed {
         return match ($status) {
             ArticleStatus::Draft => null,
             ArticleStatus::Scheduled => $value,
@@ -209,16 +412,47 @@ class ArticleController extends Controller
             ->get();
     }
 
-    private function uniqueSlug(string $source, ?Article $ignore = null): string
-    {
-        $base = Str::slug($source) ?: 'artykul';
+    private function uniqueTranslationSlug(
+        string $locale,
+        string $source,
+        ?ArticleTranslation $ignore = null
+    ): string {
+        $base = Str::slug($source) ?: 'article';
+        $slug = $base;
+        $counter = 2;
+
+        while (
+            ArticleTranslation::query()
+                ->where('locale', $locale)
+                ->where('slug', $slug)
+                ->when(
+                    $ignore,
+                    fn ($query) => $query->whereKeyNot($ignore->getKey())
+                )
+                ->exists()
+        ) {
+            $slug = $base . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    private function uniqueLegacySlug(
+        string $source,
+        ?Article $ignore = null
+    ): string {
+        $base = Str::slug($source) ?: 'article';
         $slug = $base;
         $counter = 2;
 
         while (
             Article::query()
                 ->where('slug', $slug)
-                ->when($ignore, fn ($query) => $query->whereKeyNot($ignore->getKey()))
+                ->when(
+                    $ignore,
+                    fn ($query) => $query->whereKeyNot($ignore->getKey())
+                )
                 ->exists()
         ) {
             $slug = $base . '-' . $counter;

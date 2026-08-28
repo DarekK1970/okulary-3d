@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Enums\ArticleStatus;
+use App\Enums\ArticleTranslationStatus;
 use App\Models\Article;
 use App\Models\ArticleCategory;
+use App\Models\ArticleTranslation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -55,6 +57,7 @@ class ArticleCmsTest extends TestCase
         Storage::fake('public');
 
         $editor = $this->editor();
+
         $category = ArticleCategory::create([
             'name' => 'Techniki 3D',
             'slug' => 'techniki-3d',
@@ -65,28 +68,57 @@ class ArticleCmsTest extends TestCase
         $response = $this->actingAs($editor)
             ->post('/admin/articles', [
                 'category_id' => $category->id,
-                'title' => 'Jak działa stereoskopia',
-                'slug' => '',
-                'excerpt' => 'Krótki opis.',
-                'body_html' => '<p>Treść <strong>artykułu</strong>.</p>',
+                'source_locale' => 'pl',
                 'status' => ArticleStatus::Draft->value,
-                'hero_image' => UploadedFile::fake()->image('hero.jpg', 1200, 800),
+                'translations' => [
+                    'pl' => [
+                        'title' => 'Jak działa stereoskopia',
+                        'slug' => '',
+                        'excerpt' => 'Krótki opis.',
+                        'body_html' => '<p>Treść <strong>artykułu</strong>.</p>',
+                    ],
+                ],
+                'hero_image' => UploadedFile::fake()->image(
+                    'hero.jpg',
+                    1200,
+                    800
+                ),
             ]);
 
         $article = Article::query()->firstOrFail();
 
-        $response->assertRedirect(route('admin.articles.edit', $article));
+        $response->assertRedirect(
+            route('admin.articles.edit', $article)
+        );
 
-        $this->assertSame('jak-dziala-stereoskopia', $article->slug);
-        $this->assertSame(ArticleStatus::Draft, $article->status);
+        $this->assertSame(
+            'jak-dziala-stereoskopia',
+            $article->slug
+        );
+
+        $this->assertSame(
+            ArticleStatus::Draft,
+            $article->status
+        );
+
         $this->assertNotNull($article->hero_image_path);
 
-        Storage::disk('public')->assertExists($article->hero_image_path);
+        Storage::disk('public')->assertExists(
+            $article->hero_image_path
+        );
+
+        $this->assertDatabaseHas('article_translations', [
+            'article_id' => $article->id,
+            'locale' => 'pl',
+            'slug' => 'jak-dziala-stereoskopia',
+            'translation_status' => ArticleTranslationStatus::Source->value,
+        ]);
     }
 
     public function test_article_html_is_sanitized(): void
     {
         $editor = $this->editor();
+
         $category = ArticleCategory::create([
             'name' => 'Test',
             'slug' => 'test',
@@ -97,23 +129,61 @@ class ArticleCmsTest extends TestCase
         $this->actingAs($editor)
             ->post('/admin/articles', [
                 'category_id' => $category->id,
-                'title' => 'Bezpieczny artykuł',
-                'slug' => '',
-                'body_html' => '<p onclick="alert(1)">OK</p><script>alert(2)</script>',
+                'source_locale' => 'pl',
                 'status' => ArticleStatus::Draft->value,
+                'translations' => [
+                    'pl' => [
+                        'title' => 'Bezpieczny artykuł',
+                        'slug' => '',
+                        'body_html' => '<p onclick="alert(1)">OK</p><script>alert(2)</script>',
+                    ],
+                ],
             ])
             ->assertSessionHasNoErrors();
 
-        $body = Article::query()->firstOrFail()->body_html;
+        $article = Article::query()->firstOrFail();
 
-        $this->assertStringContainsString('<p>OK</p>', $body);
-        $this->assertStringNotContainsString('script', $body);
-        $this->assertStringNotContainsString('onclick', $body);
+        $translation = ArticleTranslation::query()
+            ->where('article_id', $article->id)
+            ->where('locale', 'pl')
+            ->firstOrFail();
+
+        $this->assertStringContainsString(
+            '<p>OK</p>',
+            $translation->body_html
+        );
+
+        $this->assertStringNotContainsString(
+            'script',
+            $translation->body_html
+        );
+
+        $this->assertStringNotContainsString(
+            'onclick',
+            $translation->body_html
+        );
+
+        // Legacy snapshot remains synchronized and sanitized as well.
+        $this->assertStringContainsString(
+            '<p>OK</p>',
+            $article->body_html
+        );
+
+        $this->assertStringNotContainsString(
+            'script',
+            $article->body_html
+        );
+
+        $this->assertStringNotContainsString(
+            'onclick',
+            $article->body_html
+        );
     }
 
     public function test_scheduled_article_is_published_by_command(): void
     {
         $editor = $this->editor();
+
         $category = ArticleCategory::create([
             'name' => 'Aktualności',
             'slug' => 'aktualnosci',
@@ -123,6 +193,7 @@ class ArticleCmsTest extends TestCase
 
         $article = Article::create([
             'category_id' => $category->id,
+            'source_locale' => 'pl',
             'title' => 'Zaplanowany artykuł',
             'slug' => 'zaplanowany-artykul',
             'body_html' => '<p>Treść</p>',
@@ -137,12 +208,16 @@ class ArticleCmsTest extends TestCase
 
         $article->refresh();
 
-        $this->assertSame(ArticleStatus::Published, $article->status);
+        $this->assertSame(
+            ArticleStatus::Published,
+            $article->status
+        );
     }
 
     public function test_category_with_articles_cannot_be_deleted(): void
     {
         $editor = $this->editor();
+
         $category = ArticleCategory::create([
             'name' => 'Historia',
             'slug' => 'historia',
@@ -152,6 +227,7 @@ class ArticleCmsTest extends TestCase
 
         Article::create([
             'category_id' => $category->id,
+            'source_locale' => 'pl',
             'title' => 'Artykuł',
             'slug' => 'artykul',
             'body_html' => '<p>Treść</p>',

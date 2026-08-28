@@ -1,20 +1,38 @@
 @extends('admin.layout')
 
-@section('title', __('admin.articles.edit_title') . ' — ' . __('admin.title'))
-@section('page_heading', __('admin.articles.edit_title'))
+@php
+    $source = $article->sourceTranslation();
+@endphp
+
+@section('title', __('cms.articles.edit_title') . ' — ' . __('admin.title'))
+@section('page_heading', __('cms.articles.edit_title'))
 
 @section('content')
 <section class="cms-page">
     <div class="cms-page-heading">
         <div>
-            <span class="admin-eyebrow">{{ __('admin.articles.kicker') }}</span>
-            <h1>{{ __('admin.articles.edit_title') }}</h1>
-            <p>{{ $article->title }}</p>
+            <span class="admin-eyebrow">{{ __('cms.articles.kicker') }}</span>
+            <h1>{{ __('cms.articles.edit_title') }}</h1>
+            <p>{{ $source?->title ?? $article->title }}</p>
         </div>
 
-        <span class="cms-status cms-status-{{ $article->status->value }}">
-            {{ __('admin.articles.statuses.' . $article->status->value) }}
-        </span>
+        <div class="cms-heading-actions">
+            @foreach ($article->translations as $translation)
+                @if ($article->status->value === 'published' && $translation->isPubliclyReady())
+                    <a
+                        class="cms-secondary-button"
+                        target="_blank"
+                        href="{{ route('articles.show', ['locale' => $translation->locale, 'slug' => $translation->slug]) }}"
+                    >
+                        {{ __('cms.articles.actions.preview') }} {{ strtoupper($translation->locale) }}
+                    </a>
+                @endif
+            @endforeach
+
+            <span class="cms-status cms-status-{{ $article->status->value }}">
+                {{ __('cms.articles.statuses.' . $article->status->value) }}
+            </span>
+        </div>
     </div>
 
     <form
