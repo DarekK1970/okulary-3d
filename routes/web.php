@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\CommerceSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DiscoveryController;
+use App\Http\Controllers\Admin\DiscoverySettingsController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
@@ -262,6 +264,20 @@ Route::prefix('admin')
                     ->defaults('section', 'users')
                     ->name('users');
 
+                Route::get('/discovery', [DiscoveryController::class, 'index'])
+                    ->name('discovery.index');
+
+                Route::post('/discovery/run', [DiscoveryController::class, 'run'])
+                    ->name('discovery.run');
+
+                Route::get('/discovery/{candidate}', [DiscoveryController::class, 'show'])
+                    ->whereNumber('candidate')
+                    ->name('discovery.show');
+
+                Route::patch('/discovery/{candidate}/decision', [DiscoveryController::class, 'decision'])
+                    ->whereNumber('candidate')
+                    ->name('discovery.decision');
+
                 Route::get('/orchestrator', [PlaceholderController::class, 'show'])
                     ->defaults('section', 'orchestrator')
                     ->name('orchestrator');
@@ -281,6 +297,12 @@ Route::prefix('admin')
 
                 Route::put('/settings/ai-translation', [AiTranslationSettingsController::class, 'update'])
                     ->name('settings.ai-translation.update');
+
+                Route::get('/settings/discovery', [DiscoverySettingsController::class, 'edit'])
+                    ->name('settings.discovery');
+
+                Route::put('/settings/discovery', [DiscoverySettingsController::class, 'update'])
+                    ->name('settings.discovery.update');
             });
     });
 

@@ -19,6 +19,7 @@
         'resources/css/admin-gallery.css',
         'resources/css/admin-archive.css',
         'resources/css/admin-ai-translator.css',
+        'resources/css/admin-discovery.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -107,6 +108,11 @@
                 </a>
 
                 @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_SUPER_ADMIN], true))
+                    <a class="admin-nav-link {{ request()->routeIs('admin.discovery.*') ? 'is-active' : '' }}" href="{{ route('admin.discovery.index') }}">
+                        <span>⌕</span>
+                        {{ __('discovery.admin.menu') }}
+                    </a>
+
                     <a class="admin-nav-link {{ request()->routeIs('admin.orchestrator') ? 'is-active' : '' }}" href="{{ route('admin.orchestrator') }}">
                         <span>◇</span>
                         {{ __('admin.menu.orchestrator') }}

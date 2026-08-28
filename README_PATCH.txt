@@ -1,210 +1,66 @@
-OKULARY3D — KROK 77
-AI Translator
+OKULARY3D — KROK 78 / FIX DISCOVERY FILTER
 
-CEL:
-Uruchomienie kontrolowanego workflow tłumaczeń AI PL <-> EN
-bez automatycznej publikacji treści.
+PRZYCZYNA:
+W DiscoveryService zastosowano:
 
-ADMIN:
-http://okulary-3d.test/admin/translations
+Collection::filter('is_array')
 
-USTAWIENIA AI — SUPER ADMIN:
-http://okulary-3d.test/admin/settings/ai-translation
+W Laravel 13 callback przekazywany do Collection::filter()
+otrzymuje dwa argumenty:
+- wartość
+- klucz
 
-NAJWAŻNIEJSZA ZASADA:
-AI NIGDY nie publikuje tłumaczenia samodzielnie.
+Natywna funkcja PHP is_array() przyjmuje tylko jeden argument.
 
-Workflow:
-SOURCE -> AI -> DRAFT -> ręczna weryfikacja -> READY
+Powodowało to:
+ArgumentCountError:
+is_array() expects exactly 1 argument, 2 given
 
-Jeżeli wersja docelowa ma już status READY lub SOURCE:
-- AI nie może jej nadpisać,
-- przycisk generowania jest blokowany,
-- aby świadomie wygenerować wersję ponownie, redaktor musi
-  najpierw zmienić status istniejącej wersji na DRAFT lub REVIEW.
+Błąd występował w normalizeCandidate() podczas:
+- filtrowania listy sources,
+- filtrowania listy facts.
 
-OBSŁUGIWANE TYPY TREŚCI:
-Editor:
-- Artykuły
-- Archiwum stereoskopii
+SKUTEK:
+Każde wykonanie Discovery kończyło się wyjątkiem.
+Controller wykonywał catch() i back(), dlatego testy oczekujące:
+ /admin/discovery
+otrzymywały redirect do:
+ /
 
-Admin / Super Admin:
-- Artykuły
-- Archiwum stereoskopii
-- Produkty
-- Kategorie produktów
+NAPRAWA:
+Zastąpiono oba wywołania:
 
-PROVIDERZY:
-1. OpenAI
-   - Responses API
-   - Structured Outputs / JSON Schema
+->filter('is_array')
 
-2. Google Gemini
-   - GenerateContent API
-   - structured JSON output
+bezpiecznym callbackiem:
 
-MODEL:
-Nazwa modelu jest polem edytowalnym w panelu.
-Domyślne wartości KROKU 77:
-- OpenAI: gpt-5.6
-- Gemini: gemini-3.7-flash
+->filter(static fn (mixed $value): bool => is_array($value))
 
-Nie ma potrzeby modyfikowania .env.
-
-KLUCZE API:
-Klucze OpenAI i Gemini są zapisywane w istniejącej tabeli:
-app_settings
-
-group:
-ai_translation
-
-Klucze są oznaczane jako sekrety i korzystają z istniejącego
-encrypted cast modelu AppSetting.
-
-W panelu:
-- pole klucza pozostawione puste = zachowaj dotychczasowy klucz,
-- można jawnie usunąć zapisany klucz,
-- zapisany klucz jest pokazywany wyłącznie w formie maskowanej.
-
-USTAWIENIA:
-- włącz / wyłącz translator,
-- aktywny provider,
-- timeout,
-- model OpenAI,
-- model Gemini,
-- klucz OpenAI,
-- klucz Gemini,
-- glosariusz projektu.
-
-GLOSARIUSZ:
-Admin może wpisać własne reguły terminologiczne, np.:
-
-stereocard = karta stereoskopowa
-lenticular lens = soczewka lentikularna
-Nie tłumacz nazw modeli urządzeń.
-
-Reguły są dołączane do promptu systemowego.
-
-PROMPT BEZPIECZEŃSTWA TREŚCI:
-Translator ma instrukcję, aby:
-- zachować znaczenie,
-- nie dodawać nowych faktów,
-- zachować HTML,
-- zachować URL,
-- zachować daty,
-- zachować jednostki i wartości liczbowe,
-- zachować nazwy modeli i kody produktów,
-- nie tworzyć dodatkowych twierdzeń marketingowych,
-- zachować specjalistyczną terminologię 3D.
-
-HTML:
-Dla artykułów i produktów wynik HTML jest ponownie przepuszczany
-przez istniejący ArticleHtmlSanitizer przed zapisem.
-
-SLUG:
-AI nie generuje sluga bezpośrednio.
-Slug jest tworzony lokalnie z przetłumaczonego tytułu/nazwy
-oraz sprawdzany pod kątem unikalności.
-
-AUDYT / TOKENY:
-Nowa tabela:
-ai_translation_runs
-
-Zapisuje:
-- typ treści,
-- ID treści,
-- język źródłowy,
-- język docelowy,
-- provider,
-- model,
-- status,
-- input tokens,
-- output tokens,
-- total tokens,
-- długość request/response,
-- użytkownika uruchamiającego,
-- informację o błędzie.
-
-To jest fundament pod późniejszy KROK 79 — Orchestrator,
-który będzie analizował wykorzystanie modeli i tokenów.
-
-BŁĘDY API:
-Do bazy nie zapisujemy pełnej odpowiedzi błędu providera.
-Zapisywany jest kontrolowany komunikat HTTP / parsera,
-aby nie utrwalać przypadkowo danych wrażliwych.
+ZMIENIONY PLIK:
+app/Services/DiscoveryService.php
 
 BAZA:
-Nowa migracja:
-2026_08_28_250000_create_ai_translation_runs_table.php
+Brak migracji.
 
-Tabela app_settings już istnieje — nie jest tworzona ponownie.
+BUILD:
+Nie trzeba wykonywać npm run build.
 
-WDROŻENIE:
-1. Rozpakuj patch do:
-   C:\laragon\www\okulary-3d
+PO ROZPAKOWANIU:
+php artisan optimize:clear
+php artisan test
 
-2. Wykonaj:
-   php artisan optimize:clear
-   php artisan migrate
-   npm run build
-   php artisan test
+Możesz też najpierw uruchomić tylko test modułu:
 
-TEST RĘCZNY:
+php artisan test --filter=DiscoveryAgentTest
 
-1. Zaloguj się jako Super Admin.
+OCZEKIWANY WYNIK:
+DiscoveryAgentTest:
+7 passed
 
-2. Otwórz:
-   http://okulary-3d.test/admin/settings/ai-translation
-
-3. Wybierz provider.
-
-4. Wpisz:
-   - model,
-   - API key,
-   - opcjonalny glosariusz,
-   - zaznacz Włącz AI Translator.
-
-5. Zapisz.
-
-6. Otwórz:
-   http://okulary-3d.test/admin/translations
-
-7. Wybierz Artykuły.
-
-8. Przy artykule posiadającym tylko wersję źródłową kliknij:
-   Tłumacz AI
-
-9. Sprawdź:
-   - pojawia się wersja docelowa,
-   - status = Draft,
-   - slug został utworzony,
-   - tekst i HTML znajdują się w formularzu artykułu.
-
-10. Ręcznie sprawdź tłumaczenie.
-
-11. Dopiero po weryfikacji ustaw status:
-    Ready
-
-12. Wróć do AI Translator.
-    Dla wersji Ready przycisk AI powinien być zablokowany.
-
-13. Sprawdź analogicznie:
-    - Archiwum,
-    - Produkty,
-    - Kategorie produktów.
-
-14. Przełącz provider na drugi i sprawdź pojedyncze tłumaczenie.
-
-15. Na dole /admin/translations sprawdź historię:
-    - provider,
-    - model,
-    - tokeny,
-    - status.
+Następnie:
+pełny zestaw testów powinien przejść bez 3 dotychczasowych błędów.
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add AI translation workflow"
+git commit -m "Fix Discovery Agent collection filtering"
 git push
-
-NASTĘPNY KROK:
-KROK 78 — Discovery Agent.
