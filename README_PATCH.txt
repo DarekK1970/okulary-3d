@@ -1,145 +1,143 @@
-OKULARY3D — KROK 76
-Stereoscopic Archive / History
+OKULARY3D — KROK 77
+AI Translator
 
 CEL:
-Uruchomienie cyfrowego archiwum historycznej stereoskopii
-z naciskiem na źródła, prawa do materiałów i kontekst historyczny.
-
-PUBLICZNE ADRESY:
-http://okulary-3d.test/pl/archive
-http://okulary-3d.test/en/archive
+Uruchomienie kontrolowanego workflow tłumaczeń AI PL <-> EN
+bez automatycznej publikacji treści.
 
 ADMIN:
-http://okulary-3d.test/admin/archive
+http://okulary-3d.test/admin/translations
 
-DOSTĘP ADMIN:
-editor / admin / super_admin
+USTAWIENIA AI — SUPER ADMIN:
+http://okulary-3d.test/admin/settings/ai-translation
 
-PUBLICZNE ARCHIWUM:
-- lista historycznych obiektów,
-- wyszukiwanie tekstowe,
-- filtrowanie po technice,
-- filtrowanie po kraju / regionie,
-- zakres lat OD / DO,
-- sortowanie chronologiczne,
-- karta obiektu,
-- źródło cyfrowe,
-- status prawny,
-- metadane historyczne,
-- opis,
-- rozszerzony kontekst historyczny,
-- wersje PL / EN.
+NAJWAŻNIEJSZA ZASADA:
+AI NIGDY nie publikuje tłumaczenia samodzielnie.
 
-OBSŁUGIWANE TECHNIKI:
-- karta stereoskopowa,
-- fotografia stereoskopowa,
-- anaglif,
-- View-Master / krążek stereo,
-- obraz lentikularny,
-- inne.
+Workflow:
+SOURCE -> AI -> DRAFT -> ręczna weryfikacja -> READY
 
-STATUSY PRAW:
-- Public Domain,
-- CC0,
-- CC BY,
-- CC BY-SA,
-- publikacja za zgodą właściciela praw.
+Jeżeli wersja docelowa ma już status READY lub SOURCE:
+- AI nie może jej nadpisać,
+- przycisk generowania jest blokowany,
+- aby świadomie wygenerować wersję ponownie, redaktor musi
+  najpierw zmienić status istniejącej wersji na DRAFT lub REVIEW.
 
-WAŻNE:
-KROK 76 nie pobiera automatycznie materiałów z Internetu.
-Admin dodaje tylko materiały, dla których istnieje właściwa
-podstawa do publikacji.
+OBSŁUGIWANE TYPY TREŚCI:
+Editor:
+- Artykuły
+- Archiwum stereoskopii
 
-METADANE:
-- rok OD,
-- rok DO,
-- ca. / datowanie przybliżone,
-- autor / fotograf,
-- wydawca,
-- kraj / region,
-- nazwa kolekcji,
-- źródło / instytucja,
-- URL źródła,
-- status prawny,
-- informacja o prawach.
+Admin / Super Admin:
+- Artykuły
+- Archiwum stereoskopii
+- Produkty
+- Kategorie produktów
 
-OBRAZY:
-Każdy rekord ma:
-1. obowiązkowy oryginalny skan / obraz,
-2. opcjonalną rozdzieloną parę L / R.
+PROVIDERZY:
+1. OpenAI
+   - Responses API
+   - Structured Outputs / JSON Schema
 
-Jeśli istnieje para L/R, publiczny viewer udostępnia:
-- Original,
-- Parallel,
-- Cross-eye,
-- Anaglyph red/cyan,
-- Wiggle,
-- Swap L/R.
+2. Google Gemini
+   - GenerateContent API
+   - structured JSON output
 
-Jeżeli L/R nie istnieje:
-viewer pokazuje tylko oryginalny skan.
+MODEL:
+Nazwa modelu jest polem edytowalnym w panelu.
+Domyślne wartości KROKU 77:
+- OpenAI: gpt-5.6
+- Gemini: gemini-3.7-flash
 
-WERSJE JĘZYKOWE:
-Model:
-archive_items
-+
-archive_item_translations
+Nie ma potrzeby modyfikowania .env.
 
-Każdy obiekt ma:
-source_locale = pl lub en.
+KLUCZE API:
+Klucze OpenAI i Gemini są zapisywane w istniejącej tabeli:
+app_settings
 
-Statusy tłumaczenia:
-- source
-- draft
-- review
-- ready
+group:
+ai_translation
 
-Publiczne są:
-- source
-- ready
+Klucze są oznaczane jako sekrety i korzystają z istniejącego
+encrypted cast modelu AppSetting.
 
-Przykład:
-source_locale = pl
+W panelu:
+- pole klucza pozostawione puste = zachowaj dotychczasowy klucz,
+- można jawnie usunąć zapisany klucz,
+- zapisany klucz jest pokazywany wyłącznie w formie maskowanej.
 
-PL:
-Source -> publiczne
+USTAWIENIA:
+- włącz / wyłącz translator,
+- aktywny provider,
+- timeout,
+- model OpenAI,
+- model Gemini,
+- klucz OpenAI,
+- klucz Gemini,
+- glosariusz projektu.
 
-EN:
-Draft -> NIEPUBLICZNE
-Ready -> publiczne
+GLOSARIUSZ:
+Admin może wpisać własne reguły terminologiczne, np.:
+
+stereocard = karta stereoskopowa
+lenticular lens = soczewka lentikularna
+Nie tłumacz nazw modeli urządzeń.
+
+Reguły są dołączane do promptu systemowego.
+
+PROMPT BEZPIECZEŃSTWA TREŚCI:
+Translator ma instrukcję, aby:
+- zachować znaczenie,
+- nie dodawać nowych faktów,
+- zachować HTML,
+- zachować URL,
+- zachować daty,
+- zachować jednostki i wartości liczbowe,
+- zachować nazwy modeli i kody produktów,
+- nie tworzyć dodatkowych twierdzeń marketingowych,
+- zachować specjalistyczną terminologię 3D.
+
+HTML:
+Dla artykułów i produktów wynik HTML jest ponownie przepuszczany
+przez istniejący ArticleHtmlSanitizer przed zapisem.
 
 SLUG:
-Oddzielny dla PL i EN.
+AI nie generuje sluga bezpośrednio.
+Slug jest tworzony lokalnie z przetłumaczonego tytułu/nazwy
+oraz sprawdzany pod kątem unikalności.
 
-ADMIN:
-Można:
-- tworzyć rekord,
-- edytować rekord,
-- publikować / wycofać publikację,
-- uzupełniać PL i EN,
-- zmieniać status tłumaczenia,
-- wymieniać skan,
-- dodać / wymienić / usunąć parę L/R,
-- usunąć cały rekord.
+AUDYT / TOKENY:
+Nowa tabela:
+ai_translation_runs
 
-PLIKI:
-storage/app/public/archive/{UUID}/
+Zapisuje:
+- typ treści,
+- ID treści,
+- język źródłowy,
+- język docelowy,
+- provider,
+- model,
+- status,
+- input tokens,
+- output tokens,
+- total tokens,
+- długość request/response,
+- użytkownika uruchamiającego,
+- informację o błędzie.
 
-Np.:
-original.jpg
-left.jpg
-right.jpg
+To jest fundament pod późniejszy KROK 79 — Orchestrator,
+który będzie analizował wykorzystanie modeli i tokenów.
 
-STRONA GŁÓWNA:
-Naprawiono istniejące elementy Historia / Archiwum:
-- link "Zobacz całe archiwum" prowadzi teraz do /{locale}/archive,
-- statyczne karty archiwalne prowadzą do archiwum,
-- pozycja "Historia" w głównym menu prowadzi do /{locale}/archive.
+BŁĘDY API:
+Do bazy nie zapisujemy pełnej odpowiedzi błędu providera.
+Zapisywany jest kontrolowany komunikat HTTP / parsera,
+aby nie utrwalać przypadkowo danych wrażliwych.
 
 BAZA:
-Nowe tabele:
-- archive_items
-- archive_item_translations
+Nowa migracja:
+2026_08_28_250000_create_ai_translation_runs_table.php
+
+Tabela app_settings już istnieje — nie jest tworzona ponownie.
 
 WDROŻENIE:
 1. Rozpakuj patch do:
@@ -152,56 +150,61 @@ WDROŻENIE:
    php artisan test
 
 TEST RĘCZNY:
-1. Zaloguj się jako Editor/Admin.
+
+1. Zaloguj się jako Super Admin.
 
 2. Otwórz:
-   http://okulary-3d.test/admin/archive
+   http://okulary-3d.test/admin/settings/ai-translation
 
-3. Dodaj przykładową historyczną kartę:
-   - source_locale: PL
-   - technika: Karta stereoskopowa
-   - rok: np. 1900
-   - źródło: wpisz rzeczywiste źródło
-   - prawa: wybierz zgodny status
-   - dodaj skan
-   - uzupełnij tytuł PL
-   - zaznacz Publikuj
+3. Wybierz provider.
 
-4. Zapisz i otwórz:
-   http://okulary-3d.test/pl/archive
+4. Wpisz:
+   - model,
+   - API key,
+   - opcjonalny glosariusz,
+   - zaznacz Włącz AI Translator.
 
-5. Sprawdź:
-   - filtrowanie,
-   - kartę obiektu,
-   - źródło,
-   - prawa,
-   - metadane.
+5. Zapisz.
 
-6. Dodaj do obiektu dwa obrazy L/R.
+6. Otwórz:
+   http://okulary-3d.test/admin/translations
 
-7. Sprawdź viewer:
-   - Original
-   - Parallel
-   - Cross-eye
-   - Anaglyph
-   - Wiggle
-   - Zamień L/R
+7. Wybierz Artykuły.
 
-8. Dodaj wersję EN:
-   - najpierw Draft,
-   - sprawdź że EN nie jest publiczne,
-   - zmień na Ready,
-   - sprawdź /en/archive.
+8. Przy artykule posiadającym tylko wersję źródłową kliknij:
+   Tłumacz AI
 
-9. Sprawdź stronę główną:
-   - Historia w menu,
-   - Zobacz całe archiwum,
-   - karty sekcji archiwum.
+9. Sprawdź:
+   - pojawia się wersja docelowa,
+   - status = Draft,
+   - slug został utworzony,
+   - tekst i HTML znajdują się w formularzu artykułu.
+
+10. Ręcznie sprawdź tłumaczenie.
+
+11. Dopiero po weryfikacji ustaw status:
+    Ready
+
+12. Wróć do AI Translator.
+    Dla wersji Ready przycisk AI powinien być zablokowany.
+
+13. Sprawdź analogicznie:
+    - Archiwum,
+    - Produkty,
+    - Kategorie produktów.
+
+14. Przełącz provider na drugi i sprawdź pojedyncze tłumaczenie.
+
+15. Na dole /admin/translations sprawdź historię:
+    - provider,
+    - model,
+    - tokeny,
+    - status.
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add stereoscopic archive"
+git commit -m "Add AI translation workflow"
 git push
 
 NASTĘPNY KROK:
-KROK 77 — AI Translator.
+KROK 78 — Discovery Agent.

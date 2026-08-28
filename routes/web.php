@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
+use App\Http\Controllers\Admin\AiTranslationController;
+use App\Http\Controllers\Admin\AiTranslationSettingsController;
 use App\Http\Controllers\Admin\ArchiveController as AdminArchiveController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
@@ -213,9 +215,12 @@ Route::prefix('admin')
         Route::patch('/gallery/{galleryItem}', [AdminStereoGalleryController::class, 'update'])
             ->name('gallery.update');
 
-        Route::get('/translations', [PlaceholderController::class, 'show'])
-            ->defaults('section', 'translations')
+        Route::get('/translations', [AiTranslationController::class, 'index'])
             ->name('translations');
+
+        Route::post('/translations/{type}/{id}', [AiTranslationController::class, 'translate'])
+            ->whereNumber('id')
+            ->name('translations.translate');
 
         Route::get('/analytics', [PlaceholderController::class, 'show'])
             ->defaults('section', 'analytics')
@@ -269,6 +274,13 @@ Route::prefix('admin')
 
                 Route::put('/settings', [CommerceSettingsController::class, 'update'])
                     ->name('settings.update');
+
+
+                Route::get('/settings/ai-translation', [AiTranslationSettingsController::class, 'edit'])
+                    ->name('settings.ai-translation');
+
+                Route::put('/settings/ai-translation', [AiTranslationSettingsController::class, 'update'])
+                    ->name('settings.ai-translation.update');
             });
     });
 

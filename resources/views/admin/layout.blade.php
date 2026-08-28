@@ -18,6 +18,7 @@
         'resources/css/admin-settings.css',
         'resources/css/admin-gallery.css',
         'resources/css/admin-archive.css',
+        'resources/css/admin-ai-translator.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -100,7 +101,7 @@
                     {{ __('gallery.admin.menu') }}
                 </a>
 
-                <a class="admin-nav-link {{ request()->routeIs('admin.translations') ? 'is-active' : '' }}" href="{{ route('admin.translations') }}">
+                <a class="admin-nav-link {{ request()->routeIs('admin.translations*') ? 'is-active' : '' }}" href="{{ route('admin.translations') }}">
                     <span>文</span>
                     {{ __('admin.menu.translations') }}
                 </a>

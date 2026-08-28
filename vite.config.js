@@ -24,6 +24,7 @@ export default defineConfig({
                 'resources/css/gallery.css',
                 'resources/css/archive.css',
                 'resources/css/admin-archive.css',
+                'resources/css/admin-ai-translator.css',
                 'resources/css/admin-gallery.css',
                 'resources/js/app.js',
                 'resources/js/admin-cms.js',
