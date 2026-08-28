@@ -64,7 +64,12 @@
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#articles">{{ __('site.nav.articles') }}</a>
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#history">{{ __('site.nav.history') }}</a>
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#techniques">{{ __('site.nav.techniques') }}</a>
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#lab">{{ __('site.nav.lab') }}</a>
+            <a
+                class="nav-link {{ request()->routeIs('lab.*') ? 'is-active' : '' }}"
+                href="{{ route('lab.index', ['locale' => $locale]) }}"
+            >
+                {{ __('site.nav.lab') }}
+            </a>
             <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#gallery">{{ __('site.nav.gallery') }}</a>
 
             <a

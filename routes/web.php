@@ -18,6 +18,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LabController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
 use App\Http\Controllers\SalesDocumentController;
@@ -52,6 +53,15 @@ Route::prefix('{locale}')
 
         Route::get('/shop/{slug}', [ShopController::class, 'show'])
             ->name('shop.show');
+
+        Route::get('/lab', [LabController::class, 'index'])
+            ->name('lab.index');
+
+        Route::get('/lab/anaglyph-maker', [LabController::class, 'anaglyph'])
+            ->name('lab.anaglyph');
+
+        Route::get('/lab/stereo-alignment', [LabController::class, 'stereoAlignment'])
+            ->name('lab.stereo-alignment');
 
         Route::get('/cart', [CartController::class, 'index'])
             ->name('cart.index');
