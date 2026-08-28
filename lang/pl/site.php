@@ -2,8 +2,60 @@
 
 return [
     'title' => 'Wortal Okulary 3D',
+    'meta_description' => 'Wortal o stereoskopii, obrazie 3D, fotografii przestrzennej, technikach lentikularnych i narzędziach online.',
     'headline' => 'Zobacz świat w trzech wymiarach',
     'description' => 'Twórz obrazy 3D, poznawaj stereoskopię i odkrywaj techniki, które nadają obrazom głębię.',
     'current_language' => 'Aktualny język',
     'language_switcher' => 'Wybór języka',
+    'brand_home_aria' => 'Wortal Okulary 3D — strona główna',
+    'brand_logo_alt' => 'Wortal Okulary 3D',
+    'main_navigation' => 'Nawigacja główna',
+    'open_menu' => 'Otwórz menu',
+    'search' => 'Szukaj',
+    'account' => 'Konto użytkownika',
+    'cart' => 'Koszyk',
+
+    'nav' => [
+        'home' => 'Start',
+        'articles' => 'Artykuły',
+        'history' => 'Historia 3D',
+        'techniques' => 'Techniki 3D',
+        'lab' => '3D LAB',
+        'gallery' => 'Galeria',
+        'shop' => 'Sklep',
+        'about' => 'O nas',
+    ],
+
+    'layout_preview' => [
+        'eyebrow' => 'Krok 61 — layout globalny',
+        'note' => 'Nagłówek, menu, przełącznik języka i stopka są już częścią wspólnego layoutu. W Kroku 62 tę przestrzeń zastąpi kompletna strona główna zgodna z zaakceptowaną wizualizacją.',
+    ],
+
+    'newsletter' => [
+        'title' => 'Dołącz do społeczności i odbieraj inspiracje 3D!',
+        'description' => 'Nowe artykuły, porady, narzędzia i promocje — prosto na Twoją skrzynkę.',
+        'email_label' => 'Adres e-mail',
+        'email_placeholder' => 'Twój adres e-mail',
+        'submit' => 'Zapisz się',
+    ],
+
+    'footer' => [
+        'description' => 'Portal o stereoskopii i obrazowaniu 3D. Wiedza, narzędzia online i sklep dla pasjonatów głębi.',
+        'portal' => 'Portal',
+        'shop' => 'Sklep',
+        'support' => 'Wsparcie',
+        'community' => 'Społeczność',
+        'contact' => 'Kontakt',
+        'glasses' => 'Okulary 3D',
+        'lenticular' => 'Folia soczewkowa',
+        'stereoscopes' => 'Stereoskopy',
+        'cameras' => 'Kamery i aparaty 3D',
+        'faq' => 'FAQ',
+        'shipping' => 'Wysyłka i płatności',
+        'returns' => 'Zwroty i reklamacje',
+        'privacy' => 'Polityka prywatności',
+        'newsletter' => 'Newsletter',
+        'cooperation' => 'Współpraca',
+        'copyright' => 'Wszystkie prawa zastrzeżone.',
+    ],
 ];
