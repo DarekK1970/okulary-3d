@@ -14,6 +14,7 @@
         'resources/css/admin-multilang.css',
         'resources/css/admin-media.css',
         'resources/css/admin-shop.css',
+        'resources/css/admin-orders.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -61,6 +62,14 @@
                     >
                         <span>▣</span>
                         {{ __('admin.menu.shop') }}
+                    </a>
+
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.orders.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.orders.index') }}"
+                    >
+                        <span>▤</span>
+                        {{ __('cart.admin.orders') }}
                     </a>
 
                     <a class="admin-nav-link {{ request()->routeIs('admin.users') ? 'is-active' : '' }}" href="{{ route('admin.users') }}">

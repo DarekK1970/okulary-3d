@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountOrderController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -13,6 +15,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
@@ -44,6 +48,25 @@ Route::prefix('{locale}')
         Route::get('/shop/{slug}', [ShopController::class, 'show'])
             ->name('shop.show');
 
+        Route::get('/cart', [CartController::class, 'index'])
+            ->name('cart.index');
+        Route::post('/cart/items', [CartController::class, 'store'])
+            ->name('cart.items.store');
+        Route::patch('/cart/items/{variant}', [CartController::class, 'update'])
+            ->name('cart.items.update');
+        Route::delete('/cart/items/{variant}', [CartController::class, 'destroy'])
+            ->name('cart.items.destroy');
+        Route::delete('/cart', [CartController::class, 'clear'])
+            ->name('cart.clear');
+
+        Route::get('/checkout', [CheckoutController::class, 'create'])
+            ->name('checkout.create');
+        Route::post('/checkout', [CheckoutController::class, 'store'])
+            ->name('checkout.store');
+
+        Route::get('/order/{order:public_token}', [CheckoutController::class, 'success'])
+            ->name('order.success');
+
         Route::middleware('guest')->group(function () {
             Route::get('/login', [LoginController::class, 'create'])->name('login');
             Route::post('/login', [LoginController::class, 'store'])->name('login.store');
@@ -70,6 +93,11 @@ Route::prefix('{locale}')
                 ->name('account.profile.update');
             Route::put('/account/password', [AccountController::class, 'updatePassword'])
                 ->name('account.password.update');
+
+            Route::get('/account/orders', [AccountOrderController::class, 'index'])
+                ->name('account.orders.index');
+            Route::get('/account/orders/{order}', [AccountOrderController::class, 'show'])
+                ->name('account.orders.show');
         });
     });
 
@@ -122,6 +150,13 @@ Route::prefix('admin')
                     ->name('product-categories.update');
                 Route::delete('/product-categories/{productCategory}', [ProductCategoryController::class, 'destroy'])
                     ->name('product-categories.destroy');
+
+                Route::get('/orders', [AdminOrderController::class, 'index'])
+                    ->name('orders.index');
+                Route::get('/orders/{order}', [AdminOrderController::class, 'show'])
+                    ->name('orders.show');
+                Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
+                    ->name('orders.status.update');
 
                 Route::get('/users', [PlaceholderController::class, 'show'])
                     ->defaults('section', 'users')

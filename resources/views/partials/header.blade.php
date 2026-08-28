@@ -102,10 +102,24 @@
                         {{ auth()->check() ? __('portal_auth.common.my_account') : __('site.account') }}
                     </a>
 
-                    <button class="mobile-utility-button" type="button">
+                    @auth
+                        <a
+                            class="mobile-utility-button"
+                            href="{{ route('account.orders.index', ['locale' => $locale]) }}"
+                        >
+                            <span aria-hidden="true">▤</span>
+                            {{ __('cart.header.orders') }}
+                        </a>
+                    @endauth
+
+                    <a
+                        class="mobile-utility-button"
+                        href="{{ route('cart.index', ['locale' => $locale]) }}"
+                    >
                         <span aria-hidden="true">🛒</span>
                         {{ __('site.cart') }}
-                    </button>
+                        ({{ app(\App\Services\CartService::class)->count() }})
+                    </a>
                 </div>
             </div>
         </nav>
@@ -141,12 +155,32 @@
                 </svg>
             </a>
 
-            <button class="icon-button cart-button" type="button" aria-label="{{ __('site.cart') }}" title="{{ __('site.cart') }}">
+            @auth
+                <a
+                    class="icon-button"
+                    href="{{ route('account.orders.index', ['locale' => $locale]) }}"
+                    aria-label="{{ __('cart.header.orders') }}"
+                    title="{{ __('cart.header.orders') }}"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 3h12a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2Zm2 5h8M8 12h8"/>
+                    </svg>
+                </a>
+            @endauth
+
+            <a
+                class="icon-button cart-button"
+                href="{{ route('cart.index', ['locale' => $locale]) }}"
+                aria-label="{{ __('site.cart') }}"
+                title="{{ __('site.cart') }}"
+            >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L20 8H6m4 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
                 </svg>
-                <span class="cart-count" aria-hidden="true">0</span>
-            </button>
+                <span class="cart-count">
+                    {{ app(\App\Services\CartService::class)->count() }}
+                </span>
+            </a>
         </div>
 
         <button

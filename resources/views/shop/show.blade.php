@@ -4,7 +4,10 @@
 @section('meta_description', $translation->seo_description ?: ($translation->short_description ?: __('catalog.public.shop_description')))
 
 @push('head')
-    @vite('resources/css/shop.css')
+    @vite([
+        'resources/css/shop.css',
+        'resources/css/cart.css'
+    ])
 
     <link rel="canonical" href="{{ route('shop.show', ['locale' => $translation->locale, 'slug' => $translation->slug]) }}">
 
@@ -29,6 +32,16 @@
             <span>›</span>
             <span>{{ $translation->name }}</span>
         </nav>
+
+        @if ($errors->any())
+            <div class="cart-alert cart-alert-error product-cart-alert">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <div class="product-detail-grid">
             <div class="product-gallery">
@@ -75,41 +88,70 @@
                     <p class="product-short-description">{{ $translation->short_description }}</p>
                 @endif
 
-                <div class="product-variants">
-                    <h2>{{ __('catalog.public.variants') }}</h2>
+                @php
+                    $firstAvailableId = $product->activeVariants
+                        ->first(fn ($variant) => $variant->inStock())?->id;
+                @endphp
 
-                    @foreach ($product->activeVariants as $variant)
-                        <label class="product-variant-option {{ $variant->inStock() ? '' : 'is-out' }}">
+                <form
+                    class="product-purchase-form"
+                    method="post"
+                    action="{{ route('cart.items.store', ['locale' => app()->getLocale()]) }}"
+                >
+                    @csrf
+
+                    <div class="product-variants">
+                        <h2>{{ __('catalog.public.variants') }}</h2>
+
+                        @foreach ($product->activeVariants as $variant)
+                            <label class="product-variant-option {{ $variant->inStock() ? '' : 'is-out' }}">
+                                <input
+                                    type="radio"
+                                    name="variant_id"
+                                    value="{{ $variant->id }}"
+                                    @checked($firstAvailableId === $variant->id)
+                                    @disabled(! $variant->inStock())
+                                    required
+                                >
+
+                                <span class="product-variant-copy">
+                                    <strong>{{ $variant->name ?: $variant->sku }}</strong>
+                                    <small>SKU: {{ $variant->sku }}</small>
+                                </span>
+
+                                <span class="product-variant-price">
+                                    {{ number_format((float) $variant->price_gross, 2, ',', ' ') }} {{ $variant->currency }}
+                                </span>
+
+                                <span class="product-variant-stock">
+                                    {{ $variant->inStock() ? __('catalog.public.in_stock') : __('catalog.public.out_of_stock') }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div class="product-cart-actions">
+                        <label class="product-quantity">
+                            <span>{{ __('cart.cart.quantity') }}</span>
                             <input
-                                type="radio"
-                                name="display_variant"
-                                value="{{ $variant->id }}"
-                                @checked($loop->first)
-                                @disabled(! $variant->inStock())
+                                type="number"
+                                name="quantity"
+                                min="1"
+                                max="999"
+                                value="1"
+                                required
                             >
-
-                            <span class="product-variant-copy">
-                                <strong>{{ $variant->name ?: $variant->sku }}</strong>
-                                <small>SKU: {{ $variant->sku }}</small>
-                            </span>
-
-                            <span class="product-variant-price">
-                                {{ number_format((float) $variant->price_gross, 2, ',', ' ') }} {{ $variant->currency }}
-                            </span>
-
-                            <span class="product-variant-stock">
-                                {{ $variant->inStock() ? __('catalog.public.in_stock') : __('catalog.public.out_of_stock') }}
-                            </span>
                         </label>
-                    @endforeach
-                </div>
 
-                <div class="product-cart-placeholder">
-                    <button type="button" disabled>
-                        {{ __('catalog.public.cart_step70') }}
-                    </button>
-                    <p>{{ __('catalog.public.cart_step70_note') }}</p>
-                </div>
+                        <button
+                            class="product-add-cart-button"
+                            type="submit"
+                            @disabled(! $firstAvailableId)
+                        >
+                            {{ $firstAvailableId ? __('cart.product.add_to_cart') : __('catalog.public.out_of_stock') }}
+                        </button>
+                    </div>
+                </form>
 
                 @if ($product->translations->count() > 1)
                     <div class="product-language-links">
