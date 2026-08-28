@@ -158,7 +158,7 @@
 
                     <div class="cart-summary-row">
                         <span>{{ __('cart.summary.shipping') }}</span>
-                        <strong>{{ __('cart.summary.step71') }}</strong>
+                        <strong>{{ __('checkout71.cart.choose_in_checkout') }}</strong>
                     </div>
 
                     <div class="cart-summary-total">
@@ -177,7 +177,7 @@
                     </a>
 
                     <p class="cart-summary-note">
-                        {{ __('cart.summary.note') }}
+                        {{ __('checkout71.cart.shipping_note') }}
                     </p>
                 </aside>
             </div>

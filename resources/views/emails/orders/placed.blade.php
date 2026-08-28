@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ $order->locale }}">
+<body style="font-family:Arial,sans-serif;color:#25324a;line-height:1.6">
+    <h2>{{ __('checkout71.mail.placed_heading') }}</h2>
+
+    <p>{{ __('checkout71.mail.placed_intro', ['number' => $order->number]) }}</p>
+
+    <p>
+        <strong>{{ __('checkout71.mail.total') }}:</strong>
+        {{ number_format((float) $order->total_gross, 2, ',', ' ') }}
+        {{ $order->currency }}
+    </p>
+
+    <p>
+        <strong>{{ __('checkout71.mail.payment') }}:</strong>
+        {{ __('checkout71.payment_methods.' . $order->payment_method) }}
+        — {{ __('checkout71.payment_statuses.' . $order->payment_status->value) }}
+    </p>
+
+    <p>
+        <strong>{{ __('checkout71.mail.shipping') }}:</strong>
+        {{ $order->shipping_name_snapshot }}
+    </p>
+
+    <p>
+        <a href="{{ route('order.success', [
+            'locale' => $order->locale,
+            'order' => $order->public_token
+        ]) }}">
+            {{ __('checkout71.mail.open_order') }}
+        </a>
+    </p>
+</body>
+</html>

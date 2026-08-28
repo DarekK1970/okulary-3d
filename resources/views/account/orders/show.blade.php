@@ -16,6 +16,7 @@
                 <p>
                     {{ $order->placed_at?->format('d.m.Y H:i') }}
                     · {{ __('cart.statuses.' . $order->status->value) }}
+                    · {{ __('checkout71.payment_statuses.' . $order->payment_status->value) }}
                 </p>
             </div>
 
@@ -33,10 +34,7 @@
                         <div class="order-detail-item">
                             <div>
                                 <strong>{{ $item->product_name_snapshot }}</strong>
-                                <span>
-                                    {{ $item->variant_name_snapshot ?: $item->sku_snapshot }}
-                                    · SKU {{ $item->sku_snapshot }}
-                                </span>
+                                <span>{{ $item->variant_name_snapshot ?: $item->sku_snapshot }} · SKU {{ $item->sku_snapshot }}</span>
                             </div>
 
                             <div>
@@ -57,7 +55,7 @@
                 </div>
 
                 <div class="cart-summary-row">
-                    <span>{{ __('cart.summary.shipping') }}</span>
+                    <span>{{ $order->shipping_name_snapshot ?: __('cart.summary.shipping') }}</span>
                     <strong>{{ number_format((float) $order->shipping_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
                 </div>
 
@@ -69,16 +67,24 @@
                 <div class="order-address">
                     <span>{{ __('cart.account.shipping_address') }}</span>
                     <strong>{{ $order->shipping_first_name }} {{ $order->shipping_last_name }}</strong>
-                    @if ($order->shipping_company)
-                        <span>{{ $order->shipping_company }}</span>
-                    @endif
                     <span>{{ $order->shipping_address_line1 }}</span>
-                    @if ($order->shipping_address_line2)
-                        <span>{{ $order->shipping_address_line2 }}</span>
-                    @endif
                     <span>{{ $order->shipping_postal_code }} {{ $order->shipping_city }}</span>
-                    <span>{{ $order->shipping_country_code }}</span>
+                    @if ($order->shipping_point)<span>{{ $order->shipping_point }}</span>@endif
                 </div>
+
+                @if ($document = $order->salesDocuments->first())
+                    <a
+                        class="cart-secondary-button order-document-link"
+                        target="_blank"
+                        href="{{ route('order.document', [
+                            'locale' => app()->getLocale(),
+                            'order' => $order->public_token,
+                            'document' => $document
+                        ]) }}"
+                    >
+                        {{ __('checkout71.success.print_document') }}
+                    </a>
+                @endif
             </aside>
         </div>
     </div>

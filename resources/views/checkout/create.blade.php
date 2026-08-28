@@ -10,13 +10,24 @@
 @endpush
 
 @section('content')
+@php
+    $selectedShipping = old(
+        'shipping_method',
+        array_key_first($shippingMethods)
+    );
+    $selectedPayment = old(
+        'payment_method',
+        array_key_first($paymentMethods)
+    );
+@endphp
+
 <section class="cart-page">
     <div class="site-container cart-container">
         <div class="cart-heading">
             <div>
                 <span class="cart-kicker">{{ __('cart.checkout.kicker') }}</span>
                 <h1>{{ __('cart.checkout.title') }}</h1>
-                <p>{{ __('cart.checkout.description') }}</p>
+                <p>{{ __('checkout71.checkout.description') }}</p>
             </div>
 
             <a class="cart-back-link" href="{{ route('cart.index', ['locale' => app()->getLocale()]) }}">
@@ -38,6 +49,9 @@
             class="checkout-grid"
             method="post"
             action="{{ route('checkout.store', ['locale' => app()->getLocale()]) }}"
+            data-checkout-form
+            data-subtotal-cents="{{ $subtotalCents }}"
+            data-currency="{{ $currency }}"
         >
             @csrf
 
@@ -49,42 +63,22 @@
                     <div class="checkout-fields two-columns">
                         <label>
                             <span>{{ __('cart.checkout.email') }} *</span>
-                            <input
-                                type="email"
-                                name="customer_email"
-                                value="{{ old('customer_email', $user?->email) }}"
-                                required
-                            >
+                            <input type="email" name="customer_email" value="{{ old('customer_email', $user?->email) }}" required>
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.phone') }}</span>
-                            <input
-                                type="text"
-                                name="customer_phone"
-                                value="{{ old('customer_phone') }}"
-                                maxlength="40"
-                            >
+                            <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" maxlength="40">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.first_name') }} *</span>
-                            <input
-                                type="text"
-                                name="customer_first_name"
-                                value="{{ old('customer_first_name', $user?->name) }}"
-                                required
-                            >
+                            <input type="text" name="customer_first_name" value="{{ old('customer_first_name', $user?->name) }}" required>
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.last_name') }} *</span>
-                            <input
-                                type="text"
-                                name="customer_last_name"
-                                value="{{ old('customer_last_name') }}"
-                                required
-                            >
+                            <input type="text" name="customer_last_name" value="{{ old('customer_last_name') }}" required>
                         </label>
                     </div>
                 </section>
@@ -96,77 +90,85 @@
                     <div class="checkout-fields two-columns">
                         <label>
                             <span>{{ __('cart.checkout.company') }}</span>
-                            <input
-                                type="text"
-                                name="billing_company"
-                                value="{{ old('billing_company') }}"
-                            >
+                            <input type="text" name="billing_company" value="{{ old('billing_company') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.tax_id') }}</span>
-                            <input
-                                type="text"
-                                name="billing_tax_id"
-                                value="{{ old('billing_tax_id') }}"
-                            >
+                            <input type="text" name="billing_tax_id" value="{{ old('billing_tax_id') }}">
                         </label>
 
                         <label class="full-width">
                             <span>{{ __('cart.checkout.address1') }} *</span>
-                            <input
-                                type="text"
-                                name="billing_address_line1"
-                                value="{{ old('billing_address_line1') }}"
-                                required
-                            >
+                            <input type="text" name="billing_address_line1" value="{{ old('billing_address_line1') }}" required>
                         </label>
 
                         <label class="full-width">
                             <span>{{ __('cart.checkout.address2') }}</span>
-                            <input
-                                type="text"
-                                name="billing_address_line2"
-                                value="{{ old('billing_address_line2') }}"
-                            >
+                            <input type="text" name="billing_address_line2" value="{{ old('billing_address_line2') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.postal_code') }} *</span>
-                            <input
-                                type="text"
-                                name="billing_postal_code"
-                                value="{{ old('billing_postal_code') }}"
-                                required
-                            >
+                            <input type="text" name="billing_postal_code" value="{{ old('billing_postal_code') }}" required>
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.city') }} *</span>
-                            <input
-                                type="text"
-                                name="billing_city"
-                                value="{{ old('billing_city') }}"
-                                required
-                            >
+                            <input type="text" name="billing_city" value="{{ old('billing_city') }}" required>
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.country') }} *</span>
-                            <input
-                                type="text"
-                                name="billing_country_code"
-                                value="{{ old('billing_country_code', 'PL') }}"
-                                maxlength="2"
-                                required
-                            >
+                            <input type="text" name="billing_country_code" value="{{ old('billing_country_code', 'PL') }}" maxlength="2" required>
                         </label>
                     </div>
                 </section>
 
                 <section class="checkout-panel">
                     <span class="checkout-step">03</span>
-                    <h2>{{ __('cart.checkout.shipping') }}</h2>
+                    <h2>{{ __('checkout71.checkout.shipping_method') }}</h2>
+
+                    <div class="checkout-methods">
+                        @foreach ($shippingMethods as $method)
+                            <label class="checkout-method">
+                                <input
+                                    type="radio"
+                                    name="shipping_method"
+                                    value="{{ $method['key'] }}"
+                                    data-shipping-method
+                                    data-price-cents="{{ $method['price_cents'] }}"
+                                    data-requires-point="{{ $method['requires_point'] ? '1' : '0' }}"
+                                    @checked($selectedShipping === $method['key'])
+                                    required
+                                >
+
+                                <span>
+                                    <strong>{{ $method['name'] }}</strong>
+                                    <small>
+                                        {{ number_format($method['price_cents'] / 100, 2, ',', ' ') }}
+                                        {{ $currency }}
+                                    </small>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div class="checkout-point-field" data-shipping-point-wrap>
+                        <label>
+                            <span>{{ __('checkout71.checkout.shipping_point') }}</span>
+                            <input
+                                type="text"
+                                name="shipping_point"
+                                value="{{ old('shipping_point') }}"
+                                placeholder="{{ __('checkout71.checkout.shipping_point_placeholder') }}"
+                            >
+                        </label>
+                    </div>
+
+                    <div class="checkout-address-separator">
+                        <strong>{{ __('cart.checkout.shipping') }}</strong>
+                    </div>
 
                     <input type="hidden" name="shipping_same_as_billing" value="0">
 
@@ -183,81 +185,71 @@
                     <div class="checkout-fields two-columns checkout-shipping-fields">
                         <label>
                             <span>{{ __('cart.checkout.first_name') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_first_name"
-                                value="{{ old('shipping_first_name') }}"
-                            >
+                            <input type="text" name="shipping_first_name" value="{{ old('shipping_first_name') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.last_name') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_last_name"
-                                value="{{ old('shipping_last_name') }}"
-                            >
+                            <input type="text" name="shipping_last_name" value="{{ old('shipping_last_name') }}">
                         </label>
 
                         <label class="full-width">
                             <span>{{ __('cart.checkout.company') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_company"
-                                value="{{ old('shipping_company') }}"
-                            >
+                            <input type="text" name="shipping_company" value="{{ old('shipping_company') }}">
                         </label>
 
                         <label class="full-width">
                             <span>{{ __('cart.checkout.address1') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_address_line1"
-                                value="{{ old('shipping_address_line1') }}"
-                            >
-                        </label>
-
-                        <label class="full-width">
-                            <span>{{ __('cart.checkout.address2') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_address_line2"
-                                value="{{ old('shipping_address_line2') }}"
-                            >
+                            <input type="text" name="shipping_address_line1" value="{{ old('shipping_address_line1') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.postal_code') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_postal_code"
-                                value="{{ old('shipping_postal_code') }}"
-                            >
+                            <input type="text" name="shipping_postal_code" value="{{ old('shipping_postal_code') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.city') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_city"
-                                value="{{ old('shipping_city') }}"
-                            >
+                            <input type="text" name="shipping_city" value="{{ old('shipping_city') }}">
                         </label>
 
                         <label>
                             <span>{{ __('cart.checkout.country') }}</span>
-                            <input
-                                type="text"
-                                name="shipping_country_code"
-                                value="{{ old('shipping_country_code', 'PL') }}"
-                                maxlength="2"
-                            >
+                            <input type="text" name="shipping_country_code" value="{{ old('shipping_country_code', 'PL') }}" maxlength="2">
                         </label>
                     </div>
                 </section>
 
                 <section class="checkout-panel">
                     <span class="checkout-step">04</span>
+                    <h2>{{ __('checkout71.checkout.payment_method') }}</h2>
+
+                    <div class="checkout-methods">
+                        @foreach ($paymentMethods as $method)
+                            <label class="checkout-method">
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="{{ $method['key'] }}"
+                                    @checked($selectedPayment === $method['key'])
+                                    required
+                                >
+
+                                <span>
+                                    <strong>{{ $method['name'] }}</strong>
+                                    <small>
+                                        {{ $method['key'] === 'paynow'
+                                            ? __('checkout71.checkout.paynow_hint')
+                                            : __('checkout71.checkout.bank_hint') }}
+                                    </small>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="checkout-panel">
+                    <span class="checkout-step">05</span>
                     <h2>{{ __('cart.checkout.note') }}</h2>
 
                     <label class="checkout-textarea">
@@ -280,10 +272,7 @@
                         <div class="checkout-summary-item">
                             <div>
                                 <strong>{{ $item['translation']->name }}</strong>
-                                <span>
-                                    {{ $item['variant']->name ?: $item['variant']->sku }}
-                                    × {{ $item['quantity'] }}
-                                </span>
+                                <span>{{ $item['variant']->name ?: $item['variant']->sku }} × {{ $item['quantity'] }}</span>
                             </div>
 
                             <strong>
@@ -296,20 +285,17 @@
 
                 <div class="cart-summary-row">
                     <span>{{ __('cart.summary.products') }}</span>
-                    <strong>
-                        {{ number_format($subtotalCents / 100, 2, ',', ' ') }}
-                        {{ $currency }}
-                    </strong>
+                    <strong>{{ number_format($subtotalCents / 100, 2, ',', ' ') }} {{ $currency }}</strong>
                 </div>
 
                 <div class="cart-summary-row">
                     <span>{{ __('cart.summary.shipping') }}</span>
-                    <strong>{{ __('cart.summary.step71') }}</strong>
+                    <strong data-checkout-shipping>—</strong>
                 </div>
 
                 <div class="cart-summary-total">
                     <span>{{ __('cart.summary.current_total') }}</span>
-                    <strong>
+                    <strong data-checkout-total>
                         {{ number_format($subtotalCents / 100, 2, ',', ' ') }}
                         {{ $currency }}
                     </strong>
@@ -325,7 +311,7 @@
                 </button>
 
                 <p class="cart-summary-note">
-                    {{ __('cart.checkout.step71_note') }}
+                    {{ __('checkout71.checkout.final_note') }}
                 </p>
             </aside>
         </form>

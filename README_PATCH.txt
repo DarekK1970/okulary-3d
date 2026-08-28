@@ -1,147 +1,215 @@
-OKULARY3D — KROK 70
-Koszyk, checkout i zamówienia
+OKULARY3D — KROK 71
+Płatności, dostawa, maile transakcyjne i dokument zamówienia
 
 CEL:
-Domknięcie podstawowego procesu zakupowego przed integracją
-płatności, dostawy i dokumentów sprzedażowych.
+Rozszerzenie KROKU 70 o pełniejszy workflow sprzedażowy:
+- wybór dostawy,
+- koszt dostawy,
+- wybór płatności,
+- PayNow,
+- status płatności,
+- maile transakcyjne,
+- drukowalne potwierdzenie zamówienia.
 
-ZAKRES FRONTEND:
-- aktywny koszyk sesyjny
-- licznik produktów w nagłówku
-- dodawanie wariantu produktu do koszyka
-- zmiana ilości
-- usuwanie pozycji
-- opróżnienie koszyka
-- kontrola dostępności i stanów magazynowych
-- blokada mieszania walut PLN/EUR w jednym koszyku
-- checkout dla gościa i zalogowanego użytkownika
-- dane kontaktowe
-- dane rozliczeniowe
-- osobny adres dostawy
-- uwagi do zamówienia
-- ekran potwierdzenia z numerem zamówienia
+DOSTAWA:
+Domyślnie dostępne:
+1. Kurier
+   PLN 18,99
+   EUR 4,50
 
-KONTO KLIENTA:
-- /pl/account/orders
-- /en/account/orders
-- historia zamówień powiązanych z kontem
-- szczegóły zamówienia
-- pozycje, ceny, status i adres dostawy
-- skrót do historii zamówień w nagłówku po zalogowaniu
+2. Paczkomat / punkt odbioru
+   PLN 16,99
+   EUR 4,10
+   wymaga podania identyfikatora punktu
 
-ZAMÓWIENIA:
-Nowe tabele:
-- orders
-- order_items
+3. Odbiór osobisty
+   PLN/EUR 0,00
 
-Zamówienie zapisuje snapshot:
-- nazwy produktu
-- nazwy wariantu
-- SKU
-- ceny
-- VAT
-- ilości
-- waluty
+Konfiguracja:
+config/shop.php
 
-Dzięki temu późniejsza zmiana produktu w katalogu
-nie zmienia historycznych danych zamówienia.
+PŁATNOŚCI:
+1. Przelew tradycyjny
+   - działa bez dodatkowych kluczy
+   - admin może ręcznie oznaczyć wpłatę
+   - po oznaczeniu wpłaty klient otrzymuje e-mail
 
-MAGAZYN:
-- przy złożeniu zamówienia stan śledzonego wariantu jest zmniejszany
-- operacja wykonywana jest w transakcji
-- przy anulowaniu zamówienia stan jest zwracany
-- zwrot następuje maksymalnie jeden raz
+2. PayNow
+   - implementacja API v3
+   - domyślnie wyłączone
+   - środowisko Sandbox / Production
+   - HMAC SHA256 Signature
+   - Idempotency-Key zapisany w bazie
+   - bezpieczne ponowienie żądania po timeout
+   - redirect do PayNow
+   - callback / notification
+   - weryfikacja podpisu callbacku
+   - obsługa statusów:
+     NEW/PENDING -> payment pending
+     CONFIRMED -> paid
+     ABANDONED/ERROR/EXPIRED/REJECTED -> failed
+   - duplikaty i starsze callbacki nie cofają płatności PAID
 
-STATUSY:
-- pending / Nowe
-- processing / W realizacji
-- shipped / Wysłane
-- completed / Zrealizowane
-- cancelled / Anulowane
+PAYNOW — ZMIENNE .env:
+PAYNOW_ENABLED=false
+PAYNOW_SANDBOX=true
+PAYNOW_API_KEY=
+PAYNOW_SIGNATURE_KEY=
+PAYNOW_TIMEOUT=15
 
-Dozwolone przejścia:
+Po otrzymaniu kluczy Sandbox ustaw:
+PAYNOW_ENABLED=true
+
+Notification URL do ustawienia w panelu PayNow:
+http(s)://TWOJA-DOMENA/payments/paynow/notification
+
+W środowisku produkcyjnym:
+PAYNOW_SANDBOX=false
+
+UWAGA:
+Nie wpisuj kluczy PayNow do repozytorium.
+Klucze pozostają wyłącznie w .env.
+
+PRZELEW TRADYCYJNY — ZMIENNE .env:
+SHOP_BANK_RECIPIENT=
+SHOP_BANK_NAME=
+SHOP_BANK_ACCOUNT=
+SHOP_BANK_SWIFT=
+
+DANE SPRZEDAWCY:
+SHOP_SELLER_NAME="Wortal Okulary 3D"
+SHOP_SELLER_ADDRESS=
+SHOP_SELLER_TAX_ID=
+SHOP_SELLER_EMAIL=
+
+WORKFLOW ZAMÓWIENIA:
+Nowe zamówienie:
+- stan realizacji: Nowe
+- stan płatności:
+  przelew -> Nieopłacone
+  PayNow -> Płatność w toku
+
+Rozpoczęcie realizacji jest możliwe dopiero po opłaceniu.
+
+Dozwolone przejścia pozostają:
 Nowe -> W realizacji
 Nowe -> Anulowane
 W realizacji -> Wysłane
 W realizacji -> Anulowane
 Wysłane -> Zrealizowane
 
-Zrealizowane i Anulowane są statusami końcowymi.
+Dodatkowe zabezpieczenia:
+- nie można rozpocząć realizacji nieopłaconego zamówienia,
+- nie można anulować opłaconego zamówienia bez mechanizmu refund,
+- nie można anulować zamówienia, gdy PayNow ma status Pending,
+- anulowanie nieopłaconego zamówienia nadal zwraca stan magazynowy.
 
-ADMIN:
-- /admin/orders
-- filtrowanie po statusie
-- wyszukiwanie po numerze, kliencie i e-mailu
-- podgląd danych klienta
-- adres rozliczeniowy
-- adres dostawy
-- pozycje zamówienia
-- wartości zamówienia
-- workflow statusów
+MAILE:
+Wysyłane są:
+- potwierdzenie przyjęcia zamówienia,
+- potwierdzenie płatności,
+- informacja o wysłaniu zamówienia.
 
-RBAC:
-- admin: dostęp
-- super_admin: dostęp
-- editor: brak dostępu do rejestru zamówień
+Błąd SMTP nie przerywa checkoutu.
+Błąd zostaje zgłoszony do logów aplikacji.
 
-WAŻNE — KROK 71:
-W KROKU 70 NIE konfigurujemy jeszcze:
-- operatora płatności
-- metod wysyłki
-- kosztów wysyłki
-- dokumentów sprzedażowych / faktur
-- maili transakcyjnych
+LOKALNIE:
+Przy obecnym MAIL_HOST=127.0.0.1 i MAIL_PORT=1025
+wiadomości można sprawdzać w lokalnym catcherze poczty / Mailpit / MailHog,
+jeżeli jest uruchomiony.
 
-Dlatego shipping_gross = 0.00, a checkout informuje,
-że finalna metoda i koszt dostawy zostaną podłączone w KROKU 71.
+DOKUMENT SPRZEDAŻOWY:
+Automatycznie tworzony jest:
+"Potwierdzenie zamówienia"
+
+Tabela:
+sales_documents
+
+Numer:
+PZ/ROK/000001
+
+Dokument zapisuje snapshot:
+- nabywcy,
+- adresu,
+- wartości produktów,
+- dostawy,
+- kwoty całkowitej.
+
+Można go:
+- otworzyć z potwierdzenia zamówienia,
+- otworzyć z konta klienta,
+- wydrukować z panelu admina.
+
+WAŻNE:
+Potwierdzenie zamówienia NIE jest fakturą VAT ani paragonem fiskalnym.
+Docelowa faktura / dokument fiskalny może zostać wdrożony później
+zgodnie z wybranym modelem sprzedaży i księgowości.
+
+MIGRACJA:
+Rozszerza orders o:
+- shipping_method
+- shipping_name_snapshot
+- shipping_point
+- payment_method
+- payment_status
+- payment_merchant_external_id
+- payment_idempotency_key
+- payment_external_id
+- payment_redirect_url
+- payment_error
+- paid_at
+- payment_failed_at
+
+Dodaje:
+sales_documents
 
 WDROŻENIE:
-1. Rozpakuj paczkę do:
-   C:\laragon\www\okulary-3d
+1. Rozpakuj patch do:
+C:\laragon\www\okulary-3d
 
-2. Nadpisz wskazane pliki.
+2. Wykonaj:
+php artisan optimize:clear
+php artisan migrate
+npm run build
+php artisan test
 
-3. Wykonaj:
-   php artisan optimize:clear
-   php artisan migrate
-   npm run build
-   php artisan test
+TEST RĘCZNY — PRZELEW:
+1. Otwórz produkt.
+2. Dodaj do koszyka.
+3. Checkout.
+4. Wybierz:
+   - Kurier
+   - Przelew tradycyjny
+5. Złóż zamówienie.
+6. Sprawdź koszt dostawy i dokument.
+7. Wejdź:
+   /admin/orders
+8. Oznacz wpłatę jako opłaconą.
+9. Zmień:
+   Nowe -> W realizacji
+10. Następnie:
+   W realizacji -> Wysłane
 
-TEST RĘCZNY:
-1. Wejdź:
-   http://okulary-3d.test/pl/shop
+TEST RĘCZNY — PACZKOMAT:
+Wybór Paczkomatu / punktu odbioru wymaga wpisania identyfikatora punktu.
 
-2. Otwórz aktywny produkt.
+TEST PAYNOW:
+Dopiero po skonfigurowaniu własnych danych Sandbox w .env:
+PAYNOW_ENABLED=true
+PAYNOW_SANDBOX=true
+PAYNOW_API_KEY=...
+PAYNOW_SIGNATURE_KEY=...
 
-3. Wybierz wariant i kliknij:
-   Dodaj do koszyka
-
-4. Sprawdź:
-   http://okulary-3d.test/pl/cart
-
-5. Zmień ilość.
-
-6. Przejdź do checkoutu.
-
-7. Wypełnij dane i złóż zamówienie.
-
-8. Sprawdź zaplecze:
-   http://okulary-3d.test/admin/orders
-
-9. Zalogowany klient:
-   http://okulary-3d.test/pl/account/orders
-
-10. W panelu admina zmień status:
-    Nowe -> W realizacji
-
-11. Dla testowego drugiego zamówienia sprawdź anulowanie.
-    Po anulowaniu stan magazynowy powinien wrócić.
+Następnie ustaw Notification URL w panelu Sandbox.
 
 COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add shopping cart and checkout"
+git commit -m "Add payments and order workflow"
 git push
 
 NASTĘPNY KROK:
-KROK 71 — płatności, metody dostawy, workflow płatności,
-maile transakcyjne oraz dokumenty sprzedażowe.
+KROK 72 — 3D LAB v1:
+- Anaglyph Maker
+- Stereo Alignment / Converter
+- podstawowy workflow plików stereo
+- zapis i eksport wyniku.

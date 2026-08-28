@@ -770,3 +770,165 @@
         grid-template-columns: 82px 1fr;
     }
 }
+
+
+/* KROK 71 — shipping and payment methods */
+
+.checkout-methods {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.checkout-method {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 13px;
+    border: 1px solid #dfe5ec;
+    border-radius: 10px;
+    background: #fbfcfd;
+    cursor: pointer;
+}
+
+.checkout-method:has(input:checked) {
+    border-color: #12a8d8;
+    background: #f0fbfe;
+    box-shadow: 0 0 0 1px rgba(18,168,216,.12);
+}
+
+.checkout-method input {
+    margin-top: 3px;
+}
+
+.checkout-method span {
+    min-width: 0;
+}
+
+.checkout-method strong {
+    display: block;
+    color: #3d4b61;
+    font-size: .67rem;
+}
+
+.checkout-method small {
+    display: block;
+    margin-top: 3px;
+    color: #8b96a7;
+    font-size: .53rem;
+    line-height: 1.4;
+}
+
+.checkout-point-field {
+    margin-top: 12px;
+}
+
+.checkout-point-field.is-hidden {
+    display: none;
+}
+
+.checkout-point-field label {
+    display: grid;
+    gap: 5px;
+}
+
+.checkout-point-field span {
+    color: #667085;
+    font-size: .57rem;
+    font-weight: 800;
+}
+
+.checkout-point-field input {
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid #dce3eb;
+    border-radius: 8px;
+    font: inherit;
+    font-size: .68rem;
+}
+
+.checkout-address-separator {
+    margin: 18px 0 12px;
+    padding-top: 15px;
+    border-top: 1px solid #edf1f5;
+    color: #4c5a70;
+    font-size: .68rem;
+}
+
+.bank-transfer-box {
+    margin-top: 20px;
+    padding: 16px;
+    border: 1px solid #dfe6ed;
+    border-radius: 12px;
+    background: #f8fafc;
+    text-align: left;
+}
+
+.bank-transfer-box > strong {
+    color: #354258;
+    font-size: .75rem;
+}
+
+.bank-transfer-box > p {
+    margin: 5px 0 12px;
+    color: #7d899a;
+    font-size: .61rem;
+}
+
+.bank-transfer-box dl {
+    margin: 0;
+}
+
+.bank-transfer-box dl > div {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid #edf1f5;
+    font-size: .61rem;
+}
+
+.bank-transfer-box dl > div:last-child {
+    border-bottom: 0;
+}
+
+.bank-transfer-box dt {
+    color: #8a95a6;
+}
+
+.bank-transfer-box dd {
+    margin: 0;
+    color: #3f4d62;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.paynow-retry {
+    margin-top: 18px;
+}
+
+.order-success-actions {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.order-document-link {
+    width: 100%;
+    margin-top: 16px;
+}
+
+@media (max-width: 680px) {
+    .checkout-methods {
+        grid-template-columns: 1fr;
+    }
+
+    .bank-transfer-box dl > div {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .order-success-actions {
+        grid-template-columns: 1fr;
+    }
+}

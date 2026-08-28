@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderWorkflowService;
+use App\Services\PaymentWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -42,6 +43,13 @@ class OrderController extends Controller
             $query->where('status', $request->input('status'));
         }
 
+        if ($request->filled('payment')) {
+            $query->where(
+                'payment_status',
+                $request->input('payment')
+            );
+        }
+
         return view('admin.orders.index', [
             'orders' => $query->paginate(30)->withQueryString(),
             'statuses' => OrderStatus::cases(),
@@ -50,7 +58,11 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['items', 'user']);
+        $order->load([
+            'items',
+            'user',
+            'salesDocuments',
+        ]);
 
         return view('admin.orders.show', [
             'order' => $order,
@@ -77,6 +89,30 @@ class OrderController extends Controller
         return back()->with(
             'status',
             __('cart.admin.status_updated')
+        );
+    }
+
+    public function updatePayment(
+        Request $request,
+        Order $order,
+        PaymentWorkflowService $workflow
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'payment_action' => [
+                'required',
+                Rule::in(['paid', 'unpaid']),
+            ],
+        ]);
+
+        if ($validated['payment_action'] === 'paid') {
+            $workflow->markBankTransferPaid($order);
+        } else {
+            $workflow->markBankTransferUnpaid($order);
+        }
+
+        return back()->with(
+            'status',
+            __('checkout71.admin.payment_updated')
         );
     }
 }

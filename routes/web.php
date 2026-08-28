@@ -17,10 +17,14 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PayNowNotificationController;
+use App\Http\Controllers\SalesDocumentController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 
 $defaultLocale = config('locales.default', 'pl');
 $supportedLocales = array_keys(config('locales.supported', ['pl' => []]));
@@ -66,6 +70,21 @@ Route::prefix('{locale}')
 
         Route::get('/order/{order:public_token}', [CheckoutController::class, 'success'])
             ->name('order.success');
+
+        Route::get(
+            '/order/{order:public_token}/document/{document}',
+            [SalesDocumentController::class, 'publicShow']
+        )->name('order.document');
+
+        Route::get(
+            '/payment/paynow/return/{order:public_token}',
+            [PaymentController::class, 'payNowReturn']
+        )->name('payment.paynow.return');
+
+        Route::post(
+            '/payment/paynow/retry/{order:public_token}',
+            [PaymentController::class, 'retryPayNow']
+        )->name('payment.paynow.retry');
 
         Route::middleware('guest')->group(function () {
             Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -158,6 +177,14 @@ Route::prefix('admin')
                 Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
                     ->name('orders.status.update');
 
+                Route::patch('/orders/{order}/payment', [AdminOrderController::class, 'updatePayment'])
+                    ->name('orders.payment.update');
+
+                Route::get(
+                    '/orders/{order}/documents/{document}',
+                    [SalesDocumentController::class, 'adminShow']
+                )->name('orders.documents.show');
+
                 Route::get('/users', [PlaceholderController::class, 'show'])
                     ->defaults('section', 'users')
                     ->name('users');
@@ -172,3 +199,11 @@ Route::prefix('admin')
             ->middleware('role:' . User::ROLE_SUPER_ADMIN)
             ->name('settings');
     });
+
+
+Route::post(
+    '/payments/paynow/notification',
+    PayNowNotificationController::class
+)
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->name('payments.paynow.notification');

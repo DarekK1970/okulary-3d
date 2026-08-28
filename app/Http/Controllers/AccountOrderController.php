@@ -31,7 +31,10 @@ class AccountOrderController extends Controller
             404
         );
 
-        $order->load('items');
+        $order->load([
+            'items',
+            'salesDocuments',
+        ]);
 
         return view('account.orders.show', [
             'order' => $order,

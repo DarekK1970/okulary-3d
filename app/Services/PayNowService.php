@@ -1,0 +1,342 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\PaymentStatus;
+use App\Models\Order;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use RuntimeException;
+
+class PayNowService
+{
+    public function enabled(): bool
+    {
+        return (bool) config('paynow.enabled')
+            && filled(config('paynow.api_key'))
+            && filled(config('paynow.signature_key'));
+    }
+
+    /**
+     * @return array{paymentId:string, redirectUrl:string, status:string}
+     */
+    public function start(Order $order): array
+    {
+        if (! $this->enabled()) {
+            throw new RuntimeException(
+                __('checkout71.paynow.not_configured')
+            );
+        }
+
+        if ($order->currency !== 'PLN') {
+            throw new RuntimeException(
+                __('checkout71.paynow.currency_not_supported')
+            );
+        }
+
+        if (
+            $order->payment_status === PaymentStatus::Pending
+            && $order->payment_redirect_url
+            && $order->payment_external_id
+        ) {
+            return [
+                'paymentId' => $order->payment_external_id,
+                'redirectUrl' => $order->payment_redirect_url,
+                'status' => 'PENDING',
+            ];
+        }
+
+        $reusePendingRequest =
+            $order->payment_status === PaymentStatus::Pending
+            && filled($order->payment_merchant_external_id)
+            && filled($order->payment_idempotency_key);
+
+        $merchantExternalId = $reusePendingRequest
+            ? $order->payment_merchant_external_id
+            : sprintf(
+                'ord-%d-%s',
+                $order->id,
+                Str::lower(Str::random(10))
+            );
+
+        $idempotencyKey = $reusePendingRequest
+            ? $order->payment_idempotency_key
+            : (string) Str::uuid();
+
+        if (! $reusePendingRequest) {
+            $order->update([
+                'payment_status' => PaymentStatus::Pending,
+                'payment_merchant_external_id' => $merchantExternalId,
+                'payment_idempotency_key' => $idempotencyKey,
+                'payment_external_id' => null,
+                'payment_redirect_url' => null,
+                'payment_error' => null,
+                'payment_failed_at' => null,
+            ]);
+        }
+
+        $body = [
+            'amount' => $this->moneyToCents(
+                (string) $order->total_gross
+            ),
+            'currency' => $order->currency,
+            'externalId' => $merchantExternalId,
+            'description' => 'Order ' . $order->number,
+            'continueUrl' => route('payment.paynow.return', [
+                'locale' => $order->locale,
+                'order' => $order->public_token,
+            ]),
+            'buyer' => [
+                'email' => Str::limit(
+                    $order->customer_email,
+                    50,
+                    ''
+                ),
+                'firstName' => Str::limit(
+                    $order->customer_first_name,
+                    50,
+                    ''
+                ),
+                'lastName' => Str::limit(
+                    $order->customer_last_name,
+                    50,
+                    ''
+                ),
+                'locale' => $order->locale === 'en'
+                    ? 'en-US'
+                    : 'pl-PL',
+            ],
+        ];
+
+        $bodyJson = json_encode(
+            $body,
+            JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+        );
+
+        $response = Http::timeout(
+            (int) config('paynow.timeout', 15)
+        )
+            ->acceptJson()
+            ->withHeaders(
+                $this->headers(
+                    $idempotencyKey,
+                    $bodyJson
+                )
+            )
+            ->withBody($bodyJson, 'application/json')
+            ->post($this->baseUrl() . '/v3/payments');
+
+        if (! $response->successful()) {
+            $message = $response->json('errors.0.message')
+                ?: $response->body()
+                ?: 'PayNow API error';
+
+            $order->update([
+                'payment_status' => PaymentStatus::Failed,
+                'payment_error' => Str::limit($message, 2000),
+                'payment_failed_at' => now(),
+            ]);
+
+            throw new RuntimeException($message);
+        }
+
+        $data = $response->json();
+
+        if (
+            empty($data['paymentId'])
+            || empty($data['redirectUrl'])
+        ) {
+            throw new RuntimeException(
+                __('checkout71.paynow.invalid_response')
+            );
+        }
+
+        $order->update([
+            'payment_status' => PaymentStatus::Pending,
+            'payment_merchant_external_id' => $merchantExternalId,
+            'payment_idempotency_key' => $idempotencyKey,
+            'payment_external_id' => $data['paymentId'],
+            'payment_redirect_url' => $data['redirectUrl'],
+            'payment_error' => null,
+            'payment_failed_at' => null,
+        ]);
+
+        return [
+            'paymentId' => $data['paymentId'],
+            'redirectUrl' => $data['redirectUrl'],
+            'status' => $data['status'] ?? 'NEW',
+        ];
+    }
+
+    public function refresh(Order $order): bool
+    {
+        if (
+            ! $this->enabled()
+            || ! $order->payment_external_id
+        ) {
+            return false;
+        }
+
+        $idempotencyKey = (string) Str::uuid();
+        $bodyJson = '';
+
+        $response = Http::timeout(
+            (int) config('paynow.timeout', 15)
+        )
+            ->acceptJson()
+            ->withHeaders(
+                $this->headers(
+                    $idempotencyKey,
+                    $bodyJson
+                )
+            )
+            ->get(
+                $this->baseUrl()
+                . '/v3/payments/'
+                . urlencode($order->payment_external_id)
+                . '/status'
+            );
+
+        if (! $response->successful()) {
+            return false;
+        }
+
+        return $this->applyStatus(
+            $order,
+            (string) $response->json('status'),
+            (string) $response->json('paymentId')
+        );
+    }
+
+    public function verifyNotification(
+        string $rawBody,
+        ?string $signature
+    ): bool {
+        if (! $signature || ! filled(config('paynow.signature_key'))) {
+            return false;
+        }
+
+        $calculated = base64_encode(
+            hash_hmac(
+                'sha256',
+                $rawBody,
+                (string) config('paynow.signature_key'),
+                true
+            )
+        );
+
+        return hash_equals($calculated, $signature);
+    }
+
+    public function applyStatus(
+        Order $order,
+        string $status,
+        ?string $paymentId = null
+    ): bool {
+        $status = strtoupper($status);
+        $becamePaid = false;
+
+        if (
+            $paymentId
+            && $order->payment_external_id
+            && $paymentId !== $order->payment_external_id
+        ) {
+            return false;
+        }
+
+        if (
+            $paymentId
+            && ! $order->payment_external_id
+        ) {
+            $order->payment_external_id = $paymentId;
+        }
+
+        if ($status === 'CONFIRMED') {
+            if (! $order->isPaid()) {
+                $order->payment_status = PaymentStatus::Paid;
+                $order->paid_at = now();
+                $order->payment_failed_at = null;
+                $order->payment_error = null;
+                $becamePaid = true;
+            }
+        } elseif (
+            in_array(
+                $status,
+                ['ABANDONED', 'ERROR', 'EXPIRED', 'REJECTED'],
+                true
+            )
+            && ! $order->isPaid()
+        ) {
+            $order->payment_status = PaymentStatus::Failed;
+            $order->payment_failed_at = now();
+        } elseif (
+            in_array($status, ['NEW', 'PENDING'], true)
+            && ! $order->isPaid()
+        ) {
+            $order->payment_status = PaymentStatus::Pending;
+        }
+
+        $order->save();
+
+        return $becamePaid;
+    }
+
+    private function baseUrl(): string
+    {
+        return (bool) config('paynow.sandbox', true)
+            ? (string) config('paynow.sandbox_url')
+            : (string) config('paynow.production_url');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function headers(
+        string $idempotencyKey,
+        string $bodyJson
+    ): array {
+        $apiKey = (string) config('paynow.api_key');
+
+        return [
+            'Api-Key' => $apiKey,
+            'Idempotency-Key' => $idempotencyKey,
+            'Signature' => $this->signature(
+                $apiKey,
+                (string) config('paynow.signature_key'),
+                $idempotencyKey,
+                $bodyJson
+            ),
+            'Accept' => 'application/json',
+        ];
+    }
+
+    private function signature(
+        string $apiKey,
+        string $signatureKey,
+        string $idempotencyKey,
+        string $bodyJson
+    ): string {
+        $payload = json_encode([
+            'headers' => [
+                'Api-Key' => $apiKey,
+                'Idempotency-Key' => $idempotencyKey,
+            ],
+            'parameters' => (object) [],
+            'body' => $bodyJson,
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        return base64_encode(
+            hash_hmac(
+                'sha256',
+                $payload,
+                $signatureKey,
+                true
+            )
+        );
+    }
+
+    private function moneyToCents(string $value): int
+    {
+        return (int) round(((float) $value) * 100);
+    }
+}

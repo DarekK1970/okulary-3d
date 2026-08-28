@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\ProductStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -14,7 +15,10 @@ use Illuminate\Validation\ValidationException;
 class CheckoutService
 {
     public function __construct(
-        private readonly CartService $cart
+        private readonly CartService $cart,
+        private readonly ShippingMethodService $shippingMethods,
+        private readonly PaymentMethodService $paymentMethods,
+        private readonly SalesDocumentService $documents
     ) {
     }
 
@@ -114,15 +118,37 @@ class CheckoutService
                 ];
             }
 
-            if ($preparedItems === []) {
+            if ($preparedItems === [] || $currency === null) {
                 throw ValidationException::withMessages([
                     'cart' => __('cart.messages.empty'),
                 ]);
             }
 
-            $shipping = $this->shippingData($data);
+            $shippingMethod = $this->shippingMethods->resolve(
+                $data['shipping_method'],
+                $locale,
+                $currency
+            );
 
-            $shippingGrossCents = 0;
+            if (
+                $shippingMethod['requires_point']
+                && blank($data['shipping_point'] ?? null)
+            ) {
+                throw ValidationException::withMessages([
+                    'shipping_point' => __(
+                        'checkout71.validation.shipping_point_required'
+                    ),
+                ]);
+            }
+
+            $paymentMethod = $this->paymentMethods->resolve(
+                $data['payment_method'],
+                $locale,
+                $currency
+            );
+
+            $shipping = $this->shippingData($data);
+            $shippingGrossCents = $shippingMethod['price_cents'];
             $totalCents = $subtotalCents + $shippingGrossCents;
 
             $order = Order::create([
@@ -131,10 +157,23 @@ class CheckoutService
                 'user_id' => $user?->id,
                 'locale' => $locale,
                 'status' => OrderStatus::Pending,
-                'currency' => $currency ?? 'PLN',
-                'subtotal_gross' => $this->centsToMoney($subtotalCents),
-                'shipping_gross' => $this->centsToMoney($shippingGrossCents),
-                'total_gross' => $this->centsToMoney($totalCents),
+                'currency' => $currency,
+
+                'subtotal_gross' => $this->centsToMoney(
+                    $subtotalCents
+                ),
+                'shipping_gross' => $this->centsToMoney(
+                    $shippingGrossCents
+                ),
+                'shipping_method' => $shippingMethod['key'],
+                'shipping_name_snapshot' => $shippingMethod['name'],
+
+                'payment_method' => $paymentMethod['key'],
+                'payment_status' => PaymentStatus::Unpaid,
+
+                'total_gross' => $this->centsToMoney(
+                    $totalCents
+                ),
 
                 'customer_email' => $data['customer_email'],
                 'customer_first_name' => $data['customer_first_name'],
@@ -143,9 +182,12 @@ class CheckoutService
 
                 'billing_company' => $data['billing_company'] ?? null,
                 'billing_tax_id' => $data['billing_tax_id'] ?? null,
-                'billing_address_line1' => $data['billing_address_line1'],
-                'billing_address_line2' => $data['billing_address_line2'] ?? null,
-                'billing_postal_code' => $data['billing_postal_code'],
+                'billing_address_line1' =>
+                    $data['billing_address_line1'],
+                'billing_address_line2' =>
+                    $data['billing_address_line2'] ?? null,
+                'billing_postal_code' =>
+                    $data['billing_postal_code'],
                 'billing_city' => $data['billing_city'],
                 'billing_country_code' => strtoupper(
                     $data['billing_country_code']
@@ -161,6 +203,8 @@ class CheckoutService
                 'shipping_postal_code' => $shipping['postal_code'],
                 'shipping_city' => $shipping['city'],
                 'shipping_country_code' => $shipping['country_code'],
+                'shipping_point' =>
+                    ($data['shipping_point'] ?? null) ?: null,
 
                 'customer_note' => $data['customer_note'] ?? null,
                 'placed_at' => now(),
@@ -198,9 +242,14 @@ class CheckoutService
             return $order;
         });
 
+        $this->documents->createOrderConfirmation($order);
+
         $this->cart->clear();
 
-        return $order->load('items');
+        return $order->load([
+            'items',
+            'salesDocuments',
+        ]);
     }
 
     private function shippingData(array $data): array

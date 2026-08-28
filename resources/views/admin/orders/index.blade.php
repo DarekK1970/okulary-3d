@@ -9,17 +9,12 @@
         <div>
             <span class="admin-eyebrow">{{ __('cart.admin.kicker') }}</span>
             <h1>{{ __('cart.admin.orders') }}</h1>
-            <p>{{ __('cart.admin.description') }}</p>
+            <p>{{ __('checkout71.admin.orders_description') }}</p>
         </div>
     </div>
 
     <form class="cms-filter-bar" method="get" action="{{ route('admin.orders.index') }}">
-        <input
-            type="search"
-            name="q"
-            value="{{ request('q') }}"
-            placeholder="{{ __('cart.admin.search') }}"
-        >
+        <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('cart.admin.search') }}">
 
         <select name="status">
             <option value="">{{ __('cart.admin.all_statuses') }}</option>
@@ -30,9 +25,18 @@
             @endforeach
         </select>
 
+        <select name="payment">
+            <option value="">{{ __('checkout71.admin.all_payments') }}</option>
+            @foreach (\App\Enums\PaymentStatus::cases() as $paymentStatus)
+                <option value="{{ $paymentStatus->value }}" @selected(request('payment') === $paymentStatus->value)>
+                    {{ __('checkout71.payment_statuses.' . $paymentStatus->value) }}
+                </option>
+            @endforeach
+        </select>
+
         <button type="submit">{{ __('cart.admin.filter') }}</button>
 
-        @if (request()->hasAny(['q', 'status']))
+        @if (request()->hasAny(['q', 'status', 'payment']))
             <a href="{{ route('admin.orders.index') }}">{{ __('cart.admin.clear') }}</a>
         @endif
     </form>
@@ -44,8 +48,8 @@
                     <th>{{ __('cart.admin.number') }}</th>
                     <th>{{ __('cart.admin.date') }}</th>
                     <th>{{ __('cart.admin.customer') }}</th>
-                    <th>{{ __('cart.admin.items') }}</th>
                     <th>{{ __('cart.admin.total') }}</th>
+                    <th>{{ __('checkout71.admin.payment') }}</th>
                     <th>{{ __('cart.admin.status') }}</th>
                     <th class="cms-actions-cell">{{ __('cart.admin.actions') }}</th>
                 </tr>
@@ -59,12 +63,14 @@
                             <strong>{{ $order->customerName() }}</strong>
                             <div class="catalog-muted">{{ $order->customer_email }}</div>
                         </td>
-                        <td>{{ $order->items_count }}</td>
                         <td>
-                            <strong>
-                                {{ number_format((float) $order->total_gross, 2, ',', ' ') }}
-                                {{ $order->currency }}
-                            </strong>
+                            <strong>{{ number_format((float) $order->total_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
+                        </td>
+                        <td>
+                            <span class="payment-status payment-status-{{ $order->payment_status->value }}">
+                                {{ __('checkout71.payment_statuses.' . $order->payment_status->value) }}
+                            </span>
+                            <div class="catalog-muted">{{ __('checkout71.payment_methods.' . $order->payment_method) }}</div>
                         </td>
                         <td>
                             <span class="order-status order-status-{{ $order->status->value }}">
@@ -79,9 +85,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="cms-empty">
-                            {{ __('cart.admin.empty') }}
-                        </td>
+                        <td colspan="7" class="cms-empty">{{ __('cart.admin.empty') }}</td>
                     </tr>
                 @endforelse
             </tbody>

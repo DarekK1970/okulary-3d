@@ -12,9 +12,24 @@
             <p>{{ $order->placed_at?->format('d.m.Y H:i') }} · {{ $order->customer_email }}</p>
         </div>
 
-        <a class="cms-secondary-button" href="{{ route('admin.orders.index') }}">
-            ← {{ __('cart.admin.back') }}
-        </a>
+        <div class="catalog-heading-actions">
+            @foreach ($order->salesDocuments as $document)
+                <a
+                    class="cms-secondary-button"
+                    target="_blank"
+                    href="{{ route('admin.orders.documents.show', [
+                        'order' => $order,
+                        'document' => $document
+                    ]) }}"
+                >
+                    {{ __('checkout71.admin.print_document') }}
+                </a>
+            @endforeach
+
+            <a class="cms-secondary-button" href="{{ route('admin.orders.index') }}">
+                ← {{ __('cart.admin.back') }}
+            </a>
+        </div>
     </div>
 
     <div class="admin-order-grid">
@@ -27,10 +42,7 @@
                         <div class="admin-order-item">
                             <div>
                                 <strong>{{ $item->product_name_snapshot }}</strong>
-                                <span>
-                                    {{ $item->variant_name_snapshot ?: '—' }}
-                                    · SKU {{ $item->sku_snapshot }}
-                                </span>
+                                <span>{{ $item->variant_name_snapshot ?: '—' }} · SKU {{ $item->sku_snapshot }}</span>
                             </div>
 
                             <div>
@@ -39,6 +51,18 @@
                             </div>
                         </div>
                     @endforeach
+
+                    <div class="admin-order-item admin-order-shipping-line">
+                        <div>
+                            <strong>{{ $order->shipping_name_snapshot ?: __('cart.summary.shipping') }}</strong>
+                            @if ($order->shipping_point)
+                                <span>{{ $order->shipping_point }}</span>
+                            @endif
+                        </div>
+                        <div>
+                            <strong>{{ number_format((float) $order->shipping_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -50,48 +74,68 @@
                         <span>{{ __('cart.admin.customer') }}</span>
                         <strong>{{ $order->customerName() }}</strong>
                         <small>{{ $order->customer_email }}</small>
-                        @if ($order->customer_phone)
-                            <small>{{ $order->customer_phone }}</small>
-                        @endif
+                        @if ($order->customer_phone)<small>{{ $order->customer_phone }}</small>@endif
                     </div>
 
                     <div>
                         <span>{{ __('cart.admin.billing_address') }}</span>
                         <strong>{{ $order->billing_company ?: $order->customerName() }}</strong>
-                        @if ($order->billing_tax_id)
-                            <small>NIP: {{ $order->billing_tax_id }}</small>
-                        @endif
+                        @if ($order->billing_tax_id)<small>NIP: {{ $order->billing_tax_id }}</small>@endif
                         <small>{{ $order->billing_address_line1 }}</small>
-                        @if ($order->billing_address_line2)
-                            <small>{{ $order->billing_address_line2 }}</small>
-                        @endif
                         <small>{{ $order->billing_postal_code }} {{ $order->billing_city }}, {{ $order->billing_country_code }}</small>
                     </div>
 
                     <div>
                         <span>{{ __('cart.admin.shipping_address') }}</span>
                         <strong>{{ $order->shipping_first_name }} {{ $order->shipping_last_name }}</strong>
-                        @if ($order->shipping_company)
-                            <small>{{ $order->shipping_company }}</small>
-                        @endif
+                        @if ($order->shipping_company)<small>{{ $order->shipping_company }}</small>@endif
                         <small>{{ $order->shipping_address_line1 }}</small>
-                        @if ($order->shipping_address_line2)
-                            <small>{{ $order->shipping_address_line2 }}</small>
-                        @endif
                         <small>{{ $order->shipping_postal_code }} {{ $order->shipping_city }}, {{ $order->shipping_country_code }}</small>
+                        @if ($order->shipping_point)<small>{{ __('checkout71.admin.point') }}: {{ $order->shipping_point }}</small>@endif
                     </div>
                 </div>
-
-                @if ($order->customer_note)
-                    <div class="admin-order-note">
-                        <span>{{ __('cart.admin.note') }}</span>
-                        <p>{{ $order->customer_note }}</p>
-                    </div>
-                @endif
             </section>
         </div>
 
         <aside class="admin-order-sidebar">
+            <section class="cms-panel">
+                <h2>{{ __('checkout71.admin.payment') }}</h2>
+
+                <div class="admin-payment-box">
+                    <span class="payment-status payment-status-{{ $order->payment_status->value }}">
+                        {{ __('checkout71.payment_statuses.' . $order->payment_status->value) }}
+                    </span>
+                    <strong>{{ __('checkout71.payment_methods.' . $order->payment_method) }}</strong>
+
+                    @if ($order->paid_at)
+                        <small>{{ __('checkout71.admin.paid_at') }}: {{ $order->paid_at->format('d.m.Y H:i') }}</small>
+                    @endif
+
+                    @if ($order->payment_external_id)
+                        <small>PayNow ID: {{ $order->payment_external_id }}</small>
+                    @endif
+                </div>
+
+                @if ($order->payment_method === 'bank_transfer')
+                    <form method="post" action="{{ route('admin.orders.payment.update', $order) }}">
+                        @csrf
+                        @method('PATCH')
+
+                        <input
+                            type="hidden"
+                            name="payment_action"
+                            value="{{ $order->isPaid() ? 'unpaid' : 'paid' }}"
+                        >
+
+                        <button class="cms-secondary-button" type="submit">
+                            {{ $order->isPaid()
+                                ? __('checkout71.admin.mark_unpaid')
+                                : __('checkout71.admin.mark_paid') }}
+                        </button>
+                    </form>
+                @endif
+            </section>
+
             <section class="cms-panel">
                 <h2>{{ __('cart.admin.status') }}</h2>
 
@@ -101,9 +145,7 @@
                     </span>
                 </div>
 
-                @php
-                    $allowed = $order->status->allowedTransitions();
-                @endphp
+                @php $allowed = $order->status->allowedTransitions(); @endphp
 
                 @if ($allowed !== [])
                     <form method="post" action="{{ route('admin.orders.status.update', $order) }}">
@@ -126,9 +168,7 @@
                         </button>
                     </form>
                 @else
-                    <p class="admin-order-terminal">
-                        {{ __('cart.admin.terminal_status') }}
-                    </p>
+                    <p class="admin-order-terminal">{{ __('cart.admin.terminal_status') }}</p>
                 @endif
             </section>
 
@@ -141,7 +181,7 @@
                 </div>
 
                 <div class="admin-order-total-row">
-                    <span>{{ __('cart.summary.shipping') }}</span>
+                    <span>{{ $order->shipping_name_snapshot ?: __('cart.summary.shipping') }}</span>
                     <strong>{{ number_format((float) $order->shipping_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
                 </div>
 

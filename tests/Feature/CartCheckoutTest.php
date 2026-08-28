@@ -13,11 +13,19 @@ use App\Models\ProductTranslation;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CartCheckoutTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Mail::fake();
+    }
 
     private function productWithVariant(
         int $stock = 10,
@@ -93,6 +101,9 @@ class CartCheckoutTest extends TestCase
             'shipping_postal_code' => '',
             'shipping_city' => '',
             'shipping_country_code' => '',
+            'shipping_method' => 'pickup',
+            'shipping_point' => '',
+            'payment_method' => 'bank_transfer',
             'customer_note' => 'Test zamówienia.',
             'accept_terms' => '1',
         ], $overrides);
