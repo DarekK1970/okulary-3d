@@ -12,8 +12,10 @@
         'resources/css/admin.css',
         'resources/css/admin-cms.css',
         'resources/css/admin-multilang.css',
+        'resources/css/admin-media.css',
         'resources/js/admin-cms.js',
-        'resources/js/admin-multilang.js'
+        'resources/js/admin-multilang.js',
+        'resources/js/admin-media.js'
     ])
 </head>
 <body class="admin-body">
@@ -43,6 +45,11 @@
                 <a class="admin-nav-link {{ request()->routeIs('admin.article-categories.*') ? 'is-active' : '' }}" href="{{ route('admin.article-categories.index') }}">
                     <span>≡</span>
                     {{ __('admin.menu.categories') }}
+                </a>
+
+                <a class="admin-nav-link {{ request()->routeIs('admin.media.*') ? 'is-active' : '' }}" href="{{ route('admin.media.index') }}">
+                    <span>▧</span>
+                    {{ __('media.menu') }}
                 </a>
 
                 @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_SUPER_ADMIN], true))

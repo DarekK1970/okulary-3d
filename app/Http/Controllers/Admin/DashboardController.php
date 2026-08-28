@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,6 +25,16 @@ class DashboardController extends Controller
                     User::ROLE_SUPER_ADMIN,
                 ],
                 'icon' => '✎',
+            ],
+            [
+                'key' => 'media',
+                'route' => 'admin.media.index',
+                'roles' => [
+                    User::ROLE_EDITOR,
+                    User::ROLE_ADMIN,
+                    User::ROLE_SUPER_ADMIN,
+                ],
+                'icon' => '▧',
             ],
             [
                 'key' => 'shop',
@@ -89,9 +100,7 @@ class DashboardController extends Controller
                 'users' => User::query()->count(),
                 'articles' => Article::query()->count(),
                 'published' => Article::query()->published()->count(),
-                'admins' => User::query()
-                    ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])
-                    ->count(),
+                'media' => MediaAsset::query()->count(),
             ],
         ]);
     }

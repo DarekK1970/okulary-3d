@@ -13,6 +13,7 @@ class ArticleController extends Controller
         $translation = ArticleTranslation::query()
             ->with([
                 'article.category',
+                'article.heroMedia',
                 'article.translations' => fn ($query) => $query
                     ->whereIn(
                         'translation_status',

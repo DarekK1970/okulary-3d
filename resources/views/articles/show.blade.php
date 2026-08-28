@@ -66,11 +66,16 @@
             @endif
         </header>
 
-        @if ($article->hero_image_path)
+        @php
+            $heroPath = $article->heroMedia?->path ?? $article->hero_image_path;
+            $heroAlt = $article->heroMedia?->alt_text ?: $translation->title;
+        @endphp
+
+        @if ($heroPath)
             <figure class="article-hero">
                 <img
-                    src="{{ Storage::url($article->hero_image_path) }}"
-                    alt="{{ $translation->title }}"
+                    src="{{ Storage::disk('public')->url($heroPath) }}"
+                    alt="{{ $heroAlt }}"
                 >
             </figure>
         @endif

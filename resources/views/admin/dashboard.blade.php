@@ -31,8 +31,8 @@
             <strong>{{ $stats['published'] }}</strong>
         </article>
         <article class="admin-stat">
-            <span>{{ __('admin.dashboard.admins') }}</span>
-            <strong>{{ $stats['admins'] }}</strong>
+            <span>{{ __('admin.dashboard.media') }}</span>
+            <strong>{{ $stats['media'] }}</strong>
         </article>
     </section>
 

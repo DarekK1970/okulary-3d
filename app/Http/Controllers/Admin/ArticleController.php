@@ -8,10 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\ArticleCategory;
 use App\Models\ArticleTranslation;
+use App\Models\MediaAsset;
 use App\Services\ArticleHtmlSanitizer;
+use App\Services\MediaAssetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +23,7 @@ class ArticleController extends Controller
     public function index(Request $request): View
     {
         $query = Article::query()
-            ->with(['category', 'creator', 'translations'])
+            ->with(['category', 'creator', 'translations', 'heroMedia'])
             ->latest('id');
 
         if ($request->filled('q')) {
@@ -71,12 +72,14 @@ class ArticleController extends Controller
             'statuses' => ArticleStatus::cases(),
             'translationStatuses' => ArticleTranslationStatus::cases(),
             'supportedLocales' => config('locales.supported', []),
+            'mediaAssets' => $this->mediaAssets(),
         ]);
     }
 
     public function store(
         Request $request,
-        ArticleHtmlSanitizer $sanitizer
+        ArticleHtmlSanitizer $sanitizer,
+        MediaAssetService $mediaService
     ): RedirectResponse {
         $validated = $this->validateArticle($request);
         $status = ArticleStatus::from($validated['status']);
@@ -92,7 +95,6 @@ class ArticleController extends Controller
         $article->category_id = (int) $validated['category_id'];
         $article->source_locale = $sourceLocale;
 
-        // Legacy source snapshot kept until a later cleanup migration.
         $article->title = $source['title'];
         $article->slug = $this->uniqueLegacySlug($sourceTranslationSlug);
         $article->excerpt = ($source['excerpt'] ?? null) ?: null;
@@ -106,10 +108,12 @@ class ArticleController extends Controller
         $article->created_by = $request->user()->id;
         $article->updated_by = $request->user()->id;
 
-        if ($request->hasFile('hero_image')) {
-            $article->hero_image_path = $request->file('hero_image')
-                ->store('articles/heroes', 'public');
-        }
+        $this->applyHeroMedia(
+            $request,
+            $article,
+            $validated,
+            $mediaService
+        );
 
         $article->save();
 
@@ -127,7 +131,7 @@ class ArticleController extends Controller
 
     public function edit(Article $article): View
     {
-        $article->load('translations');
+        $article->load(['translations', 'heroMedia']);
 
         return view('admin.articles.edit', [
             'article' => $article,
@@ -135,13 +139,15 @@ class ArticleController extends Controller
             'statuses' => ArticleStatus::cases(),
             'translationStatuses' => ArticleTranslationStatus::cases(),
             'supportedLocales' => config('locales.supported', []),
+            'mediaAssets' => $this->mediaAssets(),
         ]);
     }
 
     public function update(
         Request $request,
         Article $article,
-        ArticleHtmlSanitizer $sanitizer
+        ArticleHtmlSanitizer $sanitizer,
+        MediaAssetService $mediaService
     ): RedirectResponse {
         $validated = $this->validateArticle($request);
         $status = ArticleStatus::from($validated['status']);
@@ -157,7 +163,6 @@ class ArticleController extends Controller
         $article->category_id = (int) $validated['category_id'];
         $article->source_locale = $sourceLocale;
 
-        // Keep legacy source snapshot synchronized.
         $article->title = $source['title'];
         $article->slug = $this->uniqueLegacySlug(
             $sourceTranslationSlug,
@@ -173,22 +178,12 @@ class ArticleController extends Controller
         );
         $article->updated_by = $request->user()->id;
 
-        if ($request->hasFile('hero_image')) {
-            if ($article->hero_image_path) {
-                Storage::disk('public')->delete($article->hero_image_path);
-            }
-
-            $article->hero_image_path = $request->file('hero_image')
-                ->store('articles/heroes', 'public');
-        }
-
-        if (
-            $request->boolean('remove_hero_image')
-            && $article->hero_image_path
-        ) {
-            Storage::disk('public')->delete($article->hero_image_path);
-            $article->hero_image_path = null;
-        }
+        $this->applyHeroMedia(
+            $request,
+            $article,
+            $validated,
+            $mediaService
+        );
 
         $article->save();
 
@@ -204,10 +199,8 @@ class ArticleController extends Controller
 
     public function destroy(Article $article): RedirectResponse
     {
-        if ($article->hero_image_path) {
-            Storage::disk('public')->delete($article->hero_image_path);
-        }
-
+        // Media assets are shared resources and must not be deleted together
+        // with an article.
         $article->delete();
 
         return redirect()
@@ -251,6 +244,11 @@ class ArticleController extends Controller
                 Rule::in(ArticleStatus::values()),
             ],
             'published_at' => $publishedAtRules,
+            'hero_media_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('media_assets', 'id'),
+            ],
             'hero_image' => [
                 'nullable',
                 'image',
@@ -331,6 +329,42 @@ class ArticleController extends Controller
         return $validated;
     }
 
+    private function applyHeroMedia(
+        Request $request,
+        Article $article,
+        array $validated,
+        MediaAssetService $mediaService
+    ): void {
+        if ($request->hasFile('hero_image')) {
+            $media = $mediaService->storeImage(
+                $request->file('hero_image'),
+                $request->user(),
+                'article-heroes'
+            );
+
+            $article->hero_media_id = $media->id;
+            $article->hero_image_path = $media->path;
+
+            return;
+        }
+
+        if (! empty($validated['hero_media_id'])) {
+            $media = MediaAsset::query()->findOrFail(
+                (int) $validated['hero_media_id']
+            );
+
+            $article->hero_media_id = $media->id;
+            $article->hero_image_path = $media->path;
+
+            return;
+        }
+
+        if ($request->boolean('remove_hero_image')) {
+            $article->hero_media_id = null;
+            $article->hero_image_path = null;
+        }
+    }
+
     /**
      * @param array<string, mixed> $validated
      * @param array<string, string> $reservedSlugs
@@ -409,6 +443,17 @@ class ArticleController extends Controller
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, MediaAsset>
+     */
+    private function mediaAssets()
+    {
+        return MediaAsset::query()
+            ->latest('id')
+            ->limit(100)
             ->get();
     }
 

@@ -27,6 +27,7 @@ class Article extends Model
         'excerpt',
         'body_html',
         'hero_image_path',
+        'hero_media_id',
         'status',
         'published_at',
         'created_by',
@@ -54,6 +55,11 @@ class Article extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function heroMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaAsset::class, 'hero_media_id');
     }
 
     public function translations(): HasMany

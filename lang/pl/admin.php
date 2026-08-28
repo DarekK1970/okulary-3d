@@ -34,6 +34,7 @@ return [
         'users' => 'Użytkownicy',
         'articles' => 'Artykuły',
         'published' => 'Opublikowane',
+        'media' => 'Media',
         'admins' => 'Administratorzy',
         'modules_kicker' => 'Moduły',
         'modules' => 'Zarządzanie aplikacją',
@@ -43,6 +44,10 @@ return [
         'content' => [
             'title' => 'Treści i artykuły',
             'description' => 'Artykuły, kategorie, szkice, publikacje i materiały redakcyjne.',
+        ],
+        'media' => [
+            'title' => 'Biblioteka mediów',
+            'description' => 'Centralne obrazy, metadane, katalogowanie i ponowne wykorzystanie plików.',
         ],
         'shop' => [
             'title' => 'Sklep',
@@ -67,104 +72,6 @@ return [
         'settings' => [
             'title' => 'Ustawienia systemowe',
             'description' => 'Konfiguracja krytyczna dostępna wyłącznie dla Super Administratora.',
-        ],
-    ],
-
-    'articles' => [
-        'kicker' => 'CMS',
-        'title' => 'Artykuły',
-        'description' => 'Twórz, edytuj i planuj publikacje wortalu.',
-        'new' => 'Nowy artykuł',
-        'create_title' => 'Nowy artykuł',
-        'create_description' => 'Przygotuj treść, zdjęcie główne i termin publikacji.',
-        'edit_title' => 'Edycja artykułu',
-        'empty' => 'Nie ma jeszcze żadnych artykułów.',
-
-        'statuses' => [
-            'draft' => 'Szkic',
-            'scheduled' => 'Zaplanowany',
-            'published' => 'Opublikowany',
-        ],
-
-        'filters' => [
-            'search' => 'Szukaj po tytule, slug lub opisie…',
-            'all_statuses' => 'Wszystkie statusy',
-            'all_categories' => 'Wszystkie kategorie',
-            'apply' => 'Filtruj',
-            'clear' => 'Wyczyść',
-        ],
-
-        'table' => [
-            'title' => 'Artykuł',
-            'category' => 'Kategoria',
-            'status' => 'Status',
-            'publication' => 'Publikacja',
-            'author' => 'Autor',
-            'actions' => 'Akcje',
-        ],
-
-        'actions' => [
-            'edit' => 'Edytuj',
-            'delete' => 'Usuń',
-            'delete_confirm' => 'Czy na pewno usunąć ten artykuł?',
-        ],
-
-        'form' => [
-            'title' => 'Tytuł',
-            'slug' => 'Slug URL',
-            'slug_help' => 'Możesz zostawić puste — slug zostanie utworzony automatycznie.',
-            'excerpt' => 'Lead / krótki opis',
-            'body' => 'Treść artykułu',
-            'editor_toolbar' => 'Narzędzia formatowania tekstu',
-            'publication' => 'Publikacja',
-            'category' => 'Kategoria',
-            'choose_category' => 'Wybierz kategorię',
-            'status' => 'Status',
-            'published_at' => 'Data i godzina publikacji',
-            'published_at_help' => 'Dla statusu „Zaplanowany” data musi być w przyszłości. Dla „Opublikowany” puste pole oznacza teraz.',
-            'hero' => 'Zdjęcie główne',
-            'hero_upload' => 'Wybierz plik',
-            'hero_help' => 'JPG, PNG lub WEBP, maksymalnie 5 MB.',
-            'hero_preview' => 'Podgląd zdjęcia głównego',
-            'remove_hero' => 'Usuń obecne zdjęcie główne',
-            'save' => 'Zapisz zmiany',
-            'create' => 'Utwórz artykuł',
-            'cancel' => 'Anuluj',
-        ],
-
-        'messages' => [
-            'created' => 'Artykuł został utworzony.',
-            'updated' => 'Artykuł został zapisany.',
-            'deleted' => 'Artykuł został usunięty.',
-        ],
-    ],
-
-    'categories' => [
-        'kicker' => 'CMS',
-        'title' => 'Kategorie artykułów',
-        'description' => 'Zarządzaj strukturą tematyczną publikacji.',
-        'new' => 'Nowa kategoria',
-        'list' => 'Istniejące kategorie',
-        'empty' => 'Nie ma jeszcze żadnych kategorii.',
-        'articles_short' => 'art.',
-        'delete' => 'Usuń kategorię',
-        'delete_confirm' => 'Czy na pewno usunąć tę kategorię?',
-
-        'form' => [
-            'name' => 'Nazwa',
-            'slug' => 'Slug',
-            'description' => 'Opis',
-            'order' => 'Kolejność',
-            'active' => 'Kategoria aktywna',
-            'add' => 'Dodaj kategorię',
-            'save' => 'Zapisz kategorię',
-        ],
-
-        'messages' => [
-            'created' => 'Kategoria została dodana.',
-            'updated' => 'Kategoria została zapisana.',
-            'deleted' => 'Kategoria została usunięta.',
-            'in_use' => 'Nie można usunąć kategorii, ponieważ zawiera artykuły.',
         ],
     ],
 

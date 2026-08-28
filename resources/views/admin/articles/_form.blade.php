@@ -8,6 +8,8 @@
         'published_at',
         $article->published_at?->format('Y-m-d\TH:i')
     );
+    $currentHeroId = old('hero_media_id', $article->hero_media_id);
+    $currentHeroPath = $article->heroMedia?->path ?? $article->hero_image_path;
 @endphp
 
 <div class="cms-editor-grid">
@@ -257,19 +259,47 @@
             </div>
         </section>
 
-        <section class="cms-panel">
-            <h2>{{ __('cms.articles.form.hero') }}</h2>
+        <section class="cms-panel media-hero-panel">
+            <div class="media-hero-heading">
+                <h2>{{ __('cms.articles.form.hero') }}</h2>
+                <a href="{{ route('admin.media.index') }}" target="_blank">
+                    {{ __('media.article.open_library') }} ↗
+                </a>
+            </div>
 
-            @if ($article->hero_image_path)
-                <div class="cms-current-image">
-                    <img src="{{ Storage::url($article->hero_image_path) }}" alt="">
-                </div>
+            <input
+                type="hidden"
+                name="hero_media_id"
+                value="{{ $currentHeroId }}"
+                data-hero-media-id
+            >
 
-                <label class="cms-checkbox">
-                    <input type="checkbox" name="remove_hero_image" value="1">
-                    <span>{{ __('cms.articles.form.remove_hero') }}</span>
-                </label>
-            @endif
+            <div
+                class="cms-current-image media-selected-preview"
+                data-hero-selected-preview
+                @if (! $currentHeroPath) hidden @endif
+            >
+                <img
+                    @if ($currentHeroPath)
+                        src="{{ Storage::disk('public')->url($currentHeroPath) }}"
+                    @endif
+                    alt=""
+                    data-hero-selected-image
+                >
+                <span data-hero-selected-name>
+                    {{ $article->heroMedia?->title ?: $article->heroMedia?->original_name }}
+                </span>
+            </div>
+
+            <button
+                class="cms-secondary-button media-library-button"
+                type="button"
+                data-media-picker-open
+            >
+                {{ __('media.article.choose_library') }}
+            </button>
+
+            <div class="media-or">{{ __('media.article.or_upload') }}</div>
 
             <div class="cms-field">
                 <label for="hero_image">{{ __('cms.articles.form.hero_upload') }}</label>
@@ -279,6 +309,7 @@
                     type="file"
                     accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                     data-image-input
+                    data-hero-upload
                 >
                 <small>{{ __('cms.articles.form.hero_help') }}</small>
             </div>
@@ -286,6 +317,18 @@
             <div class="cms-image-preview" data-image-preview hidden>
                 <img alt="{{ __('cms.articles.form.hero_preview') }}">
             </div>
+
+            @if ($currentHeroPath)
+                <label class="cms-checkbox">
+                    <input
+                        type="checkbox"
+                        name="remove_hero_image"
+                        value="1"
+                        data-remove-hero
+                    >
+                    <span>{{ __('cms.articles.form.remove_hero') }}</span>
+                </label>
+            @endif
         </section>
 
         <div class="cms-form-actions">
@@ -298,4 +341,56 @@
             </a>
         </div>
     </aside>
+</div>
+
+<div class="media-picker-modal" data-media-picker-modal aria-hidden="true">
+    <div class="media-picker-backdrop" data-media-picker-close></div>
+
+    <section class="media-picker-dialog" role="dialog" aria-modal="true">
+        <header>
+            <div>
+                <span class="admin-eyebrow">{{ __('media.kicker') }}</span>
+                <h2>{{ __('media.article.picker_title') }}</h2>
+            </div>
+
+            <button type="button" data-media-picker-close aria-label="{{ __('media.article.close') }}">×</button>
+        </header>
+
+        <div class="media-picker-search">
+            <input
+                type="search"
+                placeholder="{{ __('media.article.search') }}"
+                data-media-picker-search
+            >
+        </div>
+
+        <div class="media-picker-grid">
+            @forelse ($mediaAssets as $media)
+                <button
+                    type="button"
+                    class="media-picker-item"
+                    data-media-picker-item
+                    data-media-id="{{ $media->id }}"
+                    data-media-url="{{ $media->url() }}"
+                    data-media-name="{{ $media->title ?: $media->original_name }}"
+                    data-media-search="{{ Str::lower(($media->title ?: '') . ' ' . $media->original_name . ' ' . $media->folder . ' ' . ($media->alt_text ?: '')) }}"
+                >
+                    <img src="{{ $media->url() }}" alt="" loading="lazy">
+                    <span>{{ $media->title ?: $media->original_name }}</span>
+                    <small># {{ $media->folder }}</small>
+                </button>
+            @empty
+                <div class="media-picker-empty">
+                    {{ __('media.article.no_media') }}
+                </div>
+            @endforelse
+        </div>
+
+        <footer>
+            <span>{{ __('media.article.latest_limit') }}</span>
+            <a href="{{ route('admin.media.index') }}" target="_blank">
+                {{ __('media.article.manage_library') }} ↗
+            </a>
+        </footer>
+    </section>
 </div>

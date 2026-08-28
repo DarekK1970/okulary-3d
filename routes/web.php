@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -83,6 +84,10 @@ Route::prefix('admin')
             ->name('article-categories.update');
         Route::delete('/article-categories/{category}', [ArticleCategoryController::class, 'destroy'])
             ->name('article-categories.destroy');
+
+        Route::resource('media', MediaController::class)
+            ->only(['index', 'store', 'edit', 'update', 'destroy'])
+            ->parameters(['media' => 'media']);
 
         Route::get('/translations', [PlaceholderController::class, 'show'])
             ->defaults('section', 'translations')

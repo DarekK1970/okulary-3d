@@ -1,55 +1,80 @@
-OKULARY3D — KROK 67 — FIX LEGACY TESTS
+OKULARY3D — KROK 68
+Biblioteka mediów
 
-PRZYCZYNA:
-KROK 67 zmienił strukturę formularza artykułu z płaskiej:
+ZAKRES:
+- nowa tabela media_assets
+- centralny moduł /admin/media
+- upload do 10 obrazów jednocześnie
+- JPG / PNG / WEBP
+- limit 5 MB na plik
+- foldery / kolekcje
+- metadane:
+  * tytuł
+  * ALT
+  * podpis
+  * typ MIME
+  * rozmiar
+  * szerokość / wysokość
+  * uploader
+- filtrowanie i wyszukiwanie
+- podgląd w gridzie
+- edycja metadanych
+- fizyczne usuwanie nieużywanych plików
+- blokada usunięcia pliku używanego przez artykuł
 
-title
-slug
-excerpt
-body_html
+INTEGRACJA Z CMS:
+- articles.hero_media_id
+- wybór zdjęcia z biblioteki w edytorze artykułu
+- wizualny modal z ostatnimi 100 zasobami
+- wyszukiwarka wewnątrz selektora
+- nowy upload wykonany z formularza artykułu automatycznie trafia do biblioteki
+- media są współdzielone i NIE są usuwane razem z artykułem
 
-na wielojęzyczną:
+ZGODNOŚĆ WSTECZ:
+- hero_image_path pozostaje jako snapshot ścieżki
+- publiczny artykuł używa hero_media, z fallbackiem do hero_image_path
 
-source_locale
-translations[pl][title]
-translations[pl][slug]
-translations[pl][excerpt]
-translations[pl][body_html]
-translations[en][...]
-
-Nowe testy MultilingualArticleTest już używały poprawnego formatu.
-Dwa starsze testy ArticleCmsTest z KROKU 66 nadal wysyłały stary payload.
-
-POPRAWKA:
-Zmieniono tylko:
-tests/Feature/ArticleCmsTest.php
-
-Test uploadu hero image nadal sprawdza:
-- utworzenie artykułu
-- automatyczny slug
-- status draft
-- zapis hero image
-- utworzenie polskiej wersji source
-
-Test sanitizacji nadal sprawdza:
-- usunięcie <script>
-- usunięcie onclick
-- zachowanie dozwolonego <p>
-- sanitizację article_translations.body_html
-- sanitizację legacy articles.body_html
+MIGRACJA ISTNIEJĄCYCH ZDJĘĆ:
+- istniejące hero_image_path z KROKU 66/67 są automatycznie rejestrowane
+  w media_assets
+- pliki NIE są kopiowane i NIE są przenoszone
+- artykuł dostaje hero_media_id wskazujące nowy rekord biblioteki
+- takie pliki trafiają do folderu: legacy-articles
 
 WDROŻENIE:
-1. Rozpakuj do katalogu projektu.
-2. Nadpisz:
-   tests/Feature/ArticleCmsTest.php
+1. Rozpakuj paczkę do:
+   C:\laragon\www\okulary-3d
+   ze zgodą na nadpisanie.
 
-3. Wykonaj:
+2. Wykonaj:
    php artisan optimize:clear
+   php artisan migrate
+   npm run build
    php artisan test
 
-Nie uruchamiaj ponownie migracji.
+3. Sprawdź:
+   http://okulary-3d.test/admin/media
 
-Jeżeli wszystkie testy przejdą:
+4. Prześlij 2-3 testowe obrazy.
+5. Edytuj ich:
+   - tytuł
+   - ALT
+   - folder
+
+6. Wejdź:
+   http://okulary-3d.test/admin/articles
+
+7. Edytuj artykuł i użyj:
+   [Wybierz z biblioteki]
+
+8. Zapisz artykuł i sprawdź publiczny podgląd.
+
+COMMIT PO ZALICZENIU:
 git add .
-git commit -m "Add multilingual content model"
+git commit -m "Add media library"
 git push
+
+NASTĘPNY KROK:
+KROK 69 — katalog sklepu:
+kategorie, produkty, warianty, ceny, stany magazynowe,
+zdjęcia z biblioteki mediów i wielojęzyczne opisy PL/EN.
