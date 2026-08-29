@@ -22,6 +22,8 @@
         'resources/css/admin-discovery.css',
         'resources/css/admin-orchestrator.css',
         'resources/css/admin-contextual-recommendations.css',
+        'resources/css/admin-analytics.css',
+        'resources/css/admin-newsletter.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -78,6 +80,14 @@
                     >
                         <span>▤</span>
                         {{ __('cart.admin.orders') }}
+                    </a>
+
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.newsletter.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.newsletter.index') }}"
+                    >
+                        <span>✉</span>
+                        {{ __('newsletter.admin.title') }}
                     </a>
 
                     <a class="admin-nav-link {{ request()->routeIs('admin.users') ? 'is-active' : '' }}" href="{{ route('admin.users') }}">

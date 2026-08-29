@@ -45,3 +45,13 @@ Artisan::command('user:set-role {email} {role}', function (string $email, string
 Schedule::command('articles:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+
+Schedule::command('newsletter:send-due --limit=100')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('portal:analytics-prune --days=180')
+    ->dailyAt('03:30')
+    ->withoutOverlapping();
+

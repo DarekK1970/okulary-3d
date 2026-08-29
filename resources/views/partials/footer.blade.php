@@ -3,7 +3,7 @@
 @endphp
 
 <footer class="site-footer" id="about">
-    <section class="newsletter-strip" aria-label="{{ __('site.newsletter.title') }}">
+    <section class="newsletter-strip" id="newsletter" aria-label="{{ __('site.newsletter.title') }}">
         <div class="site-container newsletter-inner">
             <div class="newsletter-copy">
                 <span class="newsletter-icon" aria-hidden="true">✦</span>
@@ -13,19 +13,52 @@
                 </div>
             </div>
 
-            <form class="newsletter-form" action="#" method="post">
-                <label class="sr-only" for="newsletter-email">
-                    {{ __('site.newsletter.email_label') }}
-                </label>
-                <input
-                    id="newsletter-email"
-                    type="email"
-                    name="email"
-                    placeholder="{{ __('site.newsletter.email_placeholder') }}"
-                    autocomplete="email"
+            <div class="newsletter-form-wrap">
+                @if (session('newsletter_status'))
+                    <div class="newsletter-message" role="status">
+                        {{ session('newsletter_status') }}
+                    </div>
+                @endif
+
+                <form
+                    class="newsletter-form"
+                    action="{{ route('newsletter.subscribe', ['locale' => $locale]) }}"
+                    method="post"
                 >
-                <button type="submit">{{ __('site.newsletter.submit') }}</button>
-            </form>
+                    @csrf
+
+                    <label class="sr-only" for="newsletter-email">
+                        {{ __('site.newsletter.email_label') }}
+                    </label>
+                    <input
+                        id="newsletter-email"
+                        type="email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        placeholder="{{ __('site.newsletter.email_placeholder') }}"
+                        autocomplete="email"
+                        required
+                    >
+                    <button type="submit">{{ __('site.newsletter.submit') }}</button>
+
+                    <label class="newsletter-consent">
+                        <input
+                            type="checkbox"
+                            name="consent"
+                            value="1"
+                            required
+                        >
+                        <span>{{ __('newsletter.public.consent') }}</span>
+                    </label>
+
+                    @error('email')
+                        <small class="newsletter-error">{{ $message }}</small>
+                    @enderror
+                    @error('consent')
+                        <small class="newsletter-error">{{ $message }}</small>
+                    @enderror
+                </form>
+            </div>
         </div>
     </section>
 
@@ -68,7 +101,7 @@
         <div class="footer-column">
             <h3>{{ __('site.footer.community') }}</h3>
             <a href="{{ route('home', ['locale' => $locale]) }}#gallery">{{ __('site.nav.gallery') }}</a>
-            <a href="#">{{ __('site.footer.newsletter') }}</a>
+            <a href="#newsletter">{{ __('site.footer.newsletter') }}</a>
             <a href="#">{{ __('site.footer.cooperation') }}</a>
         </div>
 

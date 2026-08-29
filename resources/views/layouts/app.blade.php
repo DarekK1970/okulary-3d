@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="portal-analytics-endpoint" content="{{ route('analytics.event') }}">
+    <meta name="portal-route-name" content="{{ request()->route()?->getName() }}">
 
     @php
         $seoData = $pageSeo
@@ -73,7 +76,8 @@
         'resources/css/app.css',
         'resources/css/mobile.css',
         'resources/css/auth.css',
-        'resources/js/app.js'
+        'resources/js/app.js',
+        'resources/js/analytics.js'
     ])
 
     @foreach ($seoSchemas as $schema)
@@ -90,7 +94,10 @@
 
     @stack('head')
 </head>
-<body>
+<body
+    data-portal-route="{{ request()->route()?->getName() }}"
+    data-portal-locale="{{ app()->getLocale() }}"
+>
     <div class="site-shell">
         @include('partials.header')
 

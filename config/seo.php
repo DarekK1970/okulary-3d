@@ -35,6 +35,9 @@ return [
         'password.*',
         'account',
         'account.*',
+        'newsletter.confirm',
+        'newsletter.unsubscribe.form',
+        'newsletter.unsubscribe',
     ],
 
     'sitemap_static_routes' => [

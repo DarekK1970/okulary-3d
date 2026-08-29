@@ -2,8 +2,14 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
+use App\Http\Controllers\AnalyticsEventController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ReadinessController;
+use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\Admin\AdminNavigationController;
 use App\Http\Controllers\Admin\AiTranslationController;
 use App\Http\Controllers\Admin\AiTranslationSettingsController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ArchiveController as AdminArchiveController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
@@ -12,6 +18,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DiscoveryController;
 use App\Http\Controllers\Admin\DiscoverySettingsController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
+use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrchestratorController;
 use App\Http\Controllers\Admin\OrchestratorSettingsController;
@@ -52,15 +60,22 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
 Route::get('/robots.txt', [SeoController::class, 'robots'])
     ->name('robots');
 
+Route::get('/health/ready', ReadinessController::class)
+    ->middleware('throttle:60,1')
+    ->name('health.ready');
+
+Route::post('/analytics/event', [AnalyticsEventController::class, 'store'])
+    ->middleware('throttle:180,1')
+    ->name('analytics.event');
+
 Route::redirect('/', '/' . $defaultLocale);
 
 Route::prefix('{locale}')
     ->where(['locale' => $localePattern])
     ->middleware(SetLocale::class)
     ->group(function () {
-        Route::get('/', function () {
-            return view('home');
-        })->name('home');
+        Route::get('/', HomeController::class)
+            ->name('home');
 
         Route::get('/articles/{slug}', [ArticleController::class, 'show'])
             ->name('articles.show');
@@ -111,6 +126,22 @@ Route::prefix('{locale}')
         Route::get('/gallery/{galleryItem}', [StereoGalleryController::class, 'show'])
             ->name('gallery.show');
 
+        Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+            ->middleware('throttle:10,1')
+            ->name('newsletter.subscribe');
+
+        Route::get('/newsletter/confirm/{subscriber}/{token}', [NewsletterController::class, 'confirm'])
+            ->whereNumber('subscriber')
+            ->name('newsletter.confirm');
+
+        Route::get('/newsletter/unsubscribe/{subscriber}/{token}', [NewsletterController::class, 'unsubscribeForm'])
+            ->whereNumber('subscriber')
+            ->name('newsletter.unsubscribe.form');
+
+        Route::post('/newsletter/unsubscribe/{subscriber}/{token}', [NewsletterController::class, 'unsubscribe'])
+            ->whereNumber('subscriber')
+            ->name('newsletter.unsubscribe');
+
         Route::get('/cart', [CartController::class, 'index'])
             ->name('cart.index');
         Route::post('/cart/items', [CartController::class, 'store'])
@@ -150,16 +181,20 @@ Route::prefix('{locale}')
             Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 
             Route::get('/register', [RegisterController::class, 'create'])->name('register');
-            Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+            Route::post('/register', [RegisterController::class, 'store'])
+                ->middleware('throttle:5,1')
+                ->name('register.store');
 
             Route::get('/forgot-password', [ForgotPasswordController::class, 'create'])
                 ->name('password.request');
             Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])
+                ->middleware('throttle:5,1')
                 ->name('password.email');
 
             Route::get('/reset-password/{token}', [ResetPasswordController::class, 'create'])
                 ->name('password.reset');
             Route::post('/reset-password', [ResetPasswordController::class, 'store'])
+                ->middleware('throttle:10,1')
                 ->name('password.update');
         });
 
@@ -192,7 +227,7 @@ Route::prefix('admin')
     ->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
 
-        Route::get('/content', fn () => redirect()->route('admin.articles.index'))
+        Route::get('/content', [AdminNavigationController::class, 'content'])
             ->name('content');
 
         Route::resource('articles', AdminArticleController::class)
@@ -233,13 +268,12 @@ Route::prefix('admin')
             ->whereNumber('id')
             ->name('translations.translate');
 
-        Route::get('/analytics', [PlaceholderController::class, 'show'])
-            ->defaults('section', 'analytics')
+        Route::get('/analytics', [AnalyticsController::class, 'index'])
             ->name('analytics');
 
         Route::middleware('role:' . User::ROLE_ADMIN . ',' . User::ROLE_SUPER_ADMIN)
             ->group(function () {
-                Route::get('/shop', fn () => redirect()->route('admin.products.index'))
+                Route::get('/shop', [AdminNavigationController::class, 'shop'])
                     ->name('shop');
 
                 Route::resource('products', ProductController::class)
@@ -272,6 +306,42 @@ Route::prefix('admin')
                 Route::get('/users', [PlaceholderController::class, 'show'])
                     ->defaults('section', 'users')
                     ->name('users');
+
+                Route::get('/newsletter', [AdminNewsletterController::class, 'index'])
+                    ->name('newsletter.index');
+
+                Route::get('/newsletter/subscribers/export', [AdminNewsletterController::class, 'export'])
+                    ->name('newsletter.subscribers.export');
+
+                Route::get('/newsletter/campaigns/create', [NewsletterCampaignController::class, 'create'])
+                    ->name('newsletter.campaigns.create');
+
+                Route::post('/newsletter/campaigns', [NewsletterCampaignController::class, 'store'])
+                    ->name('newsletter.campaigns.store');
+
+                Route::get('/newsletter/campaigns/{campaign}/edit', [NewsletterCampaignController::class, 'edit'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.edit');
+
+                Route::put('/newsletter/campaigns/{campaign}', [NewsletterCampaignController::class, 'update'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.update');
+
+                Route::post('/newsletter/campaigns/{campaign}/schedule', [NewsletterCampaignController::class, 'schedule'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.schedule');
+
+                Route::post('/newsletter/campaigns/{campaign}/send-now', [NewsletterCampaignController::class, 'sendNow'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.send-now');
+
+                Route::post('/newsletter/campaigns/{campaign}/send-test', [NewsletterCampaignController::class, 'sendTest'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.send-test');
+
+                Route::delete('/newsletter/campaigns/{campaign}', [NewsletterCampaignController::class, 'destroy'])
+                    ->whereNumber('campaign')
+                    ->name('newsletter.campaigns.destroy');
 
                 Route::get('/discovery', [DiscoveryController::class, 'index'])
                     ->name('discovery.index');

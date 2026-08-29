@@ -1,258 +1,77 @@
-OKULARY3D — KROK 81
-Multilingual SEO
+OKULARY3D — KROK 84 / FIX ROUTE CACHE CHECK
 
-CEL:
-Ujednolicenie technicznego SEO całego publicznego wortalu PL/EN.
+PRZYCZYNA:
+app:release-check zgłaszał:
 
-WDROŻONE:
-1. Globalny canonical.
-2. hreflang PL / EN.
-3. hreflang x-default.
-4. meta robots.
-5. Open Graph.
-6. Twitter Cards.
-7. JSON-LD.
-8. sitemap.xml.
-9. robots.txt.
-10. poprawione przełączanie języka dla treści posiadających różne slugi.
+3 route closure(s) prevent route cache
 
-PUBLICZNE ADRESY:
-http://okulary-3d.test/sitemap.xml
-http://okulary-3d.test/robots.txt
+mimo że rzeczywiste:
 
-CANONICAL:
-Każda publiczna strona indeksowalna otrzymuje jeden canonical.
+php artisan optimize
 
-Dla stron z bezpieczną paginacją:
-?page=2
+kończyło etap:
 
-canonical zachowuje numer strony.
+routes ... DONE
 
-Dla filtrów i wyszukiwania, np.:
-?category=...
-?technique=...
-?q=...
+Problemem był błędny test w ReleaseReadinessService.
 
-strona otrzymuje:
-noindex,follow
+Poprzednia wersja uznawała:
 
-a canonical wskazuje czystą stronę bazową bez parametrów.
+$route->getAction('uses') instanceof Closure
 
-HREFLANG:
-Dla zwykłych stron:
-PL i EN generowane są automatycznie na podstawie tej samej trasy.
+za automatyczny błąd kompatybilności z route cache.
 
-Dla:
-- artykułów,
-- produktów,
-- archiwum,
+To założenie jest nieprawidłowe dla aktualnego Laravel 13,
+który potrafi przygotować obsługiwane route closures
+do serializacji.
 
-alternatywne URL-e są budowane z rzeczywistych lokalizowanych slugów.
+NAPRAWA:
+ReleaseReadinessService nie liczy już Closure.
 
-Przykład:
-PL:
-/pl/articles/fotografia-stereoskopowa
+Dla każdej trasy:
+1. tworzy KLON obiektu Route,
+2. wywołuje na klonie:
+   prepareForSerialization()
 
-EN:
-/en/articles/stereoscopic-photography
+To odpowiada rzeczywistej operacji przygotowania trasy
+do route cache, a jednocześnie nie modyfikuje aktywnej
+kolekcji routingu bieżącego procesu.
 
-Dodatkowo:
-hreflang="x-default"
+Jeżeli którakolwiek trasa faktycznie nie nadaje się
+do serializacji, wyjątek zostanie przechwycony
+i route_cache nadal otrzyma FAIL.
 
-wskazuje domyślną wersję PL, o ile jest publicznie dostępna.
+Jeżeli wszystkie trasy przejdą:
+route_cache = OK
 
-PRZEŁĄCZNIK JĘZYKA:
-Nagłówek korzysta teraz z tych samych adresów co hreflang.
-
-Naprawia to wcześniejszy problem stron szczegółowych, gdzie:
-Article / Product / Archive
-mogły mieć inny slug PL i EN.
-
-Jeśli dana wersja językowa nie istnieje,
-przełącznik bezpiecznie wraca do strony głównej tego języka.
-
-OPEN GRAPH / TWITTER:
-Globalny layout dodaje:
-- og:type
-- og:title
-- og:description
-- og:url
-- og:site_name
-- og:locale
-- og:locale:alternate
-- og:image, jeśli istnieje
-- twitter:card
-- twitter:title
-- twitter:description
-- twitter:image, jeśli istnieje
-
-Obrazy SEO są konwertowane do pełnych URL-i absolutnych.
-
-JSON-LD:
-Globalnie:
-- Organization
-- WebSite
-
-Artykuł:
-- Article
-
-Produkt:
-- Product
-- Offer dla aktywnych wariantów
-- cena
-- waluta
-- dostępność
-- SKU
-- marka
-
-Archiwum:
-- CreativeWork
-
-Galeria:
-- ImageObject
-
-SITEMAP.XML:
-Zawiera:
-- stronę główną PL/EN,
-- sklep PL/EN,
-- wszystkie działające narzędzia 3D LAB PL/EN,
-- archiwum PL/EN,
-- galerię PL/EN,
-- opublikowane artykuły,
-- aktywne produkty z aktywnymi wariantami,
-- opublikowane obiekty archiwum,
-- opublikowane prace galerii.
-
-Dla rekordów wielojęzycznych sitemap używa rzeczywistych slugów językowych.
-
-W sitemapie znajdują się także:
-xhtml:link rel="alternate" hreflang="pl"
-xhtml:link rel="alternate" hreflang="en"
-xhtml:link rel="alternate" hreflang="x-default"
-
-Sitemap NIE zawiera:
-- wersji Draft,
-- wersji Review,
-- nieopublikowanych artykułów,
-- nieaktywnych produktów,
-- nieopublikowanego archiwum,
-- niezatwierdzonych prac galerii.
-
-ROBOTS.TXT:
-Pozwala indeksować publiczny portal, ale blokuje crawling obszarów prywatnych:
-
-/admin
-/*/account
-/*/cart
-/*/checkout
-/*/login
-/*/register
-/*/forgot-password
-/*/reset-password
-/*/order/
-/*/payment/
-
-Na końcu robots.txt podawany jest pełny adres sitemap.xml.
-
-NOINDEX:
-Publiczny layout automatycznie stosuje:
-noindex,nofollow
-
-dla:
-- logowania,
-- rejestracji,
-- resetowania hasła,
-- konta,
-- koszyka,
-- checkout,
-- zamówień,
-- płatności,
-- formularza dodawania pracy do galerii.
-
-Dla stron filtrowanych:
-noindex,follow
-
-Dodatkowe zabezpieczenie:
-prywatne URL-e, np. link resetu hasła albo public_token zamówienia,
-nie są kopiowane do canonical ani hreflang.
-
-PLIKI:
-NOWE:
-- config/seo.php
-- app/Services/SeoService.php
-- app/Services/SitemapService.php
-- app/Http/Controllers/SeoController.php
-- resources/views/seo/sitemap.blade.php
-- tests/Feature/MultilingualSeoTest.php
-
-ZMIENIONE:
-- routes/web.php
-- resources/views/layouts/app.blade.php
-- resources/views/partials/header.blade.php
-- app/Http/Controllers/ArticleController.php
-- app/Http/Controllers/ShopController.php
-- app/Http/Controllers/ArchiveController.php
-- app/Http/Controllers/StereoGalleryController.php
-- resources/views/articles/show.blade.php
-- resources/views/shop/show.blade.php
+ZMIENIONY PLIK:
+app/Services/ReleaseReadinessService.php
 
 MIGRACJE:
-Brak.
+brak
 
-NPM BUILD:
-Brak nowych assetów.
-npm run build nie jest wymagany.
+NPM:
+nie trzeba wykonywać npm run build
 
 PO ROZPAKOWANIU:
 php artisan optimize:clear
+
+Najpierw:
+php artisan test --filter=ProductionReadinessTest
+
+Następnie:
 php artisan test
 
-TEST RĘCZNY:
-1. Otwórz źródło:
-   http://okulary-3d.test/pl
+Potem:
+php artisan app:release-check
 
-2. Sprawdź:
-   canonical
-   hreflang pl
-   hreflang en
-   hreflang x-default
-   og:locale=pl_PL
+OCZEKIWANE:
+route_cache = OK
 
-3. Otwórz artykuł posiadający PL i EN z różnymi slugami.
-   Sprawdź:
-   - przełącznik PL/EN,
-   - canonical,
-   - hreflang,
-   - JSON-LD Article.
+Na końcu ponownie można sprawdzić realny cache:
 
-4. Otwórz produkt PL/EN.
-   Sprawdź JSON-LD:
-   Product
-   Offer
-   priceCurrency
-   availability.
+php artisan optimize
+php artisan about
 
-5. Otwórz:
-   /pl/archive?technique=stereocard
-
-   Powinno być:
-   meta robots = noindex,follow
-
-   canonical:
-   /pl/archive
-
-6. Otwórz:
-   http://okulary-3d.test/sitemap.xml
-
-   Sprawdź PL/EN i x-default.
-
-7. Otwórz:
-   http://okulary-3d.test/robots.txt
-
-COMMIT:
-git add .
-git commit -m "Add multilingual SEO"
-git push
-
-NASTĘPNY KROK:
-KROK 82 — Portal Analytics.
+Po teście lokalnym:
+php artisan optimize:clear

@@ -87,6 +87,9 @@
                                 <a
                                     class="contextual-tool-card"
                                     href="{{ route($tool['route'], ['locale' => app()->getLocale()]) }}"
+                                    data-analytics-event="recommendation_click"
+                                    data-analytics-category="tool"
+                                    data-analytics-label="{{ $tool['key'] }}"
                                 >
                                     <div class="contextual-tool-icon">3D</div>
 
@@ -118,6 +121,9 @@
                                         'locale' => app()->getLocale(),
                                         'slug' => $card['translation']->slug
                                     ]) }}"
+                                    data-analytics-event="recommendation_click"
+                                    data-analytics-category="product"
+                                    data-analytics-label="{{ $card['product']->id }}"
                                 >
                                     <div class="contextual-product-image">
                                         @if ($card['media'])
