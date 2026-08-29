@@ -186,3 +186,181 @@
         font-size: 1.45rem;
     }
 }
+
+
+/* KROK 80 — Contextual Recommendations */
+
+.contextual-recommendations {
+    margin-top: 28px;
+    padding: 20px;
+    border: 1px solid #dfe5ec;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fbfcfd, #f5f8fa);
+}
+
+.contextual-recommendations-heading > span,
+.contextual-section-heading > span {
+    color: #0b91bd;
+    font-size: .48rem;
+    font-weight: 900;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.contextual-recommendations-heading h2,
+.contextual-section-heading h3 {
+    margin: 4px 0 0;
+    color: #334158;
+}
+
+.contextual-recommendations-heading h2 {
+    font-size: 1rem;
+}
+
+.contextual-recommendations-heading p {
+    margin: 5px 0 0;
+    color: #7a8698;
+    font-size: .56rem;
+    line-height: 1.55;
+}
+
+.contextual-tools-block,
+.contextual-products-block {
+    margin-top: 18px;
+}
+
+.contextual-section-heading h3 {
+    font-size: .7rem;
+}
+
+.contextual-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 9px;
+}
+
+.contextual-tool-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #dce7ec;
+    border-radius: 10px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+}
+
+.contextual-tool-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #e7faff, #fff0f3);
+    color: #42516a;
+    font-size: .58rem;
+    font-weight: 900;
+}
+
+.contextual-tool-card strong {
+    color: #435168;
+    font-size: .61rem;
+}
+
+.contextual-tool-card p {
+    margin: 4px 0 6px;
+    color: #7c8899;
+    font-size: .5rem;
+    line-height: 1.45;
+}
+
+.contextual-tool-card span {
+    color: #0a8fb9;
+    font-size: .49rem;
+    font-weight: 900;
+}
+
+.contextual-product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 9px;
+}
+
+.contextual-product-card {
+    overflow: hidden;
+    border: 1px solid #e0e5eb;
+    border-radius: 10px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+}
+
+.contextual-product-image {
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #f0f3f6;
+}
+
+.contextual-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.contextual-product-image span {
+    color: #8b95a4;
+    font-size: .8rem;
+    font-weight: 900;
+}
+
+.contextual-product-copy {
+    padding: 10px;
+}
+
+.contextual-product-copy > strong {
+    display: block;
+    color: #445168;
+    font-size: .56rem;
+}
+
+.contextual-product-copy > p {
+    margin: 5px 0 8px;
+    color: #7e8999;
+    font-size: .47rem;
+    line-height: 1.4;
+}
+
+.contextual-product-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 5px;
+    color: #667388;
+    font-size: .46rem;
+}
+
+.contextual-product-bottom b {
+    color: #0a8fb9;
+}
+
+@media (max-width: 800px) {
+    .contextual-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .contextual-tool-grid,
+    .contextual-product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contextual-recommendations {
+        padding: 14px;
+    }
+}

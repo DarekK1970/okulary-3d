@@ -66,16 +66,11 @@
             @endif
         </header>
 
-        @php
-            $heroPath = $article->heroMedia?->path ?? $article->hero_image_path;
-            $heroAlt = $article->heroMedia?->alt_text ?: $translation->title;
-        @endphp
-
-        @if ($heroPath)
+        @if ($article->hero_image_path)
             <figure class="article-hero">
                 <img
-                    src="{{ Storage::disk('public')->url($heroPath) }}"
-                    alt="{{ $heroAlt }}"
+                    src="{{ Storage::url($article->hero_image_path) }}"
+                    alt="{{ $translation->title }}"
                 >
             </figure>
         @endif
@@ -83,6 +78,105 @@
         <div class="article-content">
             {!! $translation->body_html !!}
         </div>
+
+        @if (
+            ! empty($contextualRecommendations['tools'])
+            || ! empty($contextualRecommendations['products'])
+        )
+            <section class="contextual-recommendations">
+                <div class="contextual-recommendations-heading">
+                    <span>{{ __('recommendations.public.kicker') }}</span>
+                    <h2>{{ __('recommendations.public.title') }}</h2>
+                    <p>{{ __('recommendations.public.description') }}</p>
+                </div>
+
+                @if (! empty($contextualRecommendations['tools']))
+                    <div class="contextual-tools-block">
+                        <div class="contextual-section-heading">
+                            <span>3D LAB</span>
+                            <h3>{{ __('recommendations.public.tools_title') }}</h3>
+                        </div>
+
+                        <div class="contextual-tool-grid">
+                            @foreach ($contextualRecommendations['tools'] as $tool)
+                                <a
+                                    class="contextual-tool-card"
+                                    href="{{ route($tool['route'], ['locale' => app()->getLocale()]) }}"
+                                >
+                                    <div class="contextual-tool-icon">3D</div>
+
+                                    <div>
+                                        <strong>{{ $tool['title'] }}</strong>
+                                        <p>{{ $tool['description'] }}</p>
+                                        <span>
+                                            {{ __('recommendations.public.open_tool') }} →
+                                        </span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if (! empty($contextualRecommendations['products']))
+                    <div class="contextual-products-block">
+                        <div class="contextual-section-heading">
+                            <span>{{ __('recommendations.public.shop_badge') }}</span>
+                            <h3>{{ __('recommendations.public.products_title') }}</h3>
+                        </div>
+
+                        <div class="contextual-product-grid">
+                            @foreach ($contextualRecommendations['products'] as $card)
+                                <a
+                                    class="contextual-product-card"
+                                    href="{{ route('shop.show', [
+                                        'locale' => app()->getLocale(),
+                                        'slug' => $card['translation']->slug
+                                    ]) }}"
+                                >
+                                    <div class="contextual-product-image">
+                                        @if ($card['media'])
+                                            <img
+                                                src="{{ $card['media']->url() }}"
+                                                alt="{{ $card['media']->alt_text ?: $card['translation']->name }}"
+                                                loading="lazy"
+                                            >
+                                        @else
+                                            <span>3D</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="contextual-product-copy">
+                                        <strong>{{ $card['translation']->name }}</strong>
+
+                                        @if ($card['translation']->short_description)
+                                            <p>
+                                                {{ \Illuminate\Support\Str::limit(
+                                                    $card['translation']->short_description,
+                                                    100
+                                                ) }}
+                                            </p>
+                                        @endif
+
+                                        <div class="contextual-product-bottom">
+                                            @if ($card['price'])
+                                                <span>
+                                                    {{ __('recommendations.public.from') }}
+                                                    {{ $card['price'] }}
+                                                    {{ $card['currency'] }}
+                                                </span>
+                                            @endif
+
+                                            <b>{{ __('recommendations.public.open_product') }} →</b>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </section>
+        @endif
 
         <footer class="article-footer">
             <a href="{{ route('home', ['locale' => app()->getLocale()]) }}#articles">

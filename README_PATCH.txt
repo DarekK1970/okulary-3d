@@ -1,66 +1,90 @@
-OKULARY3D — KROK 78 / FIX DISCOVERY FILTER
+OKULARY3D — KROK 80
+Contextual Recommendations
 
-PRZYCZYNA:
-W DiscoveryService zastosowano:
+CEL:
+Połączenie ścieżki:
+ARTYKUŁ -> 3D LAB -> SKLEP
 
-Collection::filter('is_array')
+FUNKCJONALNOŚCI:
+- rekomendacje narzędzi 3D LAB pod artykułem,
+- rekomendacje produktów sklepu pod artykułem,
+- ręczne wskazania w edytorze artykułu,
+- opcjonalne automatyczne uzupełnianie rekomendacji,
+- ręczne rekomendacje zawsze mają pierwszeństwo,
+- maksymalnie 2 narzędzia i 4 produkty.
 
-W Laravel 13 callback przekazywany do Collection::filter()
-otrzymuje dwa argumenty:
-- wartość
-- klucz
+NARZĘDZIA:
+- Anaglyph Maker
+- Stereo Alignment / Converter
+- Lenticular LAB
+- MPO Viewer / Converter
+- Wigglegram Maker
 
-Natywna funkcja PHP is_array() przyjmuje tylko jeden argument.
+TRYB AUTOMATYCZNY:
+System analizuje treść aktualnej wersji językowej artykułu
+i dopasowuje działające narzędzia na podstawie słownictwa
+związanego z daną techniką.
 
-Powodowało to:
-ArgumentCountError:
-is_array() expects exactly 1 argument, 2 given
+Produkty są dobierane wyłącznie spośród:
+- Active,
+- posiadających aktywny wariant,
+- posiadających publiczną wersję językową.
 
-Błąd występował w normalizeCandidate() podczas:
-- filtrowania listy sources,
-- filtrowania listy facts.
+Jeżeli dopasowanie produktu jest zbyt słabe,
+produkt nie jest pokazywany.
 
-SKUTEK:
-Każde wykonanie Discovery kończyło się wyjątkiem.
-Controller wykonywał catch() i back(), dlatego testy oczekujące:
- /admin/discovery
-otrzymywały redirect do:
- /
+TRYB RĘCZNY:
+Admin -> Artykuły -> Edycja
 
-NAPRAWA:
-Zastąpiono oba wywołania:
+Nowy panel:
+Rekomendacje kontekstowe
 
-->filter('is_array')
+Redaktor może:
+- włączyć/wyłączyć AUTO,
+- wskazać do 2 narzędzi,
+- wskazać do 4 produktów.
 
-bezpiecznym callbackiem:
+AUTO OFF:
+wyświetlane są tylko wskazania ręczne.
 
-->filter(static fn (mixed $value): bool => is_array($value))
-
-ZMIENIONY PLIK:
-app/Services/DiscoveryService.php
+AUTO ON:
+wskazania ręczne są pierwsze,
+a wolne miejsca mogą zostać uzupełnione automatycznie.
 
 BAZA:
-Brak migracji.
+- nowa kolumna articles.recommendation_auto
+- nowa tabela article_context_recommendations
 
-BUILD:
-Nie trzeba wykonywać npm run build.
+PUBLICZNY ARTYKUŁ:
+Po treści może pojawić się sekcja:
+Sprawdź ten temat w praktyce
 
-PO ROZPAKOWANIU:
+z blokami:
+- Powiązane narzędzia
+- Powiązane produkty
+
+WDROŻENIE:
 php artisan optimize:clear
+php artisan migrate
+npm run build
 php artisan test
 
-Możesz też najpierw uruchomić tylko test modułu:
+TEST RĘCZNY:
+1. Otwórz istniejący artykuł w Admin -> Artykuły.
+2. Znajdź panel Rekomendacje kontekstowe.
+3. Wybierz np. Lenticular LAB.
+4. Wybierz 1 produkt.
+5. Zapisz artykuł.
+6. Otwórz wersję publiczną.
+7. Sprawdź link LAB i produkt.
+8. Włącz AUTO i przetestuj artykuł zawierający słowa:
+   lenticular / lentikular / LPI / folia soczewkowa.
+9. System powinien sam zaproponować Lenticular LAB.
 
-php artisan test --filter=DiscoveryAgentTest
-
-OCZEKIWANY WYNIK:
-DiscoveryAgentTest:
-7 passed
-
-Następnie:
-pełny zestaw testów powinien przejść bez 3 dotychczasowych błędów.
-
-COMMIT PO ZALICZENIU:
+COMMIT:
 git add .
-git commit -m "Fix Discovery Agent collection filtering"
+git commit -m "Add contextual recommendations"
 git push
+
+NASTĘPNY KROK:
+KROK 81 — Multilingual SEO.

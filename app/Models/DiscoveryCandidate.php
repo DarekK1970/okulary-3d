@@ -58,4 +58,11 @@ class DiscoveryCandidate extends Model
             'decision_by'
         );
     }
+
+    public function orchestratorPlanItems(): HasMany
+    {
+        return $this->hasMany(
+            OrchestratorPlanItem::class
+        );
+    }
 }

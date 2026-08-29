@@ -30,6 +30,7 @@ class Article extends Model
         'hero_media_id',
         'status',
         'published_at',
+        'recommendation_auto',
         'created_by',
         'updated_by',
     ];
@@ -39,6 +40,7 @@ class Article extends Model
         return [
             'status' => ArticleStatus::class,
             'published_at' => 'datetime',
+            'recommendation_auto' => 'boolean',
         ];
     }
 
@@ -65,6 +67,13 @@ class Article extends Model
     public function translations(): HasMany
     {
         return $this->hasMany(ArticleTranslation::class);
+    }
+
+    public function contextRecommendations(): HasMany
+    {
+        return $this->hasMany(
+            ArticleContextRecommendation::class
+        )->orderBy('position');
     }
 
     public function translation(string $locale): ?ArticleTranslation

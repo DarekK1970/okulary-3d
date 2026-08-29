@@ -1,0 +1,104 @@
+/* KROK 80 — article recommendation editor */
+
+.contextual-admin-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.contextual-admin-heading h2 {
+    margin: 3px 0 0;
+}
+
+.contextual-admin-heading > span {
+    color: #9aa4b3;
+    font-size: .45rem;
+    font-weight: 800;
+}
+
+.contextual-admin-help {
+    margin: 8px 0 12px;
+    color: #8793a4;
+    font-size: .5rem;
+    line-height: 1.5;
+}
+
+.contextual-auto-checkbox {
+    align-items: flex-start;
+    padding: 9px;
+    border-radius: 8px;
+    background: #f6fbfc;
+}
+
+.contextual-auto-checkbox strong {
+    display: block;
+    color: #4b5a70;
+}
+
+.contextual-admin-subsection {
+    display: grid;
+    gap: 6px;
+    margin-top: 13px;
+    padding-top: 11px;
+    border-top: 1px solid #edf0f4;
+}
+
+.contextual-admin-subsection > strong,
+.contextual-admin-subsection > label > strong {
+    color: #59677c;
+    font-size: .54rem;
+}
+
+.contextual-admin-subsection > small,
+.contextual-admin-subsection > label > small {
+    color: #929cab;
+    font-size: .46rem;
+    line-height: 1.4;
+}
+
+.contextual-tool-options {
+    display: grid;
+    gap: 6px;
+}
+
+.contextual-tool-options label {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 7px;
+    align-items: start;
+    padding: 7px;
+    border: 1px solid #e3e8ed;
+    border-radius: 7px;
+    background: #fff;
+}
+
+.contextual-tool-options input {
+    margin-top: 2px;
+}
+
+.contextual-tool-options strong {
+    display: block;
+    color: #536075;
+    font-size: .5rem;
+}
+
+.contextual-tool-options small {
+    display: block;
+    margin-top: 2px;
+    color: #909baa;
+    font-size: .44rem;
+    line-height: 1.35;
+}
+
+.contextual-product-select {
+    width: 100%;
+    min-height: 150px;
+    padding: 6px;
+    border: 1px solid #dce3eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #4d5a70;
+    font: inherit;
+    font-size: .49rem;
+}

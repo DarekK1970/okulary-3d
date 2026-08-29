@@ -4,16 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Enums\ArticleTranslationStatus;
 use App\Models\ArticleTranslation;
+use App\Services\ContextualRecommendationService;
 use Illuminate\View\View;
 
 class ArticleController extends Controller
 {
-    public function show(string $locale, string $slug): View
-    {
+    public function show(
+        string $locale,
+        string $slug,
+        ContextualRecommendationService $recommendations
+    ): View {
         $translation = ArticleTranslation::query()
             ->with([
                 'article.category',
-                'article.heroMedia',
+                'article.contextRecommendations.product.translations',
+                'article.contextRecommendations.product.activeVariants',
+                'article.contextRecommendations.product.media',
+                'article.contextRecommendations.product.category.translations',
                 'article.translations' => fn ($query) => $query
                     ->whereIn(
                         'translation_status',
@@ -32,9 +39,16 @@ class ArticleController extends Controller
             )
             ->firstOrFail();
 
+        $article = $translation->article;
+
         return view('articles.show', [
             'translation' => $translation,
-            'article' => $translation->article,
+            'article' => $article,
+            'contextualRecommendations' =>
+                $recommendations->resolve(
+                    $article,
+                    $locale
+                ),
         ]);
     }
 }

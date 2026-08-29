@@ -10,6 +10,22 @@
     );
     $currentHeroId = old('hero_media_id', $article->hero_media_id);
     $currentHeroPath = $article->heroMedia?->path ?? $article->hero_image_path;
+    $recommendationAuto = (bool) old(
+        'recommendation_auto',
+        $article->recommendation_auto ?? true
+    );
+    $currentRecommendationTools = old(
+        'recommendation_tools',
+        $selectedRecommendationTools ?? []
+    );
+    $currentRecommendationProducts = collect(
+        old(
+            'recommendation_products',
+            $selectedRecommendationProducts ?? []
+        )
+    )
+        ->map(fn ($id) => (int) $id)
+        ->all();
 @endphp
 
 <div class="cms-editor-grid">
@@ -329,6 +345,91 @@
                     <span>{{ __('cms.articles.form.remove_hero') }}</span>
                 </label>
             @endif
+        </section>
+
+        <section class="cms-panel contextual-admin-panel">
+            <div class="contextual-admin-heading">
+                <div>
+                    <span class="admin-eyebrow">{{ __('recommendations.admin.kicker') }}</span>
+                    <h2>{{ __('recommendations.admin.title') }}</h2>
+                </div>
+                <span>Article → LAB → Shop</span>
+            </div>
+
+            <p class="contextual-admin-help">
+                {{ __('recommendations.admin.help') }}
+            </p>
+
+            <label class="cms-checkbox contextual-auto-checkbox">
+                <input
+                    type="checkbox"
+                    name="recommendation_auto"
+                    value="1"
+                    @checked($recommendationAuto)
+                >
+                <span>
+                    <strong>{{ __('recommendations.admin.auto') }}</strong>
+                    {{ __('recommendations.admin.auto_help') }}
+                </span>
+            </label>
+
+            <div class="contextual-admin-subsection">
+                <strong>{{ __('recommendations.admin.tools') }}</strong>
+                <small>{{ __('recommendations.admin.tools_help') }}</small>
+
+                <div class="contextual-tool-options">
+                    @foreach ($recommendationTools as $tool)
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="recommendation_tools[]"
+                                value="{{ $tool['key'] }}"
+                                @checked(in_array($tool['key'], $currentRecommendationTools, true))
+                            >
+                            <span>
+                                <strong>{{ $tool['title'] }}</strong>
+                                <small>{{ $tool['description'] }}</small>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="contextual-admin-subsection">
+                <label for="recommendation-products">
+                    <strong>{{ __('recommendations.admin.products') }}</strong>
+                    <small>{{ __('recommendations.admin.products_help') }}</small>
+                </label>
+
+                <select
+                    id="recommendation-products"
+                    name="recommendation_products[]"
+                    multiple
+                    size="7"
+                    class="contextual-product-select"
+                >
+                    @foreach ($recommendationProducts as $product)
+                        @php
+                            $productLabel = $product->sourceTranslation()?->name
+                                ?: $product->translations->first()?->name
+                                ?: ('#' . $product->id);
+                            $variant = $product->activeVariants
+                                ->sortBy(fn ($item) => (float) $item->price_gross)
+                                ->first();
+                        @endphp
+
+                        <option
+                            value="{{ $product->id }}"
+                            @selected(in_array($product->id, $currentRecommendationProducts, true))
+                        >
+                            {{ $productLabel }}
+                            @if ($variant)
+                                — {{ number_format((float) $variant->price_gross, 2, ',', ' ') }} {{ $variant->currency }}
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         </section>
 
         <div class="cms-form-actions">

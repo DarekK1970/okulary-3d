@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\DiscoveryController;
 use App\Http\Controllers\Admin\DiscoverySettingsController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\OrchestratorController;
+use App\Http\Controllers\Admin\OrchestratorSettingsController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -278,9 +280,27 @@ Route::prefix('admin')
                     ->whereNumber('candidate')
                     ->name('discovery.decision');
 
-                Route::get('/orchestrator', [PlaceholderController::class, 'show'])
-                    ->defaults('section', 'orchestrator')
-                    ->name('orchestrator');
+                Route::get('/orchestrator', [OrchestratorController::class, 'index'])
+                    ->name('orchestrator.index');
+
+                Route::post('/orchestrator/plans', [OrchestratorController::class, 'createPlan'])
+                    ->name('orchestrator.plans.store');
+
+                Route::get('/orchestrator/plans/{plan}', [OrchestratorController::class, 'show'])
+                    ->whereNumber('plan')
+                    ->name('orchestrator.plans.show');
+
+                Route::patch('/orchestrator/plans/{plan}/approve', [OrchestratorController::class, 'approve'])
+                    ->whereNumber('plan')
+                    ->name('orchestrator.plans.approve');
+
+                Route::delete('/orchestrator/plans/{plan}', [OrchestratorController::class, 'destroy'])
+                    ->whereNumber('plan')
+                    ->name('orchestrator.plans.destroy');
+
+                Route::post('/orchestrator/items/{item}/draft', [OrchestratorController::class, 'generateDraft'])
+                    ->whereNumber('item')
+                    ->name('orchestrator.items.draft');
             });
 
         Route::middleware('role:' . User::ROLE_SUPER_ADMIN)
@@ -303,6 +323,12 @@ Route::prefix('admin')
 
                 Route::put('/settings/discovery', [DiscoverySettingsController::class, 'update'])
                     ->name('settings.discovery.update');
+
+                Route::get('/settings/orchestrator', [OrchestratorSettingsController::class, 'edit'])
+                    ->name('settings.orchestrator');
+
+                Route::put('/settings/orchestrator', [OrchestratorSettingsController::class, 'update'])
+                    ->name('settings.orchestrator.update');
             });
     });
 

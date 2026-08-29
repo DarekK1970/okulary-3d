@@ -26,6 +26,8 @@ export default defineConfig({
                 'resources/css/admin-archive.css',
                 'resources/css/admin-ai-translator.css',
                 'resources/css/admin-discovery.css',
+                'resources/css/admin-orchestrator.css',
+                'resources/css/admin-contextual-recommendations.css',
                 'resources/css/admin-gallery.css',
                 'resources/js/app.js',
                 'resources/js/admin-cms.js',

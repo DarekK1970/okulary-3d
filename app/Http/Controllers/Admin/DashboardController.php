@@ -66,7 +66,7 @@ class DashboardController extends Controller
             ],
             [
                 'key' => 'orchestrator',
-                'route' => 'admin.orchestrator',
+                'route' => 'admin.orchestrator.index',
                 'roles' => [
                     User::ROLE_ADMIN,
                     User::ROLE_SUPER_ADMIN,

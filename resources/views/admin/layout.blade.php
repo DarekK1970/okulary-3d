@@ -20,6 +20,8 @@
         'resources/css/admin-archive.css',
         'resources/css/admin-ai-translator.css',
         'resources/css/admin-discovery.css',
+        'resources/css/admin-orchestrator.css',
+        'resources/css/admin-contextual-recommendations.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -113,9 +115,12 @@
                         {{ __('discovery.admin.menu') }}
                     </a>
 
-                    <a class="admin-nav-link {{ request()->routeIs('admin.orchestrator') ? 'is-active' : '' }}" href="{{ route('admin.orchestrator') }}">
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.orchestrator.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.orchestrator.index') }}"
+                    >
                         <span>◇</span>
-                        {{ __('admin.menu.orchestrator') }}
+                        {{ __('orchestrator.admin.menu') }}
                     </a>
                 @endif
 

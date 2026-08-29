@@ -9,7 +9,9 @@ use App\Models\Article;
 use App\Models\ArticleCategory;
 use App\Models\ArticleTranslation;
 use App\Models\MediaAsset;
+use App\Models\Product;
 use App\Services\ArticleHtmlSanitizer;
+use App\Services\ContextualRecommendationService;
 use App\Services\MediaAssetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,27 +63,39 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function create(): View
-    {
+    public function create(
+        ContextualRecommendationService $recommendations
+    ): View {
         return view('admin.articles.create', [
             'article' => new Article([
                 'status' => ArticleStatus::Draft,
                 'source_locale' => config('locales.default', 'pl'),
+                'recommendation_auto' => true,
             ]),
             'categories' => $this->categories(),
             'statuses' => ArticleStatus::cases(),
             'translationStatuses' => ArticleTranslationStatus::cases(),
             'supportedLocales' => config('locales.supported', []),
             'mediaAssets' => $this->mediaAssets(),
+            'recommendationTools' =>
+                $recommendations->toolCatalog(),
+            'recommendationProducts' =>
+                $this->recommendationProducts(),
+            'selectedRecommendationTools' => [],
+            'selectedRecommendationProducts' => [],
         ]);
     }
 
     public function store(
         Request $request,
         ArticleHtmlSanitizer $sanitizer,
-        MediaAssetService $mediaService
+        MediaAssetService $mediaService,
+        ContextualRecommendationService $recommendations
     ): RedirectResponse {
-        $validated = $this->validateArticle($request);
+        $validated = $this->validateArticle(
+            $request,
+            $recommendations
+        );
         $status = ArticleStatus::from($validated['status']);
         $sourceLocale = $validated['source_locale'];
         $source = $validated['translations'][$sourceLocale];
@@ -101,6 +115,10 @@ class ArticleController extends Controller
         $article->body_html = $sanitizer->sanitize($source['body_html']);
 
         $article->status = $status;
+        $article->recommendation_auto =
+            $request->boolean(
+                'recommendation_auto'
+            );
         $article->published_at = $this->publishedAt(
             $status,
             $validated['published_at'] ?? null
@@ -124,14 +142,32 @@ class ArticleController extends Controller
             [$sourceLocale => $sourceTranslationSlug]
         );
 
+        $recommendations->syncManual(
+            $article,
+            $validated['recommendation_tools'] ?? [],
+            $validated['recommendation_products'] ?? [],
+            $request->user()->id
+        );
+
         return redirect()
             ->route('admin.articles.edit', $article)
             ->with('status', __('cms.articles.messages.created'));
     }
 
-    public function edit(Article $article): View
-    {
-        $article->load(['translations', 'heroMedia']);
+    public function edit(
+        Article $article,
+        ContextualRecommendationService $recommendations
+    ): View {
+        $article->load([
+            'translations',
+            'heroMedia',
+            'contextRecommendations',
+        ]);
+
+        $selection =
+            $recommendations->manualSelection(
+                $article
+            );
 
         return view('admin.articles.edit', [
             'article' => $article,
@@ -140,6 +176,14 @@ class ArticleController extends Controller
             'translationStatuses' => ArticleTranslationStatus::cases(),
             'supportedLocales' => config('locales.supported', []),
             'mediaAssets' => $this->mediaAssets(),
+            'recommendationTools' =>
+                $recommendations->toolCatalog(),
+            'recommendationProducts' =>
+                $this->recommendationProducts(),
+            'selectedRecommendationTools' =>
+                $selection['tools'],
+            'selectedRecommendationProducts' =>
+                $selection['products'],
         ]);
     }
 
@@ -147,9 +191,13 @@ class ArticleController extends Controller
         Request $request,
         Article $article,
         ArticleHtmlSanitizer $sanitizer,
-        MediaAssetService $mediaService
+        MediaAssetService $mediaService,
+        ContextualRecommendationService $recommendations
     ): RedirectResponse {
-        $validated = $this->validateArticle($request);
+        $validated = $this->validateArticle(
+            $request,
+            $recommendations
+        );
         $status = ArticleStatus::from($validated['status']);
         $sourceLocale = $validated['source_locale'];
         $source = $validated['translations'][$sourceLocale];
@@ -172,6 +220,10 @@ class ArticleController extends Controller
         $article->body_html = $sanitizer->sanitize($source['body_html']);
 
         $article->status = $status;
+        $article->recommendation_auto =
+            $request->boolean(
+                'recommendation_auto'
+            );
         $article->published_at = $this->publishedAt(
             $status,
             $validated['published_at'] ?? null
@@ -194,6 +246,13 @@ class ArticleController extends Controller
             [$sourceLocale => $sourceTranslationSlug]
         );
 
+        $recommendations->syncManual(
+            $article,
+            $validated['recommendation_tools'] ?? [],
+            $validated['recommendation_products'] ?? [],
+            $request->user()->id
+        );
+
         return back()->with('status', __('cms.articles.messages.updated'));
     }
 
@@ -211,7 +270,10 @@ class ArticleController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validateArticle(Request $request): array
+    private function validateArticle(
+        Request $request,
+        ContextualRecommendationService $recommendations
+    ): array
     {
         $supportedLocales = array_keys(
             config('locales.supported', ['pl' => []])
@@ -256,6 +318,37 @@ class ArticleController extends Controller
                 'max:5120',
             ],
             'remove_hero_image' => ['nullable', 'boolean'],
+            'recommendation_auto' => [
+                'nullable',
+                'boolean',
+            ],
+            'recommendation_tools' => [
+                'nullable',
+                'array',
+                'max:2',
+            ],
+            'recommendation_tools.*' => [
+                'string',
+                Rule::in(
+                    array_keys(
+                        $recommendations
+                            ->toolDefinitions()
+                    )
+                ),
+            ],
+            'recommendation_products' => [
+                'nullable',
+                'array',
+                'max:4',
+            ],
+            'recommendation_products.*' => [
+                'integer',
+                'distinct',
+                Rule::exists(
+                    'products',
+                    'id'
+                ),
+            ],
             'translations' => ['required', 'array'],
         ];
 
@@ -454,6 +547,25 @@ class ArticleController extends Controller
         return MediaAsset::query()
             ->latest('id')
             ->limit(100)
+            ->get();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Product>
+     */
+    private function recommendationProducts()
+    {
+        return Product::query()
+            ->active()
+            ->whereHas('activeVariants')
+            ->with([
+                'translations',
+                'activeVariants',
+                'category.translations',
+            ])
+            ->orderByDesc('is_featured')
+            ->latest('id')
+            ->limit(150)
             ->get();
     }
 
