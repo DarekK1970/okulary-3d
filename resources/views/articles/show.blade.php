@@ -5,21 +5,6 @@
 
 @push('head')
     @vite('resources/css/article.css')
-
-    <link
-        rel="canonical"
-        href="{{ route('articles.show', ['locale' => $translation->locale, 'slug' => $translation->slug]) }}"
-    >
-
-    @foreach ($article->translations as $alternate)
-        @if ($alternate->isPubliclyReady())
-            <link
-                rel="alternate"
-                hreflang="{{ $alternate->locale }}"
-                href="{{ route('articles.show', ['locale' => $alternate->locale, 'slug' => $alternate->slug]) }}"
-            >
-        @endif
-    @endforeach
 @endpush
 
 @section('content')

@@ -8,18 +8,6 @@
         'resources/css/shop.css',
         'resources/css/cart.css'
     ])
-
-    <link rel="canonical" href="{{ route('shop.show', ['locale' => $translation->locale, 'slug' => $translation->slug]) }}">
-
-    @foreach ($product->translations as $alternate)
-        @if ($alternate->isPubliclyReady())
-            <link
-                rel="alternate"
-                hreflang="{{ $alternate->locale }}"
-                href="{{ route('shop.show', ['locale' => $alternate->locale, 'slug' => $alternate->slug]) }}"
-            >
-        @endif
-    @endforeach
 @endpush
 
 @section('content')

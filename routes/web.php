@@ -31,6 +31,7 @@ use App\Http\Controllers\LabController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
 use App\Http\Controllers\SalesDocumentController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StereoGalleryController;
 use App\Http\Middleware\SetLocale;
@@ -44,6 +45,12 @@ $localePattern = implode('|', array_map(
     static fn (string $locale): string => preg_quote($locale, '/'),
     $supportedLocales
 ));
+
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
+    ->name('sitemap');
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])
+    ->name('robots');
 
 Route::redirect('/', '/' . $defaultLocale);
 

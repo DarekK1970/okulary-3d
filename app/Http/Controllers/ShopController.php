@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductCategoryTranslation;
 use App\Models\ProductTranslation;
+use App\Services\SeoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -102,8 +103,11 @@ class ShopController extends Controller
         ));
     }
 
-    public function show(string $locale, string $slug): View
-    {
+    public function show(
+        string $locale,
+        string $slug,
+        SeoService $seo
+    ): View {
         $publicStatuses = CatalogTranslationStatus::publicValues();
 
         $translation = ProductTranslation::query()
@@ -123,9 +127,17 @@ class ShopController extends Controller
             })
             ->firstOrFail();
 
+        $product =
+            $translation->product;
+
         return view('shop.show', [
             'translation' => $translation,
-            'product' => $translation->product,
+            'product' => $product,
+            'pageSeo' =>
+                $seo->product(
+                    $product,
+                    $translation
+                ),
         ]);
     }
 }

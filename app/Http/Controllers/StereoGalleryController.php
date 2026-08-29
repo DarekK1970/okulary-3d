@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GalleryStatus;
 use App\Models\StereoGalleryItem;
+use App\Services\SeoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -30,7 +31,8 @@ class StereoGalleryController extends Controller
 
     public function show(
         string $locale,
-        StereoGalleryItem $galleryItem
+        StereoGalleryItem $galleryItem,
+        SeoService $seo
     ): View {
         abort_unless(
             $galleryItem->status
@@ -41,7 +43,15 @@ class StereoGalleryController extends Controller
 
         return view(
             'gallery.show',
-            compact('galleryItem')
+            [
+                'galleryItem' =>
+                    $galleryItem,
+                'pageSeo' =>
+                    $seo->gallery(
+                        $galleryItem,
+                        $locale
+                    ),
+            ]
         );
     }
 

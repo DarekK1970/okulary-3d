@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ArchiveTranslationStatus;
 use App\Models\ArchiveItem;
 use App\Models\ArchiveItemTranslation;
+use App\Services\SeoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -128,7 +129,8 @@ class ArchiveController extends Controller
 
     public function show(
         string $locale,
-        string $slug
+        string $slug,
+        SeoService $seo
     ): View {
         $translation = ArchiveItemTranslation::query()
             ->where('locale', $locale)
@@ -152,6 +154,11 @@ class ArchiveController extends Controller
                 'archiveItem' =>
                     $translation->archiveItem,
                 'translation' => $translation,
+                'pageSeo' =>
+                    $seo->archive(
+                        $translation->archiveItem,
+                        $translation
+                    ),
             ]
         );
     }

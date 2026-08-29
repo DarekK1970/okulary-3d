@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ArticleTranslationStatus;
 use App\Models\ArticleTranslation;
 use App\Services\ContextualRecommendationService;
+use App\Services\SeoService;
 use Illuminate\View\View;
 
 class ArticleController extends Controller
@@ -12,11 +13,13 @@ class ArticleController extends Controller
     public function show(
         string $locale,
         string $slug,
-        ContextualRecommendationService $recommendations
+        ContextualRecommendationService $recommendations,
+        SeoService $seo
     ): View {
         $translation = ArticleTranslation::query()
             ->with([
                 'article.category',
+                'article.heroMedia',
                 'article.contextRecommendations.product.translations',
                 'article.contextRecommendations.product.activeVariants',
                 'article.contextRecommendations.product.media',
@@ -48,6 +51,11 @@ class ArticleController extends Controller
                 $recommendations->resolve(
                     $article,
                     $locale
+                ),
+            'pageSeo' =>
+                $seo->article(
+                    $article,
+                    $translation
                 ),
         ]);
     }

@@ -1,90 +1,258 @@
-OKULARY3D — KROK 80
-Contextual Recommendations
+OKULARY3D — KROK 81
+Multilingual SEO
 
 CEL:
-Połączenie ścieżki:
-ARTYKUŁ -> 3D LAB -> SKLEP
+Ujednolicenie technicznego SEO całego publicznego wortalu PL/EN.
 
-FUNKCJONALNOŚCI:
-- rekomendacje narzędzi 3D LAB pod artykułem,
-- rekomendacje produktów sklepu pod artykułem,
-- ręczne wskazania w edytorze artykułu,
-- opcjonalne automatyczne uzupełnianie rekomendacji,
-- ręczne rekomendacje zawsze mają pierwszeństwo,
-- maksymalnie 2 narzędzia i 4 produkty.
+WDROŻONE:
+1. Globalny canonical.
+2. hreflang PL / EN.
+3. hreflang x-default.
+4. meta robots.
+5. Open Graph.
+6. Twitter Cards.
+7. JSON-LD.
+8. sitemap.xml.
+9. robots.txt.
+10. poprawione przełączanie języka dla treści posiadających różne slugi.
 
-NARZĘDZIA:
-- Anaglyph Maker
-- Stereo Alignment / Converter
-- Lenticular LAB
-- MPO Viewer / Converter
-- Wigglegram Maker
+PUBLICZNE ADRESY:
+http://okulary-3d.test/sitemap.xml
+http://okulary-3d.test/robots.txt
 
-TRYB AUTOMATYCZNY:
-System analizuje treść aktualnej wersji językowej artykułu
-i dopasowuje działające narzędzia na podstawie słownictwa
-związanego z daną techniką.
+CANONICAL:
+Każda publiczna strona indeksowalna otrzymuje jeden canonical.
 
-Produkty są dobierane wyłącznie spośród:
-- Active,
-- posiadających aktywny wariant,
-- posiadających publiczną wersję językową.
+Dla stron z bezpieczną paginacją:
+?page=2
 
-Jeżeli dopasowanie produktu jest zbyt słabe,
-produkt nie jest pokazywany.
+canonical zachowuje numer strony.
 
-TRYB RĘCZNY:
-Admin -> Artykuły -> Edycja
+Dla filtrów i wyszukiwania, np.:
+?category=...
+?technique=...
+?q=...
 
-Nowy panel:
-Rekomendacje kontekstowe
+strona otrzymuje:
+noindex,follow
 
-Redaktor może:
-- włączyć/wyłączyć AUTO,
-- wskazać do 2 narzędzi,
-- wskazać do 4 produktów.
+a canonical wskazuje czystą stronę bazową bez parametrów.
 
-AUTO OFF:
-wyświetlane są tylko wskazania ręczne.
+HREFLANG:
+Dla zwykłych stron:
+PL i EN generowane są automatycznie na podstawie tej samej trasy.
 
-AUTO ON:
-wskazania ręczne są pierwsze,
-a wolne miejsca mogą zostać uzupełnione automatycznie.
+Dla:
+- artykułów,
+- produktów,
+- archiwum,
 
-BAZA:
-- nowa kolumna articles.recommendation_auto
-- nowa tabela article_context_recommendations
+alternatywne URL-e są budowane z rzeczywistych lokalizowanych slugów.
 
-PUBLICZNY ARTYKUŁ:
-Po treści może pojawić się sekcja:
-Sprawdź ten temat w praktyce
+Przykład:
+PL:
+/pl/articles/fotografia-stereoskopowa
 
-z blokami:
-- Powiązane narzędzia
-- Powiązane produkty
+EN:
+/en/articles/stereoscopic-photography
 
-WDROŻENIE:
+Dodatkowo:
+hreflang="x-default"
+
+wskazuje domyślną wersję PL, o ile jest publicznie dostępna.
+
+PRZEŁĄCZNIK JĘZYKA:
+Nagłówek korzysta teraz z tych samych adresów co hreflang.
+
+Naprawia to wcześniejszy problem stron szczegółowych, gdzie:
+Article / Product / Archive
+mogły mieć inny slug PL i EN.
+
+Jeśli dana wersja językowa nie istnieje,
+przełącznik bezpiecznie wraca do strony głównej tego języka.
+
+OPEN GRAPH / TWITTER:
+Globalny layout dodaje:
+- og:type
+- og:title
+- og:description
+- og:url
+- og:site_name
+- og:locale
+- og:locale:alternate
+- og:image, jeśli istnieje
+- twitter:card
+- twitter:title
+- twitter:description
+- twitter:image, jeśli istnieje
+
+Obrazy SEO są konwertowane do pełnych URL-i absolutnych.
+
+JSON-LD:
+Globalnie:
+- Organization
+- WebSite
+
+Artykuł:
+- Article
+
+Produkt:
+- Product
+- Offer dla aktywnych wariantów
+- cena
+- waluta
+- dostępność
+- SKU
+- marka
+
+Archiwum:
+- CreativeWork
+
+Galeria:
+- ImageObject
+
+SITEMAP.XML:
+Zawiera:
+- stronę główną PL/EN,
+- sklep PL/EN,
+- wszystkie działające narzędzia 3D LAB PL/EN,
+- archiwum PL/EN,
+- galerię PL/EN,
+- opublikowane artykuły,
+- aktywne produkty z aktywnymi wariantami,
+- opublikowane obiekty archiwum,
+- opublikowane prace galerii.
+
+Dla rekordów wielojęzycznych sitemap używa rzeczywistych slugów językowych.
+
+W sitemapie znajdują się także:
+xhtml:link rel="alternate" hreflang="pl"
+xhtml:link rel="alternate" hreflang="en"
+xhtml:link rel="alternate" hreflang="x-default"
+
+Sitemap NIE zawiera:
+- wersji Draft,
+- wersji Review,
+- nieopublikowanych artykułów,
+- nieaktywnych produktów,
+- nieopublikowanego archiwum,
+- niezatwierdzonych prac galerii.
+
+ROBOTS.TXT:
+Pozwala indeksować publiczny portal, ale blokuje crawling obszarów prywatnych:
+
+/admin
+/*/account
+/*/cart
+/*/checkout
+/*/login
+/*/register
+/*/forgot-password
+/*/reset-password
+/*/order/
+/*/payment/
+
+Na końcu robots.txt podawany jest pełny adres sitemap.xml.
+
+NOINDEX:
+Publiczny layout automatycznie stosuje:
+noindex,nofollow
+
+dla:
+- logowania,
+- rejestracji,
+- resetowania hasła,
+- konta,
+- koszyka,
+- checkout,
+- zamówień,
+- płatności,
+- formularza dodawania pracy do galerii.
+
+Dla stron filtrowanych:
+noindex,follow
+
+Dodatkowe zabezpieczenie:
+prywatne URL-e, np. link resetu hasła albo public_token zamówienia,
+nie są kopiowane do canonical ani hreflang.
+
+PLIKI:
+NOWE:
+- config/seo.php
+- app/Services/SeoService.php
+- app/Services/SitemapService.php
+- app/Http/Controllers/SeoController.php
+- resources/views/seo/sitemap.blade.php
+- tests/Feature/MultilingualSeoTest.php
+
+ZMIENIONE:
+- routes/web.php
+- resources/views/layouts/app.blade.php
+- resources/views/partials/header.blade.php
+- app/Http/Controllers/ArticleController.php
+- app/Http/Controllers/ShopController.php
+- app/Http/Controllers/ArchiveController.php
+- app/Http/Controllers/StereoGalleryController.php
+- resources/views/articles/show.blade.php
+- resources/views/shop/show.blade.php
+
+MIGRACJE:
+Brak.
+
+NPM BUILD:
+Brak nowych assetów.
+npm run build nie jest wymagany.
+
+PO ROZPAKOWANIU:
 php artisan optimize:clear
-php artisan migrate
-npm run build
 php artisan test
 
 TEST RĘCZNY:
-1. Otwórz istniejący artykuł w Admin -> Artykuły.
-2. Znajdź panel Rekomendacje kontekstowe.
-3. Wybierz np. Lenticular LAB.
-4. Wybierz 1 produkt.
-5. Zapisz artykuł.
-6. Otwórz wersję publiczną.
-7. Sprawdź link LAB i produkt.
-8. Włącz AUTO i przetestuj artykuł zawierający słowa:
-   lenticular / lentikular / LPI / folia soczewkowa.
-9. System powinien sam zaproponować Lenticular LAB.
+1. Otwórz źródło:
+   http://okulary-3d.test/pl
+
+2. Sprawdź:
+   canonical
+   hreflang pl
+   hreflang en
+   hreflang x-default
+   og:locale=pl_PL
+
+3. Otwórz artykuł posiadający PL i EN z różnymi slugami.
+   Sprawdź:
+   - przełącznik PL/EN,
+   - canonical,
+   - hreflang,
+   - JSON-LD Article.
+
+4. Otwórz produkt PL/EN.
+   Sprawdź JSON-LD:
+   Product
+   Offer
+   priceCurrency
+   availability.
+
+5. Otwórz:
+   /pl/archive?technique=stereocard
+
+   Powinno być:
+   meta robots = noindex,follow
+
+   canonical:
+   /pl/archive
+
+6. Otwórz:
+   http://okulary-3d.test/sitemap.xml
+
+   Sprawdź PL/EN i x-default.
+
+7. Otwórz:
+   http://okulary-3d.test/robots.txt
 
 COMMIT:
 git add .
-git commit -m "Add contextual recommendations"
+git commit -m "Add multilingual SEO"
 git push
 
 NASTĘPNY KROK:
-KROK 81 — Multilingual SEO.
+KROK 82 — Portal Analytics.

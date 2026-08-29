@@ -3,17 +3,65 @@
     $routeName = request()->route()?->getName();
     $routeParameters = request()->route()?->parameters() ?? [];
 
-    $localizedUrl = static function (string $code) use ($routeName, $routeParameters): string {
+    $headerSeo = $pageSeo
+        ?? app(\App\Services\SeoService::class)->current();
+
+    $headerAlternates =
+        $headerSeo['alternates'] ?? [];
+
+    $headerPrivatePage =
+        str_starts_with(
+            (string) (
+                $headerSeo['robots']
+                ?? ''
+            ),
+            'noindex'
+        );
+
+    $localizedUrl = static function (string $code) use (
+        $routeName,
+        $routeParameters,
+        $headerAlternates,
+        $headerPrivatePage
+    ): string {
+        if (isset($headerAlternates[$code])) {
+            return $headerAlternates[$code];
+        }
+
+        if ($headerPrivatePage) {
+            return route(
+                'home',
+                ['locale' => $code]
+            );
+        }
+
         if (! $routeName) {
             return url('/' . $code);
         }
 
         try {
-            if (in_array($routeName, ['articles.show', 'shop.show'], true)) {
-                return url('/' . $code);
+            if (in_array(
+                $routeName,
+                [
+                    'articles.show',
+                    'shop.show',
+                    'archive.show',
+                ],
+                true
+            )) {
+                return route(
+                    'home',
+                    ['locale' => $code]
+                );
             }
 
-            return route($routeName, array_merge($routeParameters, ['locale' => $code]));
+            return route(
+                $routeName,
+                array_merge(
+                    $routeParameters,
+                    ['locale' => $code]
+                )
+            );
         } catch (\Throwable) {
             return url('/' . $code);
         }
