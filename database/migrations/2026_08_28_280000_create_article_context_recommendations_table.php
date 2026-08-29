@@ -6,6 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private const CONTEXT_INDEX =
+        'acr_article_type_position_idx';
+
+    private const TOOL_UNIQUE =
+        'article_context_tool_unique';
+
+    private const PRODUCT_UNIQUE =
+        'article_context_product_unique';
+
     public function up(): void
     {
         if (
@@ -76,11 +85,14 @@ return new class extends Migration
 
                     $table->timestamps();
 
-                    $table->index([
-                        'article_id',
-                        'target_type',
-                        'position',
-                    ]);
+                    $table->index(
+                        [
+                            'article_id',
+                            'target_type',
+                            'position',
+                        ],
+                        self::CONTEXT_INDEX
+                    );
 
                     $table->unique(
                         [
@@ -88,7 +100,7 @@ return new class extends Migration
                             'target_type',
                             'tool_key',
                         ],
-                        'article_context_tool_unique'
+                        self::TOOL_UNIQUE
                     );
 
                     $table->unique(
@@ -96,7 +108,76 @@ return new class extends Migration
                             'article_id',
                             'product_id',
                         ],
-                        'article_context_product_unique'
+                        self::PRODUCT_UNIQUE
+                    );
+                }
+            );
+
+            return;
+        }
+
+        /*
+         * MariaDB/MySQL may leave this table partially created
+         * when a later ALTER TABLE command fails. Reconcile
+         * indexes that can be missing after such a failure.
+         */
+        if (
+            ! Schema::hasIndex(
+                'article_context_recommendations',
+                self::CONTEXT_INDEX
+            )
+        ) {
+            Schema::table(
+                'article_context_recommendations',
+                function (Blueprint $table) {
+                    $table->index(
+                        [
+                            'article_id',
+                            'target_type',
+                            'position',
+                        ],
+                        self::CONTEXT_INDEX
+                    );
+                }
+            );
+        }
+
+        if (
+            ! Schema::hasIndex(
+                'article_context_recommendations',
+                self::TOOL_UNIQUE
+            )
+        ) {
+            Schema::table(
+                'article_context_recommendations',
+                function (Blueprint $table) {
+                    $table->unique(
+                        [
+                            'article_id',
+                            'target_type',
+                            'tool_key',
+                        ],
+                        self::TOOL_UNIQUE
+                    );
+                }
+            );
+        }
+
+        if (
+            ! Schema::hasIndex(
+                'article_context_recommendations',
+                self::PRODUCT_UNIQUE
+            )
+        ) {
+            Schema::table(
+                'article_context_recommendations',
+                function (Blueprint $table) {
+                    $table->unique(
+                        [
+                            'article_id',
+                            'product_id',
+                        ],
+                        self::PRODUCT_UNIQUE
                     );
                 }
             );
