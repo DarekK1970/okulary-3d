@@ -18,11 +18,11 @@ return [
         'translation_complete' => 'Jeżeli dodajesz tłumaczenie produktu, podaj zarówno nazwę, jak i opis.',
         'variant_not_owned' => 'Wariant nie należy do edytowanego produktu.',
         'primary_must_be_selected' => 'Zdjęcie główne musi być zaznaczone jako używane w galerii produktu.',
+        'category_parent_cycle' => 'Kategoria nie może być własnym rodzicem ani zostać przeniesiona do jednej ze swoich podkategorii.',
     ],
 
     'admin' => [
         'kicker' => 'E-commerce',
-
         'common' => [
             'active' => 'Aktywny',
             'inactive' => 'Nieaktywny',
@@ -33,17 +33,18 @@ return [
             'save' => 'Zapisz',
             'cancel' => 'Anuluj',
         ],
-
         'categories' => [
             'title' => 'Kategorie produktów',
-            'description' => 'Wielojęzyczna struktura katalogu sklepu.',
+            'description' => 'Wielojęzyczne drzewo kategorii i podkategorii sklepu.',
             'new' => 'Nowa kategoria',
             'existing' => 'Istniejące kategorie',
             'empty' => 'Nie ma jeszcze kategorii produktów.',
             'products_short' => 'produktów',
+            'children_short' => 'podkategorii',
             'delete_confirm' => 'Czy na pewno usunąć tę kategorię?',
-
             'form' => [
+                'parent' => 'Kategoria nadrzędna',
+                'root' => '— Kategoria główna —',
                 'name' => 'Nazwa kategorii',
                 'slug' => 'Slug URL',
                 'description' => 'Opis',
@@ -51,15 +52,14 @@ return [
                 'active' => 'Kategoria aktywna',
                 'create' => 'Utwórz kategorię',
             ],
-
             'messages' => [
                 'created' => 'Kategoria produktu została utworzona.',
                 'updated' => 'Kategoria produktu została zapisana.',
                 'deleted' => 'Kategoria produktu została usunięta.',
                 'in_use' => 'Nie można usunąć kategorii, ponieważ zawiera produkty.',
+                'has_children' => 'Nie można usunąć kategorii, ponieważ zawiera podkategorie. Najpierw przenieś lub usuń podkategorie.',
             ],
         ],
-
         'products' => [
             'title' => 'Produkty',
             'description' => 'Produkty, warianty SKU, ceny, stany magazynowe i galerie.',
@@ -71,7 +71,6 @@ return [
             'empty' => 'Nie ma jeszcze produktów.',
             'no_brand' => 'bez marki',
             'delete_confirm' => 'Czy na pewno usunąć produkt wraz z wariantami i tłumaczeniami?',
-
             'filters' => [
                 'search' => 'Szukaj nazwy, marki lub SKU…',
                 'all_statuses' => 'Wszystkie statusy',
@@ -79,7 +78,6 @@ return [
                 'apply' => 'Filtruj',
                 'clear' => 'Wyczyść',
             ],
-
             'table' => [
                 'product' => 'Produkt',
                 'category' => 'Kategoria',
@@ -90,7 +88,6 @@ return [
                 'languages' => 'Języki',
                 'actions' => 'Akcje',
             ],
-
             'form' => [
                 'languages' => 'Wersje językowe',
                 'localized_content' => 'Opis produktu i SEO',
@@ -122,7 +119,6 @@ return [
                 'featured' => 'Produkt wyróżniony',
                 'create' => 'Utwórz produkt',
             ],
-
             'messages' => [
                 'created' => 'Produkt został utworzony.',
                 'updated' => 'Produkt został zapisany.',

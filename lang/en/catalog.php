@@ -18,11 +18,11 @@ return [
         'translation_complete' => 'When adding a product translation, provide both name and description.',
         'variant_not_owned' => 'The variant does not belong to the edited product.',
         'primary_must_be_selected' => 'The primary image must be selected for the product gallery.',
+        'category_parent_cycle' => 'A category cannot be its own parent or be moved below one of its descendants.',
     ],
 
     'admin' => [
         'kicker' => 'E-commerce',
-
         'common' => [
             'active' => 'Active',
             'inactive' => 'Inactive',
@@ -33,17 +33,18 @@ return [
             'save' => 'Save',
             'cancel' => 'Cancel',
         ],
-
         'categories' => [
             'title' => 'Product categories',
-            'description' => 'Multilingual structure of the shop catalog.',
+            'description' => 'Multilingual tree of shop categories and subcategories.',
             'new' => 'New category',
             'existing' => 'Existing categories',
             'empty' => 'There are no product categories yet.',
             'products_short' => 'products',
+            'children_short' => 'subcategories',
             'delete_confirm' => 'Delete this category?',
-
             'form' => [
+                'parent' => 'Parent category',
+                'root' => '— Root category —',
                 'name' => 'Category name',
                 'slug' => 'URL slug',
                 'description' => 'Description',
@@ -51,15 +52,14 @@ return [
                 'active' => 'Category active',
                 'create' => 'Create category',
             ],
-
             'messages' => [
                 'created' => 'Product category created.',
                 'updated' => 'Product category saved.',
                 'deleted' => 'Product category deleted.',
                 'in_use' => 'The category cannot be deleted because it contains products.',
+                'has_children' => 'The category cannot be deleted because it contains subcategories. Move or delete them first.',
             ],
         ],
-
         'products' => [
             'title' => 'Products',
             'description' => 'Products, SKU variants, prices, stock and image galleries.',
@@ -71,7 +71,6 @@ return [
             'empty' => 'There are no products yet.',
             'no_brand' => 'no brand',
             'delete_confirm' => 'Delete this product with its variants and translations?',
-
             'filters' => [
                 'search' => 'Search name, brand or SKU…',
                 'all_statuses' => 'All statuses',
@@ -79,7 +78,6 @@ return [
                 'apply' => 'Filter',
                 'clear' => 'Clear',
             ],
-
             'table' => [
                 'product' => 'Product',
                 'category' => 'Category',
@@ -90,7 +88,6 @@ return [
                 'languages' => 'Languages',
                 'actions' => 'Actions',
             ],
-
             'form' => [
                 'languages' => 'Language versions',
                 'localized_content' => 'Product description and SEO',
@@ -122,7 +119,6 @@ return [
                 'featured' => 'Featured product',
                 'create' => 'Create product',
             ],
-
             'messages' => [
                 'created' => 'Product created.',
                 'updated' => 'Product saved.',

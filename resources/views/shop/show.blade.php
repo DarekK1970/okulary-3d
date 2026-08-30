@@ -13,10 +13,36 @@
 @section('content')
 <section class="product-page">
     <div class="site-container">
-        <nav class="shop-breadcrumbs">
-            <a href="{{ route('home', ['locale' => app()->getLocale()]) }}">{{ __('catalog.public.home') }}</a>
+        <nav class="shop-breadcrumbs" aria-label="Breadcrumb">
+            <a href="{{ route('home', ['locale' => app()->getLocale()]) }}">
+                {{ __('catalog.public.home') }}
+            </a>
+
             <span>›</span>
-            <a href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">{{ __('catalog.public.shop_title') }}</a>
+
+            <a href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
+                {{ __('catalog.public.shop_title') }}
+            </a>
+
+            @foreach ($categoryBreadcrumbs as $breadcrumbCategory)
+                @php
+                    $breadcrumbTranslation =
+                        $breadcrumbCategory->publicTranslation(
+                            app()->getLocale()
+                        );
+                @endphp
+
+                @if ($breadcrumbTranslation)
+                    <span>›</span>
+                    <a href="{{ route('shop.index', [
+                        'locale' => app()->getLocale(),
+                        'category' => $breadcrumbTranslation->slug,
+                    ]) }}">
+                        {{ $breadcrumbTranslation->name }}
+                    </a>
+                @endif
+            @endforeach
+
             <span>›</span>
             <span>{{ $translation->name }}</span>
         </nav>
@@ -50,8 +76,14 @@
                 @if ($product->media->count() > 1)
                     <div class="product-thumbnails">
                         @foreach ($product->media as $media)
-                            <button type="button" data-product-thumbnail="{{ $media->url() }}">
-                                <img src="{{ $media->url() }}" alt="{{ $media->alt_text ?: $translation->name }}">
+                            <button
+                                type="button"
+                                data-product-thumbnail="{{ $media->url() }}"
+                            >
+                                <img
+                                    src="{{ $media->url() }}"
+                                    alt="{{ $media->alt_text ?: $translation->name }}"
+                                >
                             </button>
                         @endforeach
                     </div>
@@ -73,18 +105,24 @@
                 @endif
 
                 @if ($translation->short_description)
-                    <p class="product-short-description">{{ $translation->short_description }}</p>
+                    <p class="product-short-description">
+                        {{ $translation->short_description }}
+                    </p>
                 @endif
 
                 @php
                     $firstAvailableId = $product->activeVariants
-                        ->first(fn ($variant) => $variant->inStock())?->id;
+                        ->first(
+                            fn ($variant) => $variant->inStock()
+                        )?->id;
                 @endphp
 
                 <form
                     class="product-purchase-form"
                     method="post"
-                    action="{{ route('cart.items.store', ['locale' => app()->getLocale()]) }}"
+                    action="{{ route('cart.items.store', [
+                        'locale' => app()->getLocale(),
+                    ]) }}"
                 >
                     @csrf
 
@@ -103,16 +141,26 @@
                                 >
 
                                 <span class="product-variant-copy">
-                                    <strong>{{ $variant->name ?: $variant->sku }}</strong>
+                                    <strong>
+                                        {{ $variant->name ?: $variant->sku }}
+                                    </strong>
                                     <small>SKU: {{ $variant->sku }}</small>
                                 </span>
 
                                 <span class="product-variant-price">
-                                    {{ number_format((float) $variant->price_gross, 2, ',', ' ') }} {{ $variant->currency }}
+                                    {{ number_format(
+                                        (float) $variant->price_gross,
+                                        2,
+                                        ',',
+                                        ' '
+                                    ) }}
+                                    {{ $variant->currency }}
                                 </span>
 
                                 <span class="product-variant-stock">
-                                    {{ $variant->inStock() ? __('catalog.public.in_stock') : __('catalog.public.out_of_stock') }}
+                                    {{ $variant->inStock()
+                                        ? __('catalog.public.in_stock')
+                                        : __('catalog.public.out_of_stock') }}
                                 </span>
                             </label>
                         @endforeach
@@ -136,20 +184,27 @@
                             type="submit"
                             @disabled(! $firstAvailableId)
                         >
-                            {{ $firstAvailableId ? __('cart.product.add_to_cart') : __('catalog.public.out_of_stock') }}
+                            {{ $firstAvailableId
+                                ? __('cart.product.add_to_cart')
+                                : __('catalog.public.out_of_stock') }}
                         </button>
                     </div>
                 </form>
 
                 @if ($product->translations->count() > 1)
                     <div class="product-language-links">
-                        <span>{{ __('catalog.public.other_languages') }}</span>
+                        <span>
+                            {{ __('catalog.public.other_languages') }}
+                        </span>
 
                         @foreach ($product->translations as $alternate)
                             @if ($alternate->isPubliclyReady())
                                 <a
                                     class="{{ $alternate->locale === $translation->locale ? 'is-active' : '' }}"
-                                    href="{{ route('shop.show', ['locale' => $alternate->locale, 'slug' => $alternate->slug]) }}"
+                                    href="{{ route('shop.show', [
+                                        'locale' => $alternate->locale,
+                                        'slug' => $alternate->slug,
+                                    ]) }}"
                                 >
                                     {{ strtoupper($alternate->locale) }}
                                 </a>
@@ -172,6 +227,7 @@
 document.querySelectorAll('[data-product-thumbnail]').forEach((button) => {
     button.addEventListener('click', () => {
         const image = document.querySelector('[data-product-main-image]');
+
         if (image) {
             image.src = button.dataset.productThumbnail;
         }

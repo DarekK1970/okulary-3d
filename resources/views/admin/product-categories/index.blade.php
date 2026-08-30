@@ -11,7 +11,6 @@
             <h1>{{ __('catalog.admin.categories.title') }}</h1>
             <p>{{ __('catalog.admin.categories.description') }}</p>
         </div>
-
         <a class="cms-secondary-button" href="{{ route('admin.products.index') }}">
             {{ __('catalog.admin.products.title') }}
         </a>
@@ -25,10 +24,35 @@
                 @csrf
 
                 <div class="cms-field">
+                    <label>{{ __('catalog.admin.categories.form.parent') }}</label>
+                    <select name="parent_id">
+                        <option value="">{{ __('catalog.admin.categories.form.root') }}</option>
+                        @foreach ($categoryTree as $row)
+                            @php
+                                $parentOption = $row['category'];
+                                $prefix = str_repeat('— ', min($row['depth'], 6));
+                            @endphp
+                            <option
+                                value="{{ $parentOption->id }}"
+                                @selected((string) old('parent_id') === (string) $parentOption->id)
+                            >
+                                {{ $prefix }}{{ $parentOption->sourceTranslation()?->name ?? ('#' . $parentOption->id) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="cms-field">
                     <label>{{ __('catalog.admin.common.source_locale') }}</label>
                     <select name="source_locale">
-                        <option value="pl">PL</option>
-                        <option value="en">EN</option>
+                        @foreach ($supportedLocales as $locale => $language)
+                            <option
+                                value="{{ $locale }}"
+                                @selected(old('source_locale', config('locales.default', 'pl')) === $locale)
+                            >
+                                {{ strtoupper($locale) }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -38,25 +62,44 @@
 
                         <div class="cms-field">
                             <label>{{ __('catalog.admin.categories.form.name') }}</label>
-                            <input name="translations[{{ $locale }}][name]" type="text" maxlength="160">
+                            <input
+                                name="translations[{{ $locale }}][name]"
+                                type="text"
+                                value="{{ old("translations.{$locale}.name") }}"
+                                maxlength="160"
+                            >
                         </div>
 
                         <div class="cms-field">
                             <label>{{ __('catalog.admin.categories.form.slug') }}</label>
-                            <input name="translations[{{ $locale }}][slug]" type="text" maxlength="180">
+                            <input
+                                name="translations[{{ $locale }}][slug]"
+                                type="text"
+                                value="{{ old("translations.{$locale}.slug") }}"
+                                maxlength="180"
+                            >
                         </div>
 
                         <div class="cms-field">
                             <label>{{ __('catalog.admin.categories.form.description') }}</label>
-                            <textarea name="translations[{{ $locale }}][description]" rows="3" maxlength="3000"></textarea>
+                            <textarea
+                                name="translations[{{ $locale }}][description]"
+                                rows="3"
+                                maxlength="3000"
+                            >{{ old("translations.{$locale}.description") }}</textarea>
                         </div>
 
                         <div class="cms-field">
                             <label>{{ __('catalog.admin.common.translation_status') }}</label>
                             <select name="translations[{{ $locale }}][translation_status]">
-                                <option value="draft">{{ __('catalog.translation_statuses.draft') }}</option>
-                                <option value="review">{{ __('catalog.translation_statuses.review') }}</option>
-                                <option value="ready">{{ __('catalog.translation_statuses.ready') }}</option>
+                                @foreach (['draft', 'review', 'ready'] as $status)
+                                    <option
+                                        value="{{ $status }}"
+                                        @selected(old("translations.{$locale}.translation_status", 'draft') === $status)
+                                    >
+                                        {{ __('catalog.translation_statuses.' . $status) }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                     </fieldset>
@@ -64,11 +107,22 @@
 
                 <div class="cms-field">
                     <label>{{ __('catalog.admin.categories.form.order') }}</label>
-                    <input name="sort_order" type="number" min="0" max="9999" value="0">
+                    <input
+                        name="sort_order"
+                        type="number"
+                        min="0"
+                        max="9999"
+                        value="{{ old('sort_order', 0) }}"
+                    >
                 </div>
 
                 <label class="cms-checkbox">
-                    <input type="checkbox" name="is_active" value="1" checked>
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        value="1"
+                        @checked(old('is_active', '1'))
+                    >
                     <span>{{ __('catalog.admin.categories.form.active') }}</span>
                 </label>
 
@@ -82,31 +136,102 @@
             <h2>{{ __('catalog.admin.categories.existing') }}</h2>
 
             <div class="catalog-category-list">
-                @forelse ($categories as $category)
-                    <details class="catalog-category-item">
+                @forelse ($categoryTree as $row)
+                    @php
+                        $category = $row['category'];
+                        $depth = $row['depth'];
+                        $blockedParentIds = $category->descendantIdsFrom(
+                            $categories
+                        );
+                        $path = $category->pathFrom($categories)
+                            ->map(
+                                fn ($item) =>
+                                    $item->sourceTranslation()?->name
+                                    ?? ('#' . $item->id)
+                            )
+                            ->implode(' › ');
+                    @endphp
+
+                    <details
+                        class="catalog-category-item"
+                        style="margin-left: {{ min($depth, 6) * 16 }}px"
+                    >
                         <summary>
                             <span>
-                                <strong>{{ $category->sourceTranslation()?->name ?? ('#' . $category->id) }}</strong>
+                                <strong>
+                                    @if ($depth > 0)
+                                        ↳
+                                    @endif
+                                    {{ $category->sourceTranslation()?->name ?? ('#' . $category->id) }}
+                                </strong>
                                 <small>
+                                    {{ $path }} ·
                                     {{ strtoupper($category->source_locale) }} ·
-                                    {{ $category->products_count }} {{ __('catalog.admin.categories.products_short') }}
+                                    {{ $category->products_count }}
+                                    {{ __('catalog.admin.categories.products_short') }}
+                                    @if ($category->children_count)
+                                        · {{ $category->children_count }}
+                                        {{ __('catalog.admin.categories.children_short') }}
+                                    @endif
                                 </small>
                             </span>
+
                             <span class="catalog-active-badge {{ $category->is_active ? 'is-active' : '' }}">
                                 {{ $category->is_active ? __('catalog.admin.common.active') : __('catalog.admin.common.inactive') }}
                             </span>
                         </summary>
 
                         <div class="catalog-category-item-body">
-                            <form method="post" action="{{ route('admin.product-categories.update', $category) }}" class="catalog-category-form">
+                            <form
+                                method="post"
+                                action="{{ route('admin.product-categories.update', $category) }}"
+                                class="catalog-category-form"
+                            >
                                 @csrf
                                 @method('PUT')
+
+                                <div class="cms-field">
+                                    <label>{{ __('catalog.admin.categories.form.parent') }}</label>
+                                    <select name="parent_id">
+                                        <option value="">
+                                            {{ __('catalog.admin.categories.form.root') }}
+                                        </option>
+
+                                        @foreach ($categoryTree as $parentRow)
+                                            @php
+                                                $parentOption = $parentRow['category'];
+                                                $prefix = str_repeat(
+                                                    '— ',
+                                                    min($parentRow['depth'], 6)
+                                                );
+                                            @endphp
+
+                                            @continue(
+                                                in_array(
+                                                    (int) $parentOption->id,
+                                                    $blockedParentIds,
+                                                    true
+                                                )
+                                            )
+
+                                            <option
+                                                value="{{ $parentOption->id }}"
+                                                @selected((string) $category->parent_id === (string) $parentOption->id)
+                                            >
+                                                {{ $prefix }}{{ $parentOption->sourceTranslation()?->name ?? ('#' . $parentOption->id) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="cms-field">
                                     <label>{{ __('catalog.admin.common.source_locale') }}</label>
                                     <select name="source_locale">
                                         @foreach ($supportedLocales as $locale => $language)
-                                            <option value="{{ $locale }}" @selected($category->source_locale === $locale)>
+                                            <option
+                                                value="{{ $locale }}"
+                                                @selected($category->source_locale === $locale)
+                                            >
                                                 {{ strtoupper($locale) }}
                                             </option>
                                         @endforeach
@@ -114,10 +239,14 @@
                                 </div>
 
                                 @foreach ($supportedLocales as $locale => $language)
-                                    @php $translation = $category->translation($locale); @endphp
+                                    @php
+                                        $translation = $category->translation($locale);
+                                    @endphp
 
                                     <fieldset class="catalog-language-fieldset">
-                                        <legend>{{ strtoupper($locale) }} — {{ $language['native'] }}</legend>
+                                        <legend>
+                                            {{ strtoupper($locale) }} — {{ $language['native'] }}
+                                        </legend>
 
                                         <div class="cms-field">
                                             <label>{{ __('catalog.admin.categories.form.name') }}</label>
@@ -176,7 +305,12 @@
                                 </div>
 
                                 <label class="cms-checkbox">
-                                    <input type="checkbox" name="is_active" value="1" @checked($category->is_active)>
+                                    <input
+                                        type="checkbox"
+                                        name="is_active"
+                                        value="1"
+                                        @checked($category->is_active)
+                                    >
                                     <span>{{ __('catalog.admin.categories.form.active') }}</span>
                                 </label>
 
@@ -192,6 +326,7 @@
                             >
                                 @csrf
                                 @method('DELETE')
+
                                 <button class="cms-danger-button" type="submit">
                                     {{ __('catalog.admin.common.delete') }}
                                 </button>
@@ -199,7 +334,9 @@
                         </div>
                     </details>
                 @empty
-                    <p class="cms-empty">{{ __('catalog.admin.categories.empty') }}</p>
+                    <p class="cms-empty">
+                        {{ __('catalog.admin.categories.empty') }}
+                    </p>
                 @endforelse
             </div>
         </section>

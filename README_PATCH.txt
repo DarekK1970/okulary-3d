@@ -1,77 +1,28 @@
-OKULARY3D — KROK 84 / FIX ROUTE CACHE CHECK
+OKULARY 3D — K86.1 FIX SHOP PRICE TEST
 
-PRZYCZYNA:
-app:release-check zgłaszał:
+Problem:
+Pełny zestaw testów:
+154 passed, 1 failed.
 
-3 route closure(s) prevent route cache
+Nie był to błąd logiki sklepu. HTML renderował cenę i walutę
+w osobnych liniach:
 
-mimo że rzeczywiste:
+19,99
+PLN
 
-php artisan optimize
+Test ShopCatalogTest oczekuje ciągłego tekstu:
+19,99 PLN
 
-kończyło etap:
-
-routes ... DONE
-
-Problemem był błędny test w ReleaseReadinessService.
-
-Poprzednia wersja uznawała:
-
-$route->getAction('uses') instanceof Closure
-
-za automatyczny błąd kompatybilności z route cache.
-
-To założenie jest nieprawidłowe dla aktualnego Laravel 13,
-który potrafi przygotować obsługiwane route closures
-do serializacji.
-
-NAPRAWA:
-ReleaseReadinessService nie liczy już Closure.
-
-Dla każdej trasy:
-1. tworzy KLON obiektu Route,
-2. wywołuje na klonie:
-   prepareForSerialization()
-
-To odpowiada rzeczywistej operacji przygotowania trasy
-do route cache, a jednocześnie nie modyfikuje aktywnej
-kolekcji routingu bieżącego procesu.
-
-Jeżeli którakolwiek trasa faktycznie nie nadaje się
-do serializacji, wyjątek zostanie przechwycony
-i route_cache nadal otrzyma FAIL.
-
-Jeżeli wszystkie trasy przejdą:
-route_cache = OK
+Naprawa:
+Cena i waluta są renderowane w jednym ciągu HTML:
+<strong>19,99 PLN</strong>
 
 ZMIENIONY PLIK:
-app/Services/ReleaseReadinessService.php
+resources/views/shop/index.blade.php
 
-MIGRACJE:
-brak
-
-NPM:
-nie trzeba wykonywać npm run build
-
-PO ROZPAKOWANIU:
+Po rozpakowaniu:
 php artisan optimize:clear
-
-Najpierw:
-php artisan test --filter=ProductionReadinessTest
-
-Następnie:
+php artisan test --filter=ShopCatalogTest
 php artisan test
 
-Potem:
-php artisan app:release-check
-
-OCZEKIWANE:
-route_cache = OK
-
-Na końcu ponownie można sprawdzić realny cache:
-
-php artisan optimize
-php artisan about
-
-Po teście lokalnym:
-php artisan optimize:clear
+Nie zmieniaj testu — oczekiwanie "19,99 PLN" jest poprawne.

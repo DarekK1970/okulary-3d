@@ -16,18 +16,69 @@ class ShopController extends Controller
     public function index(Request $request, string $locale): View
     {
         $publicStatuses = CatalogTranslationStatus::publicValues();
+
+        $categories = ProductCategory::query()
+            ->where('is_active', true)
+            ->whereHas('translations', function ($query) use (
+                $locale,
+                $publicStatuses
+            ) {
+                $query
+                    ->where('locale', $locale)
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    );
+            })
+            ->with([
+                'translations' => fn ($query) => $query
+                    ->where('locale', $locale)
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    ),
+            ])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $categoryTree = ProductCategory::flattenTree($categories);
         $selectedCategory = null;
+        $selectedCategoryModel = null;
+        $categoryBreadcrumbs = collect();
+        $branchCategoryIds = [];
 
         if ($request->filled('category')) {
             $selectedCategory = ProductCategoryTranslation::query()
                 ->where('locale', $locale)
                 ->where('slug', $request->input('category'))
-                ->whereIn('translation_status', $publicStatuses)
+                ->whereIn(
+                    'translation_status',
+                    $publicStatuses
+                )
                 ->whereHas(
                     'category',
-                    fn ($query) => $query->where('is_active', true)
+                    fn ($query) => $query
+                        ->where('is_active', true)
                 )
                 ->first();
+
+            if ($selectedCategory) {
+                $selectedCategoryModel = $categories->firstWhere(
+                    'id',
+                    $selectedCategory->product_category_id
+                );
+
+                if ($selectedCategoryModel) {
+                    $branchCategoryIds =
+                        $selectedCategoryModel->descendantIdsFrom(
+                            $categories
+                        );
+
+                    $categoryBreadcrumbs =
+                        $selectedCategoryModel->pathFrom($categories);
+                }
+            }
         }
 
         $products = Product::query()
@@ -38,20 +89,26 @@ class ShopController extends Controller
             ) {
                 $query
                     ->where('is_active', true)
-                    ->whereHas('translations', function ($translationQuery) use (
-                        $locale,
-                        $publicStatuses
-                    ) {
-                        $translationQuery
-                            ->where('locale', $locale)
-                            ->whereIn('translation_status', $publicStatuses);
-                    });
+                    ->whereHas(
+                        'translations',
+                        function ($translationQuery) use (
+                            $locale,
+                            $publicStatuses
+                        ) {
+                            $translationQuery
+                                ->where('locale', $locale)
+                                ->whereIn(
+                                    'translation_status',
+                                    $publicStatuses
+                                );
+                        }
+                    );
             })
             ->when(
-                $selectedCategory,
-                fn ($query) => $query->where(
+                $selectedCategoryModel,
+                fn ($query) => $query->whereIn(
                     'category_id',
-                    $selectedCategory->product_category_id
+                    $branchCategoryIds
                 )
             )
             ->whereHas('translations', function ($query) use (
@@ -60,46 +117,39 @@ class ShopController extends Controller
             ) {
                 $query
                     ->where('locale', $locale)
-                    ->whereIn('translation_status', $publicStatuses);
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    );
             })
             ->whereHas('activeVariants')
             ->with([
                 'translations' => fn ($query) => $query
                     ->where('locale', $locale)
-                    ->whereIn('translation_status', $publicStatuses),
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    ),
                 'activeVariants',
                 'media',
                 'category.translations' => fn ($query) => $query
                     ->where('locale', $locale)
-                    ->whereIn('translation_status', $publicStatuses),
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    ),
             ])
             ->orderByDesc('is_featured')
             ->latest('id')
             ->paginate(24)
             ->withQueryString();
 
-        $categories = ProductCategory::query()
-            ->where('is_active', true)
-            ->whereHas('translations', function ($query) use (
-                $locale,
-                $publicStatuses
-            ) {
-                $query
-                    ->where('locale', $locale)
-                    ->whereIn('translation_status', $publicStatuses);
-            })
-            ->with([
-                'translations' => fn ($query) => $query
-                    ->where('locale', $locale)
-                    ->whereIn('translation_status', $publicStatuses),
-            ])
-            ->orderBy('sort_order')
-            ->get();
-
         return view('shop.index', compact(
             'products',
             'categories',
-            'selectedCategory'
+            'categoryTree',
+            'selectedCategory',
+            'categoryBreadcrumbs'
         ));
     }
 
@@ -115,29 +165,75 @@ class ShopController extends Controller
                 'product.activeVariants',
                 'product.media',
                 'product.translations' => fn ($query) => $query
-                    ->whereIn('translation_status', $publicStatuses),
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    ),
                 'product.category.translations' => fn ($query) => $query
-                    ->whereIn('translation_status', $publicStatuses),
+                    ->whereIn(
+                        'translation_status',
+                        $publicStatuses
+                    ),
             ])
             ->where('locale', $locale)
             ->where('slug', $slug)
-            ->whereIn('translation_status', $publicStatuses)
+            ->whereIn(
+                'translation_status',
+                $publicStatuses
+            )
             ->whereHas('product', function ($query) {
-                $query->active()->whereHas('activeVariants');
+                $query
+                    ->active()
+                    ->whereHas('activeVariants');
             })
             ->firstOrFail();
 
-        $product =
-            $translation->product;
+        $product = $translation->product;
+        $categoryBreadcrumbs = collect();
+
+        if ($product->category) {
+            $breadcrumbCategories = ProductCategory::query()
+                ->where('is_active', true)
+                ->whereHas(
+                    'translations',
+                    function ($query) use (
+                        $locale,
+                        $publicStatuses
+                    ) {
+                        $query
+                            ->where('locale', $locale)
+                            ->whereIn(
+                                'translation_status',
+                                $publicStatuses
+                            );
+                    }
+                )
+                ->with([
+                    'translations' => fn ($query) => $query
+                        ->where('locale', $locale)
+                        ->whereIn(
+                            'translation_status',
+                            $publicStatuses
+                        ),
+                ])
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+
+            $categoryBreadcrumbs =
+                $product->category->pathFrom(
+                    $breadcrumbCategories
+                );
+        }
 
         return view('shop.show', [
             'translation' => $translation,
             'product' => $product,
-            'pageSeo' =>
-                $seo->product(
-                    $product,
-                    $translation
-                ),
+            'categoryBreadcrumbs' => $categoryBreadcrumbs,
+            'pageSeo' => $seo->product(
+                $product,
+                $translation
+            ),
         ]);
     }
 }

@@ -21,48 +21,112 @@
         <aside class="shop-categories">
             <h2>{{ __('catalog.public.categories') }}</h2>
 
-            <a class="{{ ! $selectedCategory ? 'is-active' : '' }}" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
+            <a
+                class="{{ ! $selectedCategory ? 'is-active' : '' }}"
+                href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}"
+            >
                 {{ __('catalog.public.all_products') }}
             </a>
 
-            @foreach ($categories as $category)
-                @php $translation = $category->publicTranslation(app()->getLocale()); @endphp
+            @foreach ($categoryTree as $row)
+                @php
+                    $category = $row['category'];
+                    $depth = $row['depth'];
+                    $categoryTranslation =
+                        $category->publicTranslation(app()->getLocale());
+                @endphp
 
-                @if ($translation)
+                @if ($categoryTranslation)
                     <a
                         class="{{ $selectedCategory?->product_category_id === $category->id ? 'is-active' : '' }}"
-                        href="{{ route('shop.index', ['locale' => app()->getLocale(), 'category' => $translation->slug]) }}"
+                        href="{{ route('shop.index', [
+                            'locale' => app()->getLocale(),
+                            'category' => $categoryTranslation->slug,
+                        ]) }}"
+                        style="padding-left: {{ 10 + min($depth, 6) * 14 }}px"
                     >
-                        {{ $translation->name }}
+                        @if ($depth > 0)
+                            <span aria-hidden="true">↳&nbsp;</span>
+                        @endif
+                        {{ $categoryTranslation->name }}
                     </a>
                 @endif
             @endforeach
         </aside>
 
         <main class="shop-results">
+            @if ($selectedCategory && $categoryBreadcrumbs->isNotEmpty())
+                <nav class="shop-breadcrumbs" aria-label="Breadcrumb">
+                    <a href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
+                        {{ __('catalog.public.shop_title') }}
+                    </a>
+
+                    @foreach ($categoryBreadcrumbs as $breadcrumbCategory)
+                        @php
+                            $breadcrumbTranslation =
+                                $breadcrumbCategory->publicTranslation(
+                                    app()->getLocale()
+                                );
+                        @endphp
+
+                        @if ($breadcrumbTranslation)
+                            <span>›</span>
+
+                            @if ($loop->last)
+                                <span>{{ $breadcrumbTranslation->name }}</span>
+                            @else
+                                <a href="{{ route('shop.index', [
+                                    'locale' => app()->getLocale(),
+                                    'category' => $breadcrumbTranslation->slug,
+                                ]) }}">
+                                    {{ $breadcrumbTranslation->name }}
+                                </a>
+                            @endif
+                        @endif
+                    @endforeach
+                </nav>
+            @endif
+
             <div class="shop-results-heading">
                 <div>
                     <span>{{ __('catalog.public.catalog') }}</span>
-                    <h2>{{ $selectedCategory?->name ?? __('catalog.public.all_products') }}</h2>
+                    <h2>
+                        {{ $selectedCategory?->name ?? __('catalog.public.all_products') }}
+                    </h2>
                 </div>
 
-                <strong>{{ $products->total() }} {{ __('catalog.public.products_count') }}</strong>
+                <strong>
+                    {{ $products->total() }}
+                    {{ __('catalog.public.products_count') }}
+                </strong>
             </div>
 
             <div class="shop-product-grid">
                 @forelse ($products as $product)
                     @php
-                        $translation = $product->publicTranslation(app()->getLocale());
+                        $translation =
+                            $product->publicTranslation(app()->getLocale());
                         $primary = $product->primaryMedia();
                         $variants = $product->activeVariants;
-                        $minPrice = $variants->min(fn ($variant) => (float) $variant->price_gross);
-                        $currency = $variants->first()?->currency ?? 'PLN';
-                        $hasStock = $variants->contains(fn ($variant) => $variant->inStock());
+                        $minPrice = $variants->min(
+                            fn ($variant) => (float) $variant->price_gross
+                        );
+                        $currency =
+                            $variants->first()?->currency ?? 'PLN';
+                        $hasStock = $variants->contains(
+                            fn ($variant) => $variant->inStock()
+                        );
                     @endphp
 
                     @if ($translation)
                         <article class="shop-product-card">
-                            <a class="shop-product-image" href="{{ route('shop.show', ['locale' => app()->getLocale(), 'slug' => $translation->slug]) }}">
+                            <a
+                                class="shop-product-image"
+                                href="{{ route('shop.show', [
+                                    'locale' => app()->getLocale(),
+                                    'slug' => $translation->slug,
+                                ]) }}"
+                            >
                                 @if ($primary)
                                     <img
                                         src="{{ $primary->url() }}"
@@ -74,7 +138,9 @@
                                 @endif
 
                                 @if ($product->is_featured)
-                                    <span class="shop-featured">{{ __('catalog.public.featured') }}</span>
+                                    <span class="shop-featured">
+                                        {{ __('catalog.public.featured') }}
+                                    </span>
                                 @endif
                             </a>
 
@@ -84,25 +150,38 @@
                                 </div>
 
                                 <h3>
-                                    <a href="{{ route('shop.show', ['locale' => app()->getLocale(), 'slug' => $translation->slug]) }}">
+                                    <a href="{{ route('shop.show', [
+                                        'locale' => app()->getLocale(),
+                                        'slug' => $translation->slug,
+                                    ]) }}">
                                         {{ $translation->name }}
                                     </a>
                                 </h3>
 
                                 @if ($translation->short_description)
-                                    <p>{{ Str::limit($translation->short_description, 125) }}</p>
+                                    <p>
+                                        {{ Str::limit(
+                                            $translation->short_description,
+                                            125
+                                        ) }}
+                                    </p>
                                 @endif
 
                                 <div class="shop-product-card-footer">
                                     <div class="shop-price">
                                         @if ($variants->count() > 1)
-                                            <small>{{ __('catalog.public.from') }}</small>
+                                            <small>
+                                                {{ __('catalog.public.from') }}
+                                            </small>
                                         @endif
+
                                         <strong>{{ number_format($minPrice, 2, ',', ' ') }} {{ $currency }}</strong>
                                     </div>
 
                                     <span class="shop-stock {{ $hasStock ? 'is-in' : 'is-out' }}">
-                                        {{ $hasStock ? __('catalog.public.in_stock') : __('catalog.public.out_of_stock') }}
+                                        {{ $hasStock
+                                            ? __('catalog.public.in_stock')
+                                            : __('catalog.public.out_of_stock') }}
                                     </span>
                                 </div>
                             </div>
@@ -117,7 +196,9 @@
             </div>
 
             @if ($products->hasPages())
-                <div class="shop-pagination">{{ $products->links() }}</div>
+                <div class="shop-pagination">
+                    {{ $products->links() }}
+                </div>
             @endif
         </main>
     </div>

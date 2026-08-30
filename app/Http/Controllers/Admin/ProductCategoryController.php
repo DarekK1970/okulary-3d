@@ -10,19 +10,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProductCategoryController extends Controller
 {
     public function index(): View
     {
+        $categories = ProductCategory::query()
+            ->with('translations')
+            ->withCount(['products', 'children'])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
         return view('admin.product-categories.index', [
-            'categories' => ProductCategory::query()
-                ->with('translations')
-                ->withCount('products')
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get(),
+            'categories' => $categories,
+            'categoryTree' => ProductCategory::flattenTree($categories),
             'supportedLocales' => config('locales.supported', []),
         ]);
     }
@@ -32,6 +36,7 @@ class ProductCategoryController extends Controller
         $validated = $this->validateCategory($request);
 
         $category = ProductCategory::create([
+            'parent_id' => $validated['parent_id'],
             'source_locale' => $validated['source_locale'],
             'is_active' => $request->boolean('is_active'),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
@@ -49,9 +54,13 @@ class ProductCategoryController extends Controller
         Request $request,
         ProductCategory $productCategory
     ): RedirectResponse {
-        $validated = $this->validateCategory($request);
+        $validated = $this->validateCategory(
+            $request,
+            $productCategory
+        );
 
         $productCategory->update([
+            'parent_id' => $validated['parent_id'],
             'source_locale' => $validated['source_locale'],
             'is_active' => $request->boolean('is_active'),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
@@ -76,6 +85,14 @@ class ProductCategoryController extends Controller
             ]);
         }
 
+        if ($productCategory->children()->exists()) {
+            return back()->withErrors([
+                'category_delete' => __(
+                    'catalog.admin.categories.messages.has_children'
+                ),
+            ]);
+        }
+
         $productCategory->delete();
 
         return back()->with(
@@ -84,8 +101,10 @@ class ProductCategoryController extends Controller
         );
     }
 
-    private function validateCategory(Request $request): array
-    {
+    private function validateCategory(
+        Request $request,
+        ?ProductCategory $category = null
+    ): array {
         $supported = array_keys(
             config('locales.supported', ['pl' => []])
         );
@@ -96,6 +115,11 @@ class ProductCategoryController extends Controller
         );
 
         $rules = [
+            'parent_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('product_categories', 'id'),
+            ],
             'source_locale' => ['required', Rule::in($supported)],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -103,27 +127,60 @@ class ProductCategoryController extends Controller
         ];
 
         foreach ($supported as $locale) {
-            $required = $locale === $sourceLocale ? 'required' : 'nullable';
+            $required = $locale === $sourceLocale
+                ? 'required'
+                : 'nullable';
 
-            $rules["translations.{$locale}.name"] = [$required, 'string', 'max:160'];
+            $rules["translations.{$locale}.name"] = [
+                $required,
+                'string',
+                'max:160',
+            ];
+
             $rules["translations.{$locale}.slug"] = [
                 'nullable',
                 'string',
                 'max:180',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
             ];
+
             $rules["translations.{$locale}.description"] = [
                 'nullable',
                 'string',
                 'max:3000',
             ];
+
             $rules["translations.{$locale}.translation_status"] = [
                 'nullable',
                 Rule::in(CatalogTranslationStatus::values()),
             ];
         }
 
-        return $request->validate($rules);
+        $validated = $request->validate($rules);
+
+        $parentId = isset($validated['parent_id'])
+            ? (int) $validated['parent_id']
+            : null;
+
+        $validated['parent_id'] = $parentId ?: null;
+
+        if (
+            $category
+            && $validated['parent_id'] !== null
+            && in_array(
+                $validated['parent_id'],
+                $category->descendantIds(),
+                true
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'parent_id' => __(
+                    'catalog.validation.category_parent_cycle'
+                ),
+            ]);
+        }
+
+        return $validated;
     }
 
     private function syncTranslations(
@@ -141,7 +198,10 @@ class ProductCategoryController extends Controller
                 ->where('locale', $locale)
                 ->first();
 
-            if ($locale !== $category->source_locale && $name === '') {
+            if (
+                $locale !== $category->source_locale
+                && $name === ''
+            ) {
                 $existing?->delete();
                 continue;
             }
@@ -162,7 +222,8 @@ class ProductCategoryController extends Controller
                         ($data['slug'] ?? null) ?: $name,
                         $existing
                     ),
-                    'description' => ($data['description'] ?? null) ?: null,
+                    'description' =>
+                        ($data['description'] ?? null) ?: null,
                     'translation_status' => $status,
                 ]
             );
@@ -184,7 +245,9 @@ class ProductCategoryController extends Controller
                 ->where('slug', $slug)
                 ->when(
                     $ignore,
-                    fn ($query) => $query->whereKeyNot($ignore->getKey())
+                    fn ($query) => $query->whereKeyNot(
+                        $ignore->getKey()
+                    )
                 )
                 ->exists()
         ) {
