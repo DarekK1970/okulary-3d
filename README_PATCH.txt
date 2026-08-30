@@ -1,28 +1,47 @@
-OKULARY 3D — K86.1 FIX SHOP PRICE TEST
+OKULARY 3D — K86.2 FIX CATEGORY ROUTES
 
 Problem:
-Pełny zestaw testów:
-154 passed, 1 failed.
+Testy K86.2 zwracały 404 dla:
+- /pl/sklep/materialy
+- /pl/sklep/materialy/folie
 
-Nie był to błąd logiki sklepu. HTML renderował cenę i walutę
-w osobnych liniach:
+Przyczyna:
+Polska trasa kategorii była rejestrowana jako literalna:
+  /pl/sklep/{path}
+a locale było dodawane przez:
+  ->defaults('locale', 'pl')
 
-19,99
-PLN
+Middleware SetLocale pobiera język z:
+  $request->route('locale')
 
-Test ShopCatalogTest oczekuje ciągłego tekstu:
-19,99 PLN
+Dlatego dla tej trasy locale nie było traktowane tak samo jak
+rzeczywisty parametr {locale}, co prowadziło do 404 w middleware.
 
 Naprawa:
-Cena i waluta są renderowane w jednym ciągu HTML:
-<strong>19,99 PLN</strong>
+1. Trasa kategorii ma teraz rzeczywisty parametr:
+   /{locale}/sklep/{path}
+   ograniczony regexem do locale=pl.
+2. SetLocale otrzymuje więc poprawnie route('locale').
+3. Wildcard ścieżki kategorii używa `.*`, aby ostatni parametr
+   mógł obsługiwać wielopoziomowe ścieżki.
+4. /{locale}/shop/{slug} również używa `.*`, dzięki czemu
+   angielskie ścieżki kategorii, np.
+   /en/shop/materials/films/polarizing-film
+   są obsługiwane przez istniejący ShopController::show().
+5. Adresy produktów pozostają bez zmian.
 
-ZMIENIONY PLIK:
-resources/views/shop/index.blade.php
+ZMODYFIKOWANE PLIKI:
+- routes/web.php
+- README_PATCH.txt
 
-Po rozpakowaniu:
+PO ROZPAKOWANIU:
 php artisan optimize:clear
-php artisan test --filter=ShopCatalogTest
-php artisan test
+php artisan route:list --path=sklep
+php artisan test --filter=ProductCategorySeoTest
+php artisan test --filter=ProductCategoryTreeTest
 
-Nie zmieniaj testu — oczekiwanie "19,99 PLN" jest poprawne.
+Jeżeli oba zestawy są zielone:
+php artisan test
+npm run build
+
+Na tym etapie nie commituj przed pełnym testem.

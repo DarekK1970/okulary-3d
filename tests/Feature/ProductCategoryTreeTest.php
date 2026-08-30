@@ -215,7 +215,7 @@ class ProductCategoryTreeTest extends TestCase
             'GLASS-001'
         );
 
-        $this->get('/pl/shop?category=materialy')
+        $this->get('/pl/sklep/materialy')
             ->assertOk()
             ->assertSee('Folia polaryzacyjna')
             ->assertDontSee('Okulary testowe');

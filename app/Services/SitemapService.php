@@ -8,6 +8,7 @@ use App\Enums\CatalogTranslationStatus;
 use App\Models\ArchiveItem;
 use App\Models\Article;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\StereoGalleryItem;
 
 class SitemapService
@@ -24,6 +25,7 @@ class SitemapService
         return [
             ...$this->staticEntries(),
             ...$this->articleEntries(),
+            ...$this->categoryEntries(),
             ...$this->productEntries(),
             ...$this->archiveEntries(),
             ...$this->galleryEntries(),
@@ -142,6 +144,76 @@ class SitemapService
                     }
                 }
             );
+
+        return $entries;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function categoryEntries(): array
+    {
+        $publicStatuses =
+            CatalogTranslationStatus::publicValues();
+
+        $categories = ProductCategory::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'translations',
+                fn ($query) => $query->whereIn(
+                    'translation_status',
+                    $publicStatuses
+                )
+            )
+            ->with([
+                'translations' => fn ($query) => $query->whereIn(
+                    'translation_status',
+                    $publicStatuses
+                ),
+            ])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $entries = [];
+
+        foreach ($categories as $category) {
+            $alternates = [];
+
+            foreach (
+                array_keys(config('locales.supported', []))
+                as $locale
+            ) {
+                if (! $category->publicTranslation($locale)) {
+                    continue;
+                }
+
+                $url = $category->publicUrlFrom(
+                    $categories,
+                    $locale
+                );
+
+                if ($url) {
+                    $alternates[$locale] = $url;
+                }
+            }
+
+            $lastTranslation = $category->translations
+                ->sortByDesc('updated_at')
+                ->first();
+            $lastmod = (
+                $lastTranslation?->updated_at
+                ?? $category->updated_at
+            )?->toDateString();
+
+            foreach ($alternates as $url) {
+                $entries[] = [
+                    'loc' => $url,
+                    'lastmod' => $lastmod,
+                    'alternates' => $alternates,
+                ];
+            }
+        }
 
         return $entries;
     }

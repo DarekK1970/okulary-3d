@@ -225,4 +225,57 @@ class ProductCategory extends Model
 
         return $path->values();
     }
+
+    public function localizedPathFrom(
+        Collection $categories,
+        string $locale
+    ): ?string {
+        $path = $this->pathFrom($categories);
+        $segments = [];
+
+        foreach ($path as $category) {
+            $translation = $category->publicTranslation($locale);
+
+            if (! $translation || ! filled($translation->slug)) {
+                return null;
+            }
+
+            $segments[] = $translation->slug;
+        }
+
+        return $segments === []
+            ? null
+            : implode('/', $segments);
+    }
+
+    public function publicUrlFrom(
+        Collection $categories,
+        string $locale
+    ): ?string {
+        $path = $this->localizedPathFrom(
+            $categories,
+            $locale
+        );
+
+        if (! $path) {
+            return null;
+        }
+
+        $segment = trim(
+            (string) config(
+                'locales.supported.'
+                . $locale
+                . '.shop_category_segment',
+                'shop'
+            ),
+            '/'
+        );
+
+        return url(
+            '/' . $locale
+            . '/' . ($segment ?: 'shop')
+            . '/' . $path
+        );
+    }
+
 }

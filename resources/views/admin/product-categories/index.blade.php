@@ -88,6 +88,34 @@
                                 maxlength="3000"
                             >{{ old("translations.{$locale}.description") }}</textarea>
                         </div>
+                        <div class="cms-field">
+                            <label>{{ __('catalog.admin.categories.form.content_html') }}</label>
+                            <textarea
+                                name="translations[{{ $locale }}][content_html]"
+                                rows="8"
+                                maxlength="50000"
+                            >{{ old("translations.{$locale}.content_html") }}</textarea>
+                            <small>{{ __('catalog.admin.categories.form.content_html_help') }}</small>
+                        </div>
+
+                        <div class="cms-field">
+                            <label>{{ __('catalog.admin.categories.form.seo_title') }}</label>
+                            <input
+                                name="translations[{{ $locale }}][seo_title]"
+                                type="text"
+                                value="{{ old("translations.{$locale}.seo_title") }}"
+                                maxlength="180"
+                            >
+                        </div>
+
+                        <div class="cms-field">
+                            <label>{{ __('catalog.admin.categories.form.seo_description') }}</label>
+                            <textarea
+                                name="translations[{{ $locale }}][seo_description]"
+                                rows="3"
+                                maxlength="320"
+                            >{{ old("translations.{$locale}.seo_description") }}</textarea>
+                        </div>
 
                         <div class="cms-field">
                             <label>{{ __('catalog.admin.common.translation_status') }}</label>
@@ -275,6 +303,34 @@
                                                 rows="3"
                                                 maxlength="3000"
                                             >{{ $translation?->description }}</textarea>
+                                        </div>
+                                        <div class="cms-field">
+                                            <label>{{ __('catalog.admin.categories.form.content_html') }}</label>
+                                            <textarea
+                                                name="translations[{{ $locale }}][content_html]"
+                                                rows="8"
+                                                maxlength="50000"
+                                            >{{ $translation?->content_html }}</textarea>
+                                            <small>{{ __('catalog.admin.categories.form.content_html_help') }}</small>
+                                        </div>
+
+                                        <div class="cms-field">
+                                            <label>{{ __('catalog.admin.categories.form.seo_title') }}</label>
+                                            <input
+                                                name="translations[{{ $locale }}][seo_title]"
+                                                type="text"
+                                                value="{{ $translation?->seo_title }}"
+                                                maxlength="180"
+                                            >
+                                        </div>
+
+                                        <div class="cms-field">
+                                            <label>{{ __('catalog.admin.categories.form.seo_description') }}</label>
+                                            <textarea
+                                                name="translations[{{ $locale }}][seo_description]"
+                                                rows="3"
+                                                maxlength="320"
+                                            >{{ $translation?->seo_description }}</textarea>
                                         </div>
 
                                         <div class="cms-field">

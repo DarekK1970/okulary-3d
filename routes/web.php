@@ -70,6 +70,33 @@ Route::post('/analytics/event', [AnalyticsEventController::class, 'store'])
 
 Route::redirect('/', '/' . $defaultLocale);
 
+foreach (config('locales.supported', []) as $categoryLocale => $language) {
+    $categorySegment = trim(
+        (string) ($language['shop_category_segment'] ?? 'shop'),
+        '/'
+    );
+
+    if ($categorySegment === '' || $categorySegment === 'shop') {
+        continue;
+    }
+
+    /*
+     * Keep {locale} as a real route parameter. SetLocale reads
+     * request()->route('locale'), so a route default on a literal
+     * /pl/... path is not reliable enough for this middleware.
+     */
+    Route::get(
+        '/{locale}/' . $categorySegment . '/{path}',
+        [ShopController::class, 'category']
+    )
+        ->where([
+            'locale' => preg_quote($categoryLocale, '/'),
+            'path' => '.*',
+        ])
+        ->middleware(SetLocale::class)
+        ->name('shop.category.' . $categoryLocale);
+}
+
 Route::prefix('{locale}')
     ->where(['locale' => $localePattern])
     ->middleware(SetLocale::class)
@@ -84,6 +111,8 @@ Route::prefix('{locale}')
             ->name('shop.index');
 
         Route::get('/shop/{slug}', [ShopController::class, 'show'])
+            // Last-segment wildcard also supports nested EN category paths.
+            ->where('slug', '.*')
             ->name('shop.show');
 
         Route::get('/lab', [LabController::class, 'index'])

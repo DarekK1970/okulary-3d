@@ -7,9 +7,12 @@ use App\Models\ArchiveItemTranslation;
 use App\Models\Article;
 use App\Models\ArticleTranslation;
 use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductCategoryTranslation;
 use App\Models\ProductTranslation;
 use App\Models\StereoGalleryItem;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -363,6 +366,110 @@ class SeoService
             type: 'product',
             image: $image,
             schemas: [$schema]
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function productCategory(
+        ProductCategory $category,
+        ProductCategoryTranslation $translation,
+        Collection $categories
+    ): array {
+        $alternates = [];
+
+        foreach (
+            array_keys(
+                config('locales.supported', [])
+            ) as $locale
+        ) {
+            if (! $category->publicTranslation($locale)) {
+                continue;
+            }
+
+            $url = $category->publicUrlFrom(
+                $categories,
+                $locale
+            );
+
+            if ($url) {
+                $alternates[$locale] = $url;
+            }
+        }
+
+        $canonical = $category->publicUrlFrom(
+            $categories,
+            $translation->locale
+        ) ?? url()->current();
+
+        $description = $translation->seo_description
+            ?: $translation->description
+            ?: __('catalog.public.shop_description');
+
+        $breadcrumbItems = [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => __('catalog.public.shop_title'),
+                'item' => route(
+                    'shop.index',
+                    ['locale' => $translation->locale]
+                ),
+            ],
+        ];
+
+        foreach (
+            $category->pathFrom($categories)
+            as $breadcrumbCategory
+        ) {
+            $breadcrumbTranslation =
+                $breadcrumbCategory->publicTranslation(
+                    $translation->locale
+                );
+            $breadcrumbUrl =
+                $breadcrumbCategory->publicUrlFrom(
+                    $categories,
+                    $translation->locale
+                );
+
+            if (! $breadcrumbTranslation || ! $breadcrumbUrl) {
+                continue;
+            }
+
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => count($breadcrumbItems) + 1,
+                'name' => $breadcrumbTranslation->name,
+                'item' => $breadcrumbUrl,
+            ];
+        }
+
+        $collectionSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'CollectionPage',
+            'name' => $translation->seo_title
+                ?: $translation->name,
+            'description' => $description,
+            'url' => $canonical,
+            'inLanguage' => $translation->locale,
+        ];
+
+        $breadcrumbSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $breadcrumbItems,
+        ];
+
+        return $this->pageData(
+            canonical: $canonical,
+            alternates: $alternates,
+            type: 'website',
+            image: null,
+            schemas: [
+                $collectionSchema,
+                $breadcrumbSchema,
+            ]
         );
     }
 

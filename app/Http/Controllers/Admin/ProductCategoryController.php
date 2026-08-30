@@ -149,6 +149,23 @@ class ProductCategoryController extends Controller
                 'string',
                 'max:3000',
             ];
+            $rules["translations.{$locale}.content_html"] = [
+                'nullable',
+                'string',
+                'max:50000',
+            ];
+
+            $rules["translations.{$locale}.seo_title"] = [
+                'nullable',
+                'string',
+                'max:180',
+            ];
+
+            $rules["translations.{$locale}.seo_description"] = [
+                'nullable',
+                'string',
+                'max:320',
+            ];
 
             $rules["translations.{$locale}.translation_status"] = [
                 'nullable',
@@ -224,6 +241,12 @@ class ProductCategoryController extends Controller
                     ),
                     'description' =>
                         ($data['description'] ?? null) ?: null,
+                    'content_html' =>
+                        ($data['content_html'] ?? null) ?: null,
+                    'seo_title' =>
+                        ($data['seo_title'] ?? null) ?: null,
+                    'seo_description' =>
+                        ($data['seo_description'] ?? null) ?: null,
                     'translation_status' => $status,
                 ]
             );

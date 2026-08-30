@@ -1,7 +1,18 @@
 @extends('layouts.app')
 
-@section('title', __('catalog.public.shop_title') . ' — ' . __('site.title'))
-@section('meta_description', __('catalog.public.shop_description'))
+@section(
+    'title',
+    ($selectedCategory?->seo_title
+        ?: $selectedCategory?->name
+        ?: __('catalog.public.shop_title'))
+    . ' — ' . __('site.title')
+)
+@section(
+    'meta_description',
+    $selectedCategory?->seo_description
+        ?: $selectedCategory?->description
+        ?: __('catalog.public.shop_description')
+)
 
 @push('head')
     @vite('resources/css/shop.css')
@@ -12,8 +23,13 @@
     <div class="shop-hero">
         <div class="site-container">
             <span class="shop-kicker">{{ __('catalog.public.kicker') }}</span>
-            <h1>{{ __('catalog.public.shop_title') }}</h1>
-            <p>{{ __('catalog.public.shop_description') }}</p>
+            <h1>
+                {{ $selectedCategory?->name ?? __('catalog.public.shop_title') }}
+            </h1>
+            <p>
+                {{ $selectedCategory?->description
+                    ?: __('catalog.public.shop_description') }}
+            </p>
         </div>
     </div>
 
@@ -34,15 +50,16 @@
                     $depth = $row['depth'];
                     $categoryTranslation =
                         $category->publicTranslation(app()->getLocale());
+                    $categoryUrl = $category->publicUrlFrom(
+                        $categories,
+                        app()->getLocale()
+                    );
                 @endphp
 
-                @if ($categoryTranslation)
+                @if ($categoryTranslation && $categoryUrl)
                     <a
                         class="{{ $selectedCategory?->product_category_id === $category->id ? 'is-active' : '' }}"
-                        href="{{ route('shop.index', [
-                            'locale' => app()->getLocale(),
-                            'category' => $categoryTranslation->slug,
-                        ]) }}"
+                        href="{{ $categoryUrl }}"
                         style="padding-left: {{ 10 + min($depth, 6) * 14 }}px"
                     >
                         @if ($depth > 0)
@@ -67,18 +84,19 @@
                                 $breadcrumbCategory->publicTranslation(
                                     app()->getLocale()
                                 );
+                            $breadcrumbUrl = $breadcrumbCategory->publicUrlFrom(
+                                $categories,
+                                app()->getLocale()
+                            );
                         @endphp
 
                         @if ($breadcrumbTranslation)
                             <span>›</span>
 
-                            @if ($loop->last)
+                            @if ($loop->last || ! $breadcrumbUrl)
                                 <span>{{ $breadcrumbTranslation->name }}</span>
                             @else
-                                <a href="{{ route('shop.index', [
-                                    'locale' => app()->getLocale(),
-                                    'category' => $breadcrumbTranslation->slug,
-                                ]) }}">
+                                <a href="{{ $breadcrumbUrl }}">
                                     {{ $breadcrumbTranslation->name }}
                                 </a>
                             @endif
@@ -199,6 +217,12 @@
                 <div class="shop-pagination">
                     {{ $products->links() }}
                 </div>
+            @endif
+
+            @if ($selectedCategory?->content_html)
+                <section class="shop-category-content">
+                    {!! $selectedCategory->content_html !!}
+                </section>
             @endif
         </main>
     </div>

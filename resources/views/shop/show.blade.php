@@ -33,13 +33,20 @@
                 @endphp
 
                 @if ($breadcrumbTranslation)
+                    @php
+                        $breadcrumbUrl = $breadcrumbCategory->publicUrlFrom(
+                            $categoryUrlCategories,
+                            app()->getLocale()
+                        );
+                    @endphp
                     <span>›</span>
-                    <a href="{{ route('shop.index', [
-                        'locale' => app()->getLocale(),
-                        'category' => $breadcrumbTranslation->slug,
-                    ]) }}">
-                        {{ $breadcrumbTranslation->name }}
-                    </a>
+                    @if ($breadcrumbUrl)
+                        <a href="{{ $breadcrumbUrl }}">
+                            {{ $breadcrumbTranslation->name }}
+                        </a>
+                    @else
+                        <span>{{ $breadcrumbTranslation->name }}</span>
+                    @endif
                 @endif
             @endforeach
 

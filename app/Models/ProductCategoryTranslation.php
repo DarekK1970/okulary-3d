@@ -17,6 +17,9 @@ class ProductCategoryTranslation extends Model
         'name',
         'slug',
         'description',
+        'content_html',
+        'seo_title',
+        'seo_description',
         'translation_status',
     ];
 
