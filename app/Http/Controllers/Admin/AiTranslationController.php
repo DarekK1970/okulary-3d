@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiTranslationRun;
+use App\Models\Product;
+use App\Models\User;
 use App\Services\AiTranslationService;
 use App\Services\AiTranslationSettingsService;
+use App\Services\ProductSeoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -67,11 +70,49 @@ class AiTranslationController extends Controller
         Request $request,
         string $type,
         int $id,
-        AiTranslationService $translator
+        AiTranslationService $translator,
+        ProductSeoService $productSeo
     ): RedirectResponse {
+        if ($type === ProductSeoService::TYPE) {
+            if (! in_array(
+                $request->user()->role,
+                [
+                    User::ROLE_ADMIN,
+                    User::ROLE_SUPER_ADMIN,
+                ],
+                true
+            )) {
+                abort(403);
+            }
+
+            try {
+                $run = $productSeo->generate(
+                    Product::query()->findOrFail($id),
+                    $request->user()
+                );
+            } catch (\Throwable $exception) {
+                return back()->withErrors([
+                    'product_ai' =>
+                        $exception->getMessage(),
+                ]);
+            }
+
+            return back()->with(
+                'status',
+                __('product_ai.messages.seo_generated', [
+                    'provider' => strtoupper(
+                        $run->provider
+                    ),
+                    'model' => $run->model,
+                ])
+            );
+        }
+
         if (! in_array(
             $type,
-            $translator->allowedTypesFor($request->user()),
+            $translator->allowedTypesFor(
+                $request->user()
+            ),
             true
         )) {
             abort(403);
@@ -85,7 +126,8 @@ class AiTranslationController extends Controller
             );
         } catch (\Throwable $exception) {
             return back()->withErrors([
-                'translation' => $exception->getMessage(),
+                'translation' =>
+                    $exception->getMessage(),
             ]);
         }
 
