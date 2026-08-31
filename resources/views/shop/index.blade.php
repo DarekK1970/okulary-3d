@@ -126,11 +126,20 @@
                             $product->publicTranslation(app()->getLocale());
                         $primary = $product->primaryMedia();
                         $variants = $product->activeVariants;
-                        $minPrice = $variants->min(
-                            fn ($variant) => (float) $variant->price_gross
+                        $currencyService = app(
+                            \App\Services\CurrencyService::class
                         );
-                        $currency =
-                            $variants->first()?->currency ?? 'PLN';
+
+                        $convertedPrices = $variants->map(
+                            fn ($variant) =>
+                                $currencyService->convertToSelected(
+                                    (float) $variant->price_gross,
+                                    $variant->currency ?? 'PLN'
+                                )
+                        );
+
+                        $minPrice = $convertedPrices->min();
+
                         $hasStock = $variants->contains(
                             fn ($variant) => $variant->inStock()
                         );
@@ -193,7 +202,12 @@
                                             </small>
                                         @endif
 
-                                        <strong>{{ number_format($minPrice, 2, ',', ' ') }} {{ $currency }}</strong>
+                                        <strong>
+                                            {{ $currencyService->formatAmount(
+                                                $minPrice,
+                                                $currencyService->selectedCurrency()
+                                            ) }}
+                                        </strong>
                                     </div>
 
                                     <span class="shop-stock {{ $hasStock ? 'is-in' : 'is-out' }}">

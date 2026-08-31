@@ -10,7 +10,6 @@
     @php
         $seoData = $pageSeo
             ?? app(\App\Services\SeoService::class)->current();
-
         $seoCanonical = $seoData['canonical'] ?? url()->current();
         $seoAlternates = $seoData['alternates'] ?? [];
         $seoXDefault = $seoData['x_default'] ?? null;
@@ -23,7 +22,10 @@
     @endphp
 
     <title>@yield('title', __('site.title'))</title>
-    <meta name="description" content="@yield('meta_description', __('site.meta_description'))">
+    <meta
+        name="description"
+        content="@yield('meta_description', __('site.meta_description'))"
+    >
     <meta name="robots" content="{{ $seoRobots }}">
 
     <link rel="canonical" href="{{ $seoCanonical }}">
@@ -45,14 +47,26 @@
     @endif
 
     <meta property="og:type" content="{{ $seoType }}">
-    <meta property="og:title" content="@yield('title', __('site.title'))">
-    <meta property="og:description" content="@yield('meta_description', __('site.meta_description'))">
+    <meta
+        property="og:title"
+        content="@yield('title', __('site.title'))"
+    >
+    <meta
+        property="og:description"
+        content="@yield('meta_description', __('site.meta_description'))"
+    >
     <meta property="og:url" content="{{ $seoCanonical }}">
-    <meta property="og:site_name" content="{{ config('seo.organization.name') }}">
+    <meta
+        property="og:site_name"
+        content="{{ config('seo.organization.name') }}"
+    >
     <meta property="og:locale" content="{{ $seoOgLocale }}">
 
     @foreach ($seoOgLocaleAlternates as $alternateLocale)
-        <meta property="og:locale:alternate" content="{{ $alternateLocale }}">
+        <meta
+            property="og:locale:alternate"
+            content="{{ $alternateLocale }}"
+        >
     @endforeach
 
     @if ($seoImage)
@@ -63,8 +77,14 @@
         name="twitter:card"
         content="{{ $seoImage ? 'summary_large_image' : 'summary' }}"
     >
-    <meta name="twitter:title" content="@yield('title', __('site.title'))">
-    <meta name="twitter:description" content="@yield('meta_description', __('site.meta_description'))">
+    <meta
+        name="twitter:title"
+        content="@yield('title', __('site.title'))"
+    >
+    <meta
+        name="twitter:description"
+        content="@yield('meta_description', __('site.meta_description'))"
+    >
 
     @if ($seoImage)
         <meta name="twitter:image" content="{{ $seoImage }}">
@@ -79,6 +99,8 @@
         'resources/js/app.js',
         'resources/js/analytics.js'
     ])
+
+    @include('partials.currency-style')
 
     @foreach ($seoSchemas as $schema)
         <script type="application/ld+json">{!! json_encode(

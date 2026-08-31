@@ -31,7 +31,12 @@ class PayNowService
             );
         }
 
-        if ($order->currency !== 'PLN') {
+        if (
+            ! $this->settings
+                ->payNowSupportsCurrency(
+                    $order->currency
+                )
+        ) {
             throw new RuntimeException(
                 __('checkout71.paynow.currency_not_supported')
             );

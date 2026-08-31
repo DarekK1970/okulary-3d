@@ -122,6 +122,20 @@
                         ->first(
                             fn ($variant) => $variant->inStock()
                         )?->id;
+
+                    $currencyService = app(
+                        \App\Services\CurrencyService::class
+                    );
+
+                    $selectedCurrency =
+                        $currencyService->selectedCurrency();
+
+                    $selectedRate =
+                        $currencyService->selectedRate();
+
+                    $currencyMarkup = (float) app(
+                        \App\Services\CurrencySettingsService::class
+                    )->markupPercent();
                 @endphp
 
                 <form
@@ -155,13 +169,10 @@
                                 </span>
 
                                 <span class="product-variant-price">
-                                    {{ number_format(
+                                    {{ $currencyService->formatSelected(
                                         (float) $variant->price_gross,
-                                        2,
-                                        ',',
-                                        ' '
+                                        $variant->currency ?? 'PLN'
                                     ) }}
-                                    {{ $variant->currency }}
                                 </span>
 
                                 <span class="product-variant-stock">
@@ -172,6 +183,54 @@
                             </label>
                         @endforeach
                     </div>
+
+                    @if (
+                        ! $currencyService->selectedIsBase()
+                        && $selectedRate
+                    )
+                        <div class="product-currency-note">
+                            @if ($currencyMarkup > 0)
+                                {{ __(
+                                    'currency.rate_note_markup',
+                                    [
+                                        'currency' =>
+                                            $selectedCurrency->code,
+                                        'source' =>
+                                            strtoupper(
+                                                $selectedRate->source
+                                            ),
+                                        'date' =>
+                                            $selectedRate
+                                                ->effective_date
+                                                ?->format('Y-m-d'),
+                                        'markup' =>
+                                            number_format(
+                                                $currencyMarkup,
+                                                2,
+                                                ',',
+                                                ' '
+                                            ),
+                                    ]
+                                ) }}
+                            @else
+                                {{ __(
+                                    'currency.rate_note',
+                                    [
+                                        'currency' =>
+                                            $selectedCurrency->code,
+                                        'source' =>
+                                            strtoupper(
+                                                $selectedRate->source
+                                            ),
+                                        'date' =>
+                                            $selectedRate
+                                                ->effective_date
+                                                ?->format('Y-m-d'),
+                                    ]
+                                ) }}
+                            @endif
+                        </div>
+                    @endif
 
                     <div class="product-cart-actions">
                         <label class="product-quantity">

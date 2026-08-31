@@ -52,6 +52,7 @@
             data-checkout-form
             data-subtotal-cents="{{ $subtotalCents }}"
             data-currency="{{ $currency }}"
+            data-locale="{{ app()->getLocale() }}"
         >
             @csrf
 
@@ -146,8 +147,10 @@
                                 <span>
                                     <strong>{{ $method['name'] }}</strong>
                                     <small>
-                                        {{ number_format($method['price_cents'] / 100, 2, ',', ' ') }}
-                                        {{ $currency }}
+                                        {{ $currencyService->formatCents(
+                                            $method['price_cents'],
+                                            $currency
+                                        ) }}
                                     </small>
                                 </span>
                             </label>
@@ -276,8 +279,10 @@
                             </div>
 
                             <strong>
-                                {{ number_format($item['line_total_cents'] / 100, 2, ',', ' ') }}
-                                {{ $item['currency'] }}
+                                {{ $currencyService->formatCents(
+                                    $item['line_total_cents'],
+                                    $item['currency']
+                                ) }}
                             </strong>
                         </div>
                     @endforeach
@@ -285,7 +290,10 @@
 
                 <div class="cart-summary-row">
                     <span>{{ __('cart.summary.products') }}</span>
-                    <strong>{{ number_format($subtotalCents / 100, 2, ',', ' ') }} {{ $currency }}</strong>
+                    <strong>{{ $currencyService->formatCents(
+                            $subtotalCents,
+                            $currency
+                        ) }}</strong>
                 </div>
 
                 <div class="cart-summary-row">
@@ -296,8 +304,10 @@
                 <div class="cart-summary-total">
                     <span>{{ __('cart.summary.current_total') }}</span>
                     <strong data-checkout-total>
-                        {{ number_format($subtotalCents / 100, 2, ',', ' ') }}
-                        {{ $currency }}
+                        {{ $currencyService->formatCents(
+                            $subtotalCents,
+                            $currency
+                        ) }}
                     </strong>
                 </div>
 

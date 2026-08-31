@@ -9,10 +9,7 @@ return [
                     'pl' => 'Kurier',
                     'en' => 'Courier',
                 ],
-                'prices' => [
-                    'PLN' => 18.99,
-                    'EUR' => 4.50,
-                ],
+                'base_price_pln' => 18.99,
                 'requires_point' => false,
             ],
 
@@ -22,10 +19,7 @@ return [
                     'pl' => 'Paczkomat / punkt odbioru',
                     'en' => 'Parcel locker / pickup point',
                 ],
-                'prices' => [
-                    'PLN' => 16.99,
-                    'EUR' => 4.10,
-                ],
+                'base_price_pln' => 16.99,
                 'requires_point' => true,
             ],
 
@@ -35,10 +29,7 @@ return [
                     'pl' => 'Odbiór osobisty',
                     'en' => 'Local pickup',
                 ],
-                'prices' => [
-                    'PLN' => 0.00,
-                    'EUR' => 0.00,
-                ],
+                'base_price_pln' => 0.00,
                 'requires_point' => false,
             ],
         ],
@@ -51,7 +42,12 @@ return [
                 'pl' => 'Przelew tradycyjny',
                 'en' => 'Bank transfer',
             ],
-            'currencies' => ['PLN', 'EUR'],
+            'currencies' => [
+                'PLN',
+                'EUR',
+                'GBP',
+                'USD',
+            ],
         ],
 
         'paynow' => [

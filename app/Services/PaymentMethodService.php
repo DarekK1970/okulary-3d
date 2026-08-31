@@ -18,34 +18,64 @@ class PaymentMethodService
         string $locale,
         string $currency
     ): array {
+        $currency = strtoupper(
+            trim($currency)
+        );
+
         $methods = [];
 
-        foreach (config('shop.payments', []) as $key => $method) {
-            if (! ($method['active'] ?? false)) {
-                continue;
-            }
-
+        foreach (
+            config(
+                'shop.payments',
+                []
+            )
+            as $key => $method
+        ) {
             if (
-                $key === 'paynow'
-                && ! $this->settings->payNowEnabled()
+                ! (
+                    $method['active']
+                    ?? false
+                )
             ) {
                 continue;
             }
 
-            if (! in_array(
-                $currency,
-                $method['currencies'] ?? [],
-                true
-            )) {
+            if ($key === 'paynow') {
+                if (
+                    ! $this->settings
+                        ->payNowSupportsCurrency(
+                            $currency
+                        )
+                ) {
+                    continue;
+                }
+            } elseif (
+                ! in_array(
+                    $currency,
+                    $method[
+                        'currencies'
+                    ] ?? [],
+                    true
+                )
+            ) {
                 continue;
             }
 
             $methods[$key] = [
                 'key' => $key,
-                'name' => $method['name'][$locale]
+                'name' =>
+                    $method['name'][$locale]
                     ?? $method['name']['pl']
                     ?? $key,
-                'currencies' => $method['currencies'] ?? [],
+                'currencies' =>
+                    $key === 'paynow'
+                        ? $this->settings
+                            ->payNowEnabledCurrencies()
+                        : (
+                            $method[
+                                'currencies'
+                            ] ?? []
+                        ),
             ];
         }
 
@@ -60,14 +90,18 @@ class PaymentMethodService
         string $locale,
         string $currency
     ): array {
-        $methods = $this->available($locale, $currency);
+        $methods = $this->available(
+            $locale,
+            $currency
+        );
 
         if (! isset($methods[$key])) {
-            throw ValidationException::withMessages([
-                'payment_method' => __(
-                    'checkout71.validation.payment_unavailable'
-                ),
-            ]);
+            throw ValidationException
+                ::withMessages([
+                    'payment_method' => __(
+                        'checkout71.validation.payment_unavailable'
+                    ),
+                ]);
         }
 
         return $methods[$key];

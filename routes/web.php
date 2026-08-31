@@ -35,6 +35,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
@@ -106,6 +107,13 @@ Route::prefix('{locale}')
 
         Route::get('/articles/{slug}', [ArticleController::class, 'show'])
             ->name('articles.show');
+
+        Route::post(
+            '/currency',
+            [CurrencyController::class, 'update']
+        )
+            ->middleware('throttle:30,1')
+            ->name('currency.update');
 
         Route::get('/shop', [ShopController::class, 'index'])
             ->name('shop.index');

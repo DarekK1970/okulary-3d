@@ -187,6 +187,57 @@ NIP: {{ $document->billing_tax_id }}
             </div>
         </div>
 
+        @if (
+            $order->currency
+            !== ($order->base_currency ?? 'PLN')
+        )
+            <div class="notice">
+                <strong>
+                    {{ __('checkout71.document.currency_snapshot') }}
+                </strong><br>
+
+                {{ __('checkout71.document.exchange_rate') }}:
+                1 {{ $order->currency }}
+                =
+                {{ number_format(
+                    (float) $order->exchange_rate,
+                    8,
+                    ',',
+                    ' '
+                ) }}
+                {{ $order->base_currency }}<br>
+
+                {{ __('checkout71.document.conversion_margin') }}:
+                {{ number_format(
+                    (float) $order->currency_markup_percent,
+                    2,
+                    ',',
+                    ' '
+                ) }}%
+
+                @if ($order->exchange_rate_source)
+                    <br>
+                    {{ __('checkout71.document.rate_source') }}:
+                    {{ strtoupper($order->exchange_rate_source) }}
+                    @if ($order->exchange_rate_effective_date)
+                        · {{ $order->exchange_rate_effective_date->format('Y-m-d') }}
+                    @endif
+                @endif
+
+                @if ($order->total_base_gross !== null)
+                    <br>
+                    {{ __('checkout71.document.base_total') }}:
+                    {{ number_format(
+                        (float) $order->total_base_gross,
+                        2,
+                        ',',
+                        ' '
+                    ) }}
+                    {{ $order->base_currency }}
+                @endif
+            </div>
+        @endif
+
         <div class="notice">
             {{ __('checkout71.document.notice') }}
         </div>

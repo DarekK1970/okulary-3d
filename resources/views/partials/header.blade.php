@@ -70,6 +70,16 @@
     $accountUrl = auth()->check()
         ? route('account', ['locale' => $locale])
         : route('login', ['locale' => $locale]);
+
+    $currencyService = app(
+        \App\Services\CurrencyService::class
+    );
+
+    $headerCurrencies =
+        $currencyService->selectableCurrencies();
+
+    $selectedCurrencyCode =
+        $currencyService->selectedCode();
 @endphp
 
 <header class="site-header" data-site-header>
@@ -106,23 +116,41 @@
                 </button>
             </div>
 
-            <a class="nav-link {{ request()->routeIs('home') ? 'is-active' : '' }}" href="{{ route('home', ['locale' => $locale]) }}">
+            <a
+                class="nav-link {{ request()->routeIs('home') ? 'is-active' : '' }}"
+                href="{{ route('home', ['locale' => $locale]) }}"
+            >
                 {{ __('site.nav.home') }}
             </a>
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#articles">{{ __('site.nav.articles') }}</a>
+
+            <a
+                class="nav-link"
+                href="{{ route('home', ['locale' => $locale]) }}#articles"
+            >
+                {{ __('site.nav.articles') }}
+            </a>
+
             <a
                 class="nav-link {{ request()->routeIs('archive.*') ? 'is-active' : '' }}"
                 href="{{ route('archive.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.history') }}
             </a>
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#techniques">{{ __('site.nav.techniques') }}</a>
+
+            <a
+                class="nav-link"
+                href="{{ route('home', ['locale' => $locale]) }}#techniques"
+            >
+                {{ __('site.nav.techniques') }}
+            </a>
+
             <a
                 class="nav-link {{ request()->routeIs('lab.*') ? 'is-active' : '' }}"
                 href="{{ route('lab.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.lab') }}
             </a>
+
             <a
                 class="nav-link {{ request()->routeIs('gallery.*') || request()->routeIs('account.gallery.*') ? 'is-active' : '' }}"
                 href="{{ route('gallery.index', ['locale' => $locale]) }}"
@@ -137,38 +165,103 @@
                 {{ __('site.nav.shop') }}
             </a>
 
-            <a class="nav-link" href="{{ route('home', ['locale' => $locale]) }}#about">{{ __('site.nav.about') }}</a>
+            <a
+                class="nav-link"
+                href="{{ route('home', ['locale' => $locale]) }}#about"
+            >
+                {{ __('site.nav.about') }}
+            </a>
 
             <div class="mobile-nav-actions">
-                <div class="mobile-language-switcher" aria-label="{{ __('site.language_switcher') }}">
+                <div
+                    class="mobile-language-switcher"
+                    aria-label="{{ __('site.language_switcher') }}"
+                >
                     @foreach (config('locales.supported', []) as $code => $language)
                         <a
                             class="mobile-language-link {{ $locale === $code ? 'is-active' : '' }}"
                             href="{{ $localizedUrl($code) }}"
                             hreflang="{{ $code }}"
                             lang="{{ $code }}"
-                            @if ($locale === $code) aria-current="page" @endif
+                            @if ($locale === $code)
+                                aria-current="page"
+                            @endif
                         >
                             {{ $language['native'] }}
                         </a>
                     @endforeach
                 </div>
 
+                @if ($headerCurrencies->isNotEmpty())
+                    <form
+                        class="mobile-currency-switcher"
+                        method="post"
+                        action="{{ route('currency.update', [
+                            'locale' => $locale,
+                        ]) }}"
+                    >
+                        @csrf
+
+                        <label
+                            for="mobile-currency-select"
+                            class="sr-only"
+                        >
+                            {{ __('currency.switcher') }}
+                        </label>
+
+                        <select
+                            id="mobile-currency-select"
+                            name="currency"
+                            onchange="this.form.submit()"
+                            aria-label="{{ __('currency.switcher') }}"
+                        >
+                            @foreach ($headerCurrencies as $currency)
+                                <option
+                                    value="{{ $currency->code }}"
+                                    @selected(
+                                        $selectedCurrencyCode
+                                        === $currency->code
+                                    )
+                                >
+                                    {{ $currency->code }}
+                                    · {{ $currency->symbol }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <noscript>
+                            <button type="submit">
+                                {{ __('currency.apply') }}
+                            </button>
+                        </noscript>
+                    </form>
+                @endif
+
                 <div class="mobile-utility-row">
-                    <button class="mobile-utility-button" type="button">
+                    <button
+                        class="mobile-utility-button"
+                        type="button"
+                    >
                         <span aria-hidden="true">⌕</span>
                         {{ __('site.search') }}
                     </button>
 
-                    <a class="mobile-utility-button" href="{{ $accountUrl }}">
+                    <a
+                        class="mobile-utility-button"
+                        href="{{ $accountUrl }}"
+                    >
                         <span aria-hidden="true">○</span>
-                        {{ auth()->check() ? __('portal_auth.common.my_account') : __('site.account') }}
+                        {{ auth()->check()
+                            ? __('portal_auth.common.my_account')
+                            : __('site.account') }}
                     </a>
 
                     @auth
                         <a
                             class="mobile-utility-button"
-                            href="{{ route('account.orders.index', ['locale' => $locale]) }}"
+                            href="{{ route('account.orders.index', [
+                                'locale' => $locale,
+                            ]) }}"
                         >
                             <span aria-hidden="true">▤</span>
                             {{ __('cart.header.orders') }}
@@ -177,7 +270,9 @@
 
                     <a
                         class="mobile-utility-button"
-                        href="{{ route('cart.index', ['locale' => $locale]) }}"
+                        href="{{ route('cart.index', [
+                            'locale' => $locale,
+                        ]) }}"
                     >
                         <span aria-hidden="true">🛒</span>
                         {{ __('site.cart') }}
@@ -188,31 +283,94 @@
         </nav>
 
         <div class="header-actions">
-            <div class="language-switcher" aria-label="{{ __('site.language_switcher') }}">
+            <div
+                class="language-switcher"
+                aria-label="{{ __('site.language_switcher') }}"
+            >
                 @foreach (config('locales.supported', []) as $code => $language)
                     <a
                         class="language-link {{ $locale === $code ? 'is-active' : '' }}"
                         href="{{ $localizedUrl($code) }}"
                         hreflang="{{ $code }}"
                         lang="{{ $code }}"
-                        @if ($locale === $code) aria-current="page" @endif
+                        @if ($locale === $code)
+                            aria-current="page"
+                        @endif
                     >
                         {{ strtoupper($code) }}
                     </a>
 
                     @if (! $loop->last)
-                        <span class="language-separator" aria-hidden="true">/</span>
+                        <span
+                            class="language-separator"
+                            aria-hidden="true"
+                        >/</span>
                     @endif
                 @endforeach
             </div>
 
-            <button class="icon-button" type="button" aria-label="{{ __('site.search') }}" title="{{ __('site.search') }}">
+            @if ($headerCurrencies->isNotEmpty())
+                <form
+                    class="currency-switcher"
+                    method="post"
+                    action="{{ route('currency.update', [
+                        'locale' => $locale,
+                    ]) }}"
+                >
+                    @csrf
+
+                    <label
+                        for="desktop-currency-select"
+                        class="sr-only"
+                    >
+                        {{ __('currency.switcher') }}
+                    </label>
+
+                    <select
+                        id="desktop-currency-select"
+                        name="currency"
+                        onchange="this.form.submit()"
+                        aria-label="{{ __('currency.switcher') }}"
+                        title="{{ __('currency.switcher') }}"
+                    >
+                        @foreach ($headerCurrencies as $currency)
+                            <option
+                                value="{{ $currency->code }}"
+                                @selected(
+                                    $selectedCurrencyCode
+                                    === $currency->code
+                                )
+                            >
+                                {{ $currency->code }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <noscript>
+                        <button type="submit">
+                            {{ __('currency.apply') }}
+                        </button>
+                    </noscript>
+                </form>
+            @endif
+
+            <button
+                class="icon-button"
+                type="button"
+                aria-label="{{ __('site.search') }}"
+                title="{{ __('site.search') }}"
+            >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/>
                 </svg>
             </button>
 
-            <a class="icon-button" href="{{ $accountUrl }}" aria-label="{{ __('site.account') }}" title="{{ __('site.account') }}">
+            <a
+                class="icon-button"
+                href="{{ $accountUrl }}"
+                aria-label="{{ __('site.account') }}"
+                title="{{ __('site.account') }}"
+            >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/>
                 </svg>
@@ -221,7 +379,9 @@
             @auth
                 <a
                     class="icon-button"
-                    href="{{ route('account.orders.index', ['locale' => $locale]) }}"
+                    href="{{ route('account.orders.index', [
+                        'locale' => $locale,
+                    ]) }}"
                     aria-label="{{ __('cart.header.orders') }}"
                     title="{{ __('cart.header.orders') }}"
                 >
@@ -233,13 +393,16 @@
 
             <a
                 class="icon-button cart-button"
-                href="{{ route('cart.index', ['locale' => $locale]) }}"
+                href="{{ route('cart.index', [
+                    'locale' => $locale,
+                ]) }}"
                 aria-label="{{ __('site.cart') }}"
                 title="{{ __('site.cart') }}"
             >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L20 8H6m4 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
                 </svg>
+
                 <span class="cart-count">
                     {{ app(\App\Services\CartService::class)->count() }}
                 </span>
@@ -260,5 +423,8 @@
         </button>
     </div>
 
-    <div class="mobile-nav-backdrop" data-menu-backdrop></div>
+    <div
+        class="mobile-nav-backdrop"
+        data-menu-backdrop
+    ></div>
 </header>

@@ -19,9 +19,12 @@ class OrderItem extends Model
         'variant_name_snapshot',
         'quantity',
         'unit_price_gross',
+        'base_unit_price_gross',
         'vat_rate',
         'line_total_gross',
+        'base_line_total_gross',
         'currency',
+        'base_currency',
     ];
 
     protected function casts(): array
@@ -29,8 +32,10 @@ class OrderItem extends Model
         return [
             'quantity' => 'integer',
             'unit_price_gross' => 'decimal:2',
+            'base_unit_price_gross' => 'decimal:2',
             'vat_rate' => 'decimal:2',
             'line_total_gross' => 'decimal:2',
+            'base_line_total_gross' => 'decimal:2',
         ];
     }
 

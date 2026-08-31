@@ -173,6 +173,122 @@
     backdrop-filter: blur(8px);
 }
 
+/* K86.4A — currency settings */
+
+.commerce-settings-grid .cms-field small {
+    display: block;
+    margin-top: 5px;
+    color: #8a96a8;
+    font-size: .51rem;
+    line-height: 1.45;
+}
+
+.currency-markup-input {
+    display: grid;
+    grid-template-columns: 1fr 38px;
+    align-items: stretch;
+}
+
+.currency-markup-input input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.currency-markup-input span {
+    display: grid;
+    place-items: center;
+    border: 1px solid #dfe5ec;
+    border-left: 0;
+    border-radius: 0 8px 8px 0;
+    background: #f7f9fb;
+    color: #5e6b7e;
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+.currency-table-wrap {
+    margin-top: 18px;
+    overflow-x: auto;
+    border: 1px solid #e3e8ee;
+    border-radius: 10px;
+}
+
+.currency-settings-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.currency-settings-table th,
+.currency-settings-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf1f5;
+    text-align: left;
+    vertical-align: middle;
+    font-size: .57rem;
+}
+
+.currency-settings-table th {
+    background: #f7f9fb;
+    color: #69768a;
+    font-size: .51rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.currency-settings-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.currency-settings-table td:nth-child(2) strong,
+.currency-settings-table td:nth-child(2) span {
+    display: block;
+}
+
+.currency-settings-table td:nth-child(2) strong {
+    color: #344054;
+    font-size: .62rem;
+}
+
+.currency-settings-table td:nth-child(2) span {
+    margin-top: 2px;
+    color: #8994a5;
+    font-size: .51rem;
+}
+
+.currency-enable-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.currency-rate-input {
+    width: 138px;
+    min-height: 34px;
+    padding: 6px 8px;
+}
+
+.currency-base-rate {
+    color: #3c4a5f;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 800;
+}
+
+.currency-rate-badge {
+    display: inline-flex;
+    margin-left: 5px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #fff4d9;
+    color: #8a6515;
+    font-size: .46rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
 @media (max-width: 760px) {
     .commerce-settings-heading {
         flex-direction: column;
@@ -184,5 +300,141 @@
 
     .commerce-full-width {
         grid-column: auto;
+    }
+}
+
+
+/* K86.4B — NBP refresh action */
+
+.currency-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.currency-refresh-button {
+    min-height: 30px;
+    border: 1px solid #cfe0e8;
+    background: #f5fbfd;
+    color: #087da2;
+    cursor: pointer;
+}
+
+.currency-refresh-button:hover {
+    border-color: #9ecddd;
+    background: #eefafd;
+}
+
+.commerce-currency-error {
+    margin: -4px 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #f2c7cd;
+    border-radius: 8px;
+    background: #fff5f6;
+    color: #a62d42;
+    font-size: .56rem;
+    font-weight: 700;
+}
+
+/*
+ * K86.4B — Admin sidebar vertical scrolling.
+ *
+ * admin-settings.css is already included globally by admin.layout,
+ * so this small usability fix applies to every Admin screen without
+ * adding another Vite entry point.
+ */
+@media (min-width: 761px) {
+    .admin-sidebar {
+        overflow: hidden;
+    }
+
+    .admin-brand,
+    .admin-sidebar-footer {
+        flex: 0 0 auto;
+    }
+
+    .admin-nav {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(158, 172, 192, .42) transparent;
+    }
+
+    .admin-nav::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .admin-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .admin-nav::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(158, 172, 192, .34);
+    }
+
+    .admin-nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(158, 172, 192, .55);
+    }
+}
+
+@media (max-width: 760px) {
+    .currency-heading-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .admin-sidebar {
+        overflow: visible;
+    }
+
+    .admin-nav {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow-y: hidden;
+    }
+}
+
+
+/* K86.4E — PayNow currency capability matrix */
+.paynow-currency-capabilities {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #edf1f5;
+}
+.paynow-currency-capabilities__heading strong {
+    color: #46536a;
+    font-size: .63rem;
+}
+.paynow-currency-capabilities__heading p {
+    max-width: 760px;
+    margin: 5px 0 12px;
+    color: #7f8b9d;
+    font-size: .54rem;
+    line-height: 1.55;
+}
+.paynow-currency-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+.paynow-foreign-warning {
+    border-color: #f0dfb9;
+    background: #fffaf0;
+}
+.paynow-foreign-warning strong {
+    color: #7b5a11;
+}
+.paynow-foreign-warning p {
+    color: #8b7442;
+}
+@media (max-width: 760px) {
+    .paynow-currency-grid {
+        grid-template-columns: 1fr;
     }
 }

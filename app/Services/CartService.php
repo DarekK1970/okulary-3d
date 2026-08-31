@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\CatalogTranslationStatus;
 use App\Enums\ProductStatus;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
@@ -11,6 +10,11 @@ use Illuminate\Validation\ValidationException;
 class CartService
 {
     private const SESSION_KEY = 'shop_cart';
+
+    public function __construct(
+        private readonly CurrencyService $currencies
+    ) {
+    }
 
     /**
      * @return array<int, int>
@@ -42,7 +46,6 @@ class CartService
         $this->assertCurrencyCompatible($variant);
 
         $entries[$variant->id] = $newQuantity;
-
         session()->put(self::SESSION_KEY, $entries);
     }
 
@@ -60,7 +63,6 @@ class CartService
 
         $entries = $this->entries();
         $entries[$variant->id] = $quantity;
-
         session()->put(self::SESSION_KEY, $entries);
     }
 
@@ -68,7 +70,6 @@ class CartService
     {
         $entries = $this->entries();
         unset($entries[$variantId]);
-
         session()->put(self::SESSION_KEY, $entries);
     }
 
@@ -98,6 +99,8 @@ class CartService
             ->get()
             ->keyBy('id');
 
+        $pricing = $this->currencies->pricingSnapshot();
+
         $resolved = collect();
         $cleanEntries = [];
 
@@ -125,8 +128,15 @@ class CartService
             }
 
             $quantity = (int) $quantity;
-            $unitPriceCents = $this->moneyToCents(
-                (string) $variant->price_gross
+
+            $baseUnitPriceCents = $this->currencies->toBaseCents(
+                (string) $variant->price_gross,
+                $variant->currency
+            );
+
+            $unitPriceCents = $this->currencies->convertBaseCentsWithSnapshot(
+                $baseUnitPriceCents,
+                $pricing
             );
 
             $cleanEntries[$variant->id] = $quantity;
@@ -137,9 +147,15 @@ class CartService
                 'translation' => $translation,
                 'media' => $variant->product->primaryMedia(),
                 'quantity' => $quantity,
+
+                'base_currency' => $pricing['base_currency'],
+                'unit_price_base_cents' => $baseUnitPriceCents,
+                'line_total_base_cents' => $baseUnitPriceCents * $quantity,
+
                 'unit_price_cents' => $unitPriceCents,
                 'line_total_cents' => $unitPriceCents * $quantity,
-                'currency' => $variant->currency,
+                'currency' => $pricing['currency'],
+                'source_currency' => $variant->currency,
             ]);
         }
 
@@ -154,6 +170,12 @@ class CartService
     {
         return (int) $this->resolvedItems($locale)
             ->sum('line_total_cents');
+    }
+
+    public function subtotalBaseCents(string $locale): int
+    {
+        return (int) $this->resolvedItems($locale)
+            ->sum('line_total_base_cents');
     }
 
     public function currency(string $locale): ?string
@@ -195,19 +217,15 @@ class CartService
         ProductVariant $variant,
         int $quantity
     ): void {
-        if (
-            $variant->track_stock
-            && $quantity > $variant->stock_quantity
-        ) {
+        if ($variant->track_stock && $quantity > $variant->stock_quantity) {
             throw ValidationException::withMessages([
                 'quantity' => __('cart.messages.insufficient_stock'),
             ]);
         }
     }
 
-    private function assertCurrencyCompatible(
-        ProductVariant $variant
-    ): void {
+    private function assertCurrencyCompatible(ProductVariant $variant): void
+    {
         $entries = $this->entries();
 
         if ($entries === []) {
@@ -219,18 +237,10 @@ class CartService
             ->where('is_active', true)
             ->value('currency');
 
-        if (
-            $existingCurrency
-            && $existingCurrency !== $variant->currency
-        ) {
+        if ($existingCurrency && $existingCurrency !== $variant->currency) {
             throw ValidationException::withMessages([
                 'cart' => __('cart.messages.mixed_currency'),
             ]);
         }
-    }
-
-    private function moneyToCents(string $value): int
-    {
-        return (int) round(((float) $value) * 100);
     }
 }

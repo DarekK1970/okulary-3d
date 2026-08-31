@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
 use App\Services\CartService;
+use App\Services\CurrencyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,14 +13,17 @@ class CartController extends Controller
 {
     public function index(
         string $locale,
-        CartService $cart
+        CartService $cart,
+        CurrencyService $currencies
     ): View {
         $items = $cart->resolvedItems($locale);
 
         return view('cart.index', [
             'items' => $items,
             'subtotalCents' => (int) $items->sum('line_total_cents'),
-            'currency' => $items->first()['currency'] ?? 'PLN',
+            'currency' => $items->first()['currency']
+                ?? $currencies->selectedCode(),
+            'currencyService' => $currencies,
         ]);
     }
 

@@ -189,6 +189,64 @@
                     <span>{{ __('cart.admin.total') }}</span>
                     <strong>{{ number_format((float) $order->total_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
                 </div>
+
+                @if (
+                    $order->currency
+                    !== $order->base_currency
+                )
+                    <div class="admin-order-total-row">
+                        <span>{{ __('checkout71.admin.base_total') }}</span>
+                        <strong>
+                            {{ number_format(
+                                (float) $order->total_base_gross,
+                                2,
+                                ',',
+                                ' '
+                            ) }}
+                            {{ $order->base_currency }}
+                        </strong>
+                    </div>
+
+                    <div class="admin-payment-box">
+                        <strong>
+                            {{ __('checkout71.admin.currency_snapshot') }}
+                        </strong>
+
+                        <small>
+                            {{ __('checkout71.admin.exchange_rate') }}:
+                            1 {{ $order->currency }}
+                            =
+                            {{ number_format(
+                                (float) $order->exchange_rate,
+                                8,
+                                ',',
+                                ' '
+                            ) }}
+                            {{ $order->base_currency }}
+                        </small>
+
+                        <small>
+                            {{ __('checkout71.admin.conversion_margin') }}:
+                            {{ number_format(
+                                (float) $order->currency_markup_percent,
+                                2,
+                                ',',
+                                ' '
+                            ) }}%
+                        </small>
+
+                        @if ($order->exchange_rate_source)
+                            <small>
+                                {{ __('checkout71.admin.rate_source') }}:
+                                {{ strtoupper($order->exchange_rate_source) }}
+                                @if ($order->exchange_rate_effective_date)
+                                    · {{ $order->exchange_rate_effective_date->format('Y-m-d') }}
+                                @endif
+                            </small>
+                        @endif
+                    </div>
+                @endif
+
             </section>
         </aside>
     </div>

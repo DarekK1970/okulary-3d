@@ -77,8 +77,10 @@
                                 @endif
 
                                 <strong class="cart-unit-price">
-                                    {{ number_format($item['unit_price_cents'] / 100, 2, ',', ' ') }}
-                                    {{ $item['currency'] }}
+                                    {{ $currencyService->formatCents(
+                                        $item['unit_price_cents'],
+                                        $item['currency']
+                                    ) }}
                                 </strong>
                             </div>
 
@@ -110,8 +112,10 @@
                             <div class="cart-item-total">
                                 <span>{{ __('cart.cart.line_total') }}</span>
                                 <strong>
-                                    {{ number_format($item['line_total_cents'] / 100, 2, ',', ' ') }}
-                                    {{ $item['currency'] }}
+                                    {{ $currencyService->formatCents(
+                                        $item['line_total_cents'],
+                                        $item['currency']
+                                    ) }}
                                 </strong>
 
                                 <form
@@ -151,8 +155,10 @@
                     <div class="cart-summary-row">
                         <span>{{ __('cart.summary.products') }}</span>
                         <strong>
-                            {{ number_format($subtotalCents / 100, 2, ',', ' ') }}
-                            {{ $currency }}
+                            {{ $currencyService->formatCents(
+                                $subtotalCents,
+                                $currency
+                            ) }}
                         </strong>
                     </div>
 
@@ -164,8 +170,10 @@
                     <div class="cart-summary-total">
                         <span>{{ __('cart.summary.current_total') }}</span>
                         <strong>
-                            {{ number_format($subtotalCents / 100, 2, ',', ' ') }}
-                            {{ $currency }}
+                            {{ $currencyService->formatCents(
+                                $subtotalCents,
+                                $currency
+                            ) }}
                         </strong>
                     </div>
 

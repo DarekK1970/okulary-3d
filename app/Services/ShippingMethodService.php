@@ -6,13 +6,23 @@ use Illuminate\Validation\ValidationException;
 
 class ShippingMethodService
 {
+    public function __construct(
+        private readonly CurrencyService $currencies
+    ) {
+    }
+
     /**
+     * @param array<string, mixed>|null $pricingSnapshot
      * @return array<string, array<string, mixed>>
      */
     public function available(
         string $locale,
-        string $currency
+        string $currency,
+        ?array $pricingSnapshot = null
     ): array {
+        $pricingSnapshot ??=
+            $this->currencies->pricingSnapshotForCode($currency);
+
         $methods = [];
 
         foreach (config('shop.shipping.methods', []) as $key => $method) {
@@ -20,19 +30,33 @@ class ShippingMethodService
                 continue;
             }
 
-            if (! array_key_exists($currency, $method['prices'] ?? [])) {
+            $basePrice = $method['base_price_pln']
+                ?? data_get($method, 'prices.PLN');
+
+            if (! is_numeric($basePrice)) {
                 continue;
             }
+
+            $basePriceCents = (int) round(
+                ((float) $basePrice) * 100,
+                0,
+                PHP_ROUND_HALF_UP
+            );
+
+            $priceCents = $this->currencies->convertBaseCentsWithSnapshot(
+                $basePriceCents,
+                $pricingSnapshot
+            );
 
             $methods[$key] = [
                 'key' => $key,
                 'name' => $method['name'][$locale]
                     ?? $method['name']['pl']
                     ?? $key,
-                'price_cents' => $this->moneyToCents(
-                    (string) $method['prices'][$currency]
-                ),
-                'currency' => $currency,
+                'base_price_cents' => $basePriceCents,
+                'price_cents' => $priceCents,
+                'base_currency' => CurrencySettingsService::BASE_CURRENCY,
+                'currency' => $pricingSnapshot['currency'],
                 'requires_point' => (bool) (
                     $method['requires_point'] ?? false
                 ),
@@ -43,14 +67,20 @@ class ShippingMethodService
     }
 
     /**
+     * @param array<string, mixed>|null $pricingSnapshot
      * @return array<string, mixed>
      */
     public function resolve(
         string $key,
         string $locale,
-        string $currency
+        string $currency,
+        ?array $pricingSnapshot = null
     ): array {
-        $methods = $this->available($locale, $currency);
+        $methods = $this->available(
+            $locale,
+            $currency,
+            $pricingSnapshot
+        );
 
         if (! isset($methods[$key])) {
             throw ValidationException::withMessages([
@@ -61,10 +91,5 @@ class ShippingMethodService
         }
 
         return $methods[$key];
-    }
-
-    private function moneyToCents(string $value): int
-    {
-        return (int) round(((float) $value) * 100);
     }
 }

@@ -46,7 +46,6 @@ Schedule::command('articles:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
 
-
 Schedule::command('newsletter:send-due --limit=100')
     ->everyMinute()
     ->withoutOverlapping();
@@ -55,3 +54,13 @@ Schedule::command('portal:analytics-prune --days=180')
     ->dailyAt('03:30')
     ->withoutOverlapping();
 
+/*
+ * The configured update time lives in the database. The lightweight
+ * command is therefore invoked by Laravel Scheduler every minute and
+ * exits immediately unless current HH:MM matches the saved setting.
+ *
+ * The existing Plesk "artisan schedule:run" task is sufficient.
+ */
+Schedule::command('currency:rates-update --scheduled')
+    ->everyMinute()
+    ->withoutOverlapping();

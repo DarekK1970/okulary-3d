@@ -16,8 +16,10 @@ const initShippingAddress = () => {
     update();
 };
 
-const formatMoney = (cents, currency) => {
-    return `${(cents / 100).toLocaleString('pl-PL', {
+const formatMoney = (cents, currency, locale) => {
+    const browserLocale = locale === 'en' ? 'en-GB' : 'pl-PL';
+
+    return `${(cents / 100).toLocaleString(browserLocale, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })} ${currency}`;
@@ -30,9 +32,7 @@ const initCheckoutMethods = () => {
         return;
     }
 
-    const shippingOutput = form.querySelector(
-        '[data-checkout-shipping]'
-    );
+    const shippingOutput = form.querySelector('[data-checkout-shipping]');
     const totalOutput = form.querySelector('[data-checkout-total]');
     const pointWrap = form.querySelector('[data-shipping-point-wrap]');
     const pointInput = pointWrap?.querySelector(
@@ -41,6 +41,7 @@ const initCheckoutMethods = () => {
 
     const subtotal = Number(form.dataset.subtotalCents || 0);
     const currency = form.dataset.currency || 'PLN';
+    const locale = form.dataset.locale || 'pl';
 
     const update = () => {
         const selected = form.querySelector(
@@ -57,14 +58,16 @@ const initCheckoutMethods = () => {
         if (shippingOutput) {
             shippingOutput.textContent = formatMoney(
                 shippingCents,
-                currency
+                currency,
+                locale
             );
         }
 
         if (totalOutput) {
             totalOutput.textContent = formatMoney(
                 subtotal + shippingCents,
-                currency
+                currency,
+                locale
             );
         }
 

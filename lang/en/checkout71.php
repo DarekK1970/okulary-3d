@@ -22,6 +22,8 @@ return [
         'shipping_unavailable' => 'The selected shipping method is unavailable for this currency.',
         'payment_unavailable' => 'The selected payment method is currently unavailable.',
         'shipping_point_required' => 'Enter a parcel locker or pickup point for this shipping method.',
+        'no_shipping_methods' => 'No shipping methods are available for the selected currency.',
+        'no_payment_methods' => 'No payment methods are available for the selected currency.',
     ],
 
     'checkout' => [
@@ -50,7 +52,7 @@ return [
 
     'paynow' => [
         'not_configured' => 'PayNow is not configured.',
-        'currency_not_supported' => 'PayNow is currently enabled for PLN payments in this shop.',
+        'currency_not_supported' => 'PayNow is not enabled for this order currency. Foreign currencies require separate card-payment activation on the PayNow side.',
         'invalid_response' => 'PayNow returned an incomplete response.',
         'start_failed' => 'PayNow payment could not be started. The order was saved and payment can be retried.',
     ],
@@ -70,6 +72,11 @@ return [
         'cannot_cancel_pending_online' => 'An order cannot be cancelled while an online payment is pending.',
         'print_document' => 'Print confirmation',
         'point' => 'Pickup point',
+        'currency_snapshot' => 'Order currency snapshot',
+        'exchange_rate' => 'Applied exchange rate',
+        'conversion_margin' => 'Currency conversion margin',
+        'rate_source' => 'Rate source',
+        'base_total' => 'Base order value',
     ],
 
     'document' => [
@@ -86,6 +93,11 @@ return [
         'total' => 'Total',
         'print' => 'Print',
         'notice' => 'This document confirms the order and is not a VAT invoice or fiscal receipt.',
+        'currency_snapshot' => 'Order currency settlement',
+        'exchange_rate' => 'Applied exchange rate',
+        'conversion_margin' => 'Currency conversion margin',
+        'rate_source' => 'Rate source',
+        'base_total' => 'Base value',
     ],
 
     'mail' => [

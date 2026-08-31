@@ -19,11 +19,21 @@ class Order extends Model
         'user_id',
         'locale',
         'status',
+
         'currency',
+        'base_currency',
+        'exchange_rate',
+        'exchange_rate_source',
+        'exchange_rate_effective_date',
+        'currency_markup_percent',
+
         'subtotal_gross',
+        'subtotal_base_gross',
         'shipping_gross',
+        'shipping_base_gross',
         'shipping_method',
         'shipping_name_snapshot',
+
         'payment_method',
         'payment_status',
         'payment_merchant_external_id',
@@ -31,7 +41,10 @@ class Order extends Model
         'payment_external_id',
         'payment_redirect_url',
         'payment_error',
+
         'total_gross',
+        'total_base_gross',
+
         'customer_email',
         'customer_first_name',
         'customer_last_name',
@@ -66,9 +79,15 @@ class Order extends Model
         return [
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
+            'exchange_rate' => 'decimal:8',
+            'exchange_rate_effective_date' => 'date',
+            'currency_markup_percent' => 'decimal:2',
             'subtotal_gross' => 'decimal:2',
+            'subtotal_base_gross' => 'decimal:2',
             'shipping_gross' => 'decimal:2',
+            'shipping_base_gross' => 'decimal:2',
             'total_gross' => 'decimal:2',
+            'total_base_gross' => 'decimal:2',
             'shipping_same_as_billing' => 'boolean',
             'placed_at' => 'datetime',
             'paid_at' => 'datetime',

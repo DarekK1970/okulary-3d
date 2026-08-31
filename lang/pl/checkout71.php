@@ -22,6 +22,8 @@ return [
         'shipping_unavailable' => 'Wybrana metoda dostawy nie jest dostępna dla tej waluty.',
         'payment_unavailable' => 'Wybrana metoda płatności nie jest obecnie dostępna.',
         'shipping_point_required' => 'Dla tej metody dostawy podaj Paczkomat lub punkt odbioru.',
+        'no_shipping_methods' => 'Brak dostępnych metod dostawy dla wybranej waluty.',
+        'no_payment_methods' => 'Brak dostępnych metod płatności dla wybranej waluty.',
     ],
 
     'checkout' => [
@@ -50,7 +52,7 @@ return [
 
     'paynow' => [
         'not_configured' => 'PayNow nie jest skonfigurowany.',
-        'currency_not_supported' => 'PayNow jest obecnie dostępny w sklepie dla płatności PLN.',
+        'currency_not_supported' => 'PayNow nie jest aktywne dla waluty tego zamówienia. Waluty obce wymagają osobnej aktywacji płatności kartowych po stronie PayNow.',
         'invalid_response' => 'PayNow zwrócił niepełną odpowiedź.',
         'start_failed' => 'Nie udało się uruchomić płatności PayNow. Zamówienie zostało zapisane — możesz ponowić płatność.',
     ],
@@ -70,6 +72,11 @@ return [
         'cannot_cancel_pending_online' => 'Nie można anulować zamówienia, gdy płatność online jest jeszcze w toku.',
         'print_document' => 'Drukuj potwierdzenie',
         'point' => 'Punkt odbioru',
+        'currency_snapshot' => 'Snapshot waluty zamówienia',
+        'exchange_rate' => 'Kurs zastosowany',
+        'conversion_margin' => 'Marża przewalutowania',
+        'rate_source' => 'Źródło kursu',
+        'base_total' => 'Wartość bazowa zamówienia',
     ],
 
     'document' => [
@@ -86,6 +93,11 @@ return [
         'total' => 'Razem',
         'print' => 'Drukuj',
         'notice' => 'Dokument stanowi potwierdzenie złożenia zamówienia i nie jest fakturą VAT ani paragonem fiskalnym.',
+        'currency_snapshot' => 'Rozliczenie walutowe zamówienia',
+        'exchange_rate' => 'Zastosowany kurs',
+        'conversion_margin' => 'Marża przewalutowania',
+        'rate_source' => 'Źródło kursu',
+        'base_total' => 'Wartość bazowa',
     ],
 
     'mail' => [

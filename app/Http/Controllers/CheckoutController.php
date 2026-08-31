@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\CartService;
 use App\Services\CommerceSettingsService;
+use App\Services\CurrencyService;
 use App\Services\CheckoutService;
 use App\Services\PaymentMethodService;
 use App\Services\PayNowService;
@@ -21,7 +22,8 @@ class CheckoutController extends Controller
         string $locale,
         CartService $cart,
         ShippingMethodService $shippingMethods,
-        PaymentMethodService $paymentMethods
+        PaymentMethodService $paymentMethods,
+        CurrencyService $currencies
     ): View|RedirectResponse {
         $items = $cart->resolvedItems($locale);
 
@@ -33,7 +35,8 @@ class CheckoutController extends Controller
                 ]);
         }
 
-        $currency = $items->first()['currency'] ?? 'PLN';
+        $currency = $items->first()['currency']
+            ?? $currencies->selectedCode();
 
         return view('checkout.create', [
             'items' => $items,
@@ -50,6 +53,7 @@ class CheckoutController extends Controller
                 $locale,
                 $currency
             ),
+            'currencyService' => $currencies,
         ]);
     }
 
