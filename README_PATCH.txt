@@ -1,276 +1,289 @@
-OKULARY 3D — K88
-STATIC PAGES CMS + WYSIWYG + AUTOMATIC TRANSLATION
+OKULARY 3D — K89
+GLOBAL ADVANCED WYSIWYG
 
 CEL:
-Dodać zarządzalne strony statyczne portalu i sklepu,
-automatyczne tłumaczenie brakujących wersji językowych
-oraz podłączyć stopkę do realnych adresów stron.
+Zastąpić bardzo prosty edytor contenteditable jednym wspólnym,
+rozbudowanym edytorem WYSIWYG we wszystkich modułach, które już
+używają atrybutu data-wysiwyg.
 
 ============================================================
-1. NOWA FUNKCJONALNOŚĆ W ADMINIE
+ARCHITEKTURA
 ============================================================
 
-Nowa pozycja menu:
+K89 NIE kopiuje osobnych edytorów do:
+- Artykułów
+- Produktów
+- Newslettera
+- Stron statycznych
 
-Strony statyczne
+Wszystkie te moduły już używają wspólnego:
+resources/js/admin-cms.js
+oraz:
+resources/css/admin-cms.css
 
-Lista jest podzielona na dwie sekcje:
+K89 rozbudowuje właśnie ten globalny komponent.
 
-STRONY STATYCZNE:
-- FAQ
-- Wysyłka i płatności
-- Zwroty i reklamacje
-- Polityka prywatności
-- Regulamin portalu
+Dzięki temu każde obecne i przyszłe pole:
+<div data-wysiwyg>...</div>
+automatycznie otrzyma ten sam edytor.
 
-SKLEP:
-- Regulamin sklepu
-- Bezpieczne płatności
-
-Kolumna AKCJE:
-- Edytuj
-- Automatyczne tłumaczenie
-- Podgląd
-
-============================================================
-2. EDYTOR WYSIWYG
-============================================================
-
-Każda wersja językowa posiada:
-- Tytuł
-- Treść WYSIWYG
-- SEO title
-- SEO description
-
-WYSIWYG korzysta z istniejącego admin-cms.js,
-czyli dokładnie tego samego mechanizmu co edycja artykułów.
-
-Obsługuje:
-P, H2, H3, Bold, Italic, listy, blockquote, link.
-
-HTML przechodzi przez istniejący ArticleHtmlSanitizer.
+Nie zmieniamy:
+- modeli danych,
+- nazw pól,
+- istniejących body_html / description_html,
+- mechanizmu zapisu formularzy.
 
 ============================================================
-3. AUTOMATYCZNE TŁUMACZENIE
+DLACZEGO K89 NIE DODAJE CIĘŻKIEJ BIBLIOTEKI NPM
+============================================================
+
+Analizowany @synapxlab/wysiwyg jest bardzo dobrym punktem odniesienia
+funkcjonalnego, ale jego aktualny pakiet npm deklaruje zależności m.in.
+od React / ReactDOM / Excalidraw / KaTeX.
+
+W naszym wortalu potrzebujemy zaawansowanego rich-text CMS,
+a nie pełnego page-buildera / Excalidraw.
+
+Dlatego K89 realizuje potrzebny zakres jako lekki komponent
+projektowy bez nowych zależności runtime.
+
+Efekt użytkowy:
+zaawansowany edytor podobny do klasycznych WYSIWYG,
+ale bez dokładania dużego stosu zależności do całego wortalu.
+
+============================================================
+FUNKCJE EDYTORA
+============================================================
+
+- Undo / Redo
+- Akapit
+- H2
+- H3
+- H4
+- Blockquote
+- PRE / kod
+- Bold
+- Italic
+- Underline
+- Strike
+- Superscript
+- Subscript
+- Lista UL
+- Lista OL
+- Wcięcie +
+- Wcięcie -
+- Wyrównanie lewo
+- Wyśrodkowanie
+- Wyrównanie prawo
+- Justowanie
+- Kolor tekstu
+- Kolor tła tekstu
+- Link
+- Tabela
+- Obraz z URL
+- Linia pozioma
+- Usuń formatowanie
+- Głębokie czyszczenie HTML
+- HTML SOURCE
+- Fullscreen
+- licznik słów
+- licznik znaków
+- bezpieczne wklejanie HTML z Word/WWW
+- responsywny toolbar
+
+============================================================
+BIBLIOTEKA MEDIÓW
+============================================================
+
+Jeżeli na aktualnym ekranie istnieje:
+data-media-picker-modal
+
+edytor automatycznie pokazuje dodatkowy przycisk:
+"Wstaw obraz z Biblioteki mediów".
+
+Dotyczy to przede wszystkim edytora artykułów,
+gdzie biblioteka mediów jest już dostarczona do formularza.
+
+Kliknięcie obrazu w tym trybie:
+- NIE ustawia go jako hero,
+- wstawia go do miejsca kursora w treści,
+- zamyka picker.
+
+Na ekranach bez istniejącego pickera nadal dostępne jest:
+"Wstaw obraz z URL".
+
+============================================================
+NEWSLETTER
+============================================================
+
+Jeżeli istniejący newsletter jest zablokowany i ma:
+contenteditable="false"
+
+K89 rozpoznaje tryb readonly:
+- treść pozostaje widoczna,
+- toolbar jest disabled,
+- edycja nie jest możliwa.
+
+============================================================
+HTML SOURCE
 ============================================================
 
 Przycisk:
-Automatyczne tłumaczenie
+</>
 
-działa dla konkretnej strony.
+przełącza:
+WYSIWYG <-> HTML source.
 
-Mechanizm:
-- bierze source_locale strony,
-- sprawdza wszystkie języki z config/locales.php,
-- pomija kompletną wersję,
-- tworzy wersję brakującą,
-- jeżeli wersja jest częściowo uzupełniona, NIE nadpisuje
-  już wpisanych ręcznie pól; uzupełnia tylko braki,
-- zapisuje run w ai_translation_runs jako:
-  content_type = static_page.
+Po powrocie z source HTML jest czyszczony przed ponownym
+umieszczeniem w edytorze.
 
-Używa tej samej konfiguracji OpenAI/Gemini,
-która już działa w AI Translator.
-
-Dodatkowo AiTranslationProviderService został poprawiony:
-nazwy języków nie są już zakodowane tylko dla PL/EN.
-Jeśli później dodasz np. DE/FR/ES do config/locales.php,
-provider pobierze nazwę języka z konfiguracji.
+Przy submit zawsze synchronizujemy finalny HTML do istniejącego:
+data-editor-output.
 
 ============================================================
-4. PUBLICZNE ADRESY
+PASTE CLEAN
 ============================================================
 
-Adres jest stabilny i niezależny od tytułu:
-
-/{locale}/info/{key}
-
-Przykłady:
-
-/pl/info/faq
-/pl/info/shipping-payments
-/pl/info/returns-complaints
-/pl/info/privacy-policy
-/pl/info/portal-terms
-/pl/info/shop-terms
-/pl/info/secure-payments
-
-Dla EN:
-/en/info/faq
-itd.
-
-Jeżeli lokalna wersja jeszcze nie istnieje,
-strona tymczasowo pokazuje wersję źródłową.
-
-Po automatycznym tłumaczeniu od razu pokazuje wersję lokalną.
+Wklejenie treści z Worda / strony WWW:
+- usuwa script/style/iframe/form itd.,
+- usuwa event handlery,
+- usuwa class/id,
+- ogranicza style do bezpiecznej listy,
+- pozostawia semantyczne formatowanie.
 
 ============================================================
-5. SEO
+SANITIZER BACKEND
 ============================================================
 
-Każda strona posiada:
-- SEO title
-- SEO description
-- canonical
-- hreflang wszystkich obsługiwanych języków
-- x-default
-- schema.org WebPage
+ArticleHtmlSanitizer został rozszerzony, bo stary sanitizer usuwałby
+część HTML generowanego przez nowy toolbar.
+
+Nowa lista obsługuje m.in.:
+h2/h3/h4
+u/s
+sup/sub
+table/thead/tbody/tfoot/tr/th/td
+hr
+pre/code
+img
+span
+
+Dozwolone style:
+- text-align
+- color
+- background-color
+- font-size
+- font-family
+- text-decoration
+
+Nadal blokowane:
+- script
+- iframe
+- object
+- embed
+- event attributes on*
+- javascript:
+- data: dla obrazów/linków
+- niebezpieczne CSS url()/expression()/behavior
+- dowolne niewspierane atrybuty
+
+Link target="_blank" automatycznie otrzymuje:
+rel="noopener noreferrer".
 
 ============================================================
-6. STOPKA
+WAŻNE
 ============================================================
 
-Sekcja WSPARCIE:
+Nie ma migracji bazy.
 
-FAQ
--> /{locale}/info/faq
+Nie ma zmian package.json.
 
-Wysyłka i płatności
--> /{locale}/info/shipping-payments
+Nie ma nowych paczek npm.
 
-Zwroty i reklamacje
--> /{locale}/info/returns-complaints
-
-Polityka prywatności
--> /{locale}/info/privacy-policy
-
-Regulamin portalu
--> /{locale}/info/portal-terms
-
-
-Sekcja SKLEP otrzymuje dodatkowo:
-
-Regulamin sklepu
--> /{locale}/info/shop-terms
-
-Bezpieczne płatności
--> /{locale}/info/secure-payments
-
-============================================================
-7. BAZA
-============================================================
-
-Nowe tabele:
-
-static_pages
-static_page_translations
-
-Migracja automatycznie tworzy siedem wymaganych stron
-i ich polskie rekordy źródłowe.
-
-Nie wstawia fikcyjnych treści prawnych.
-
-Do momentu uzupełnienia body użytkownik zobaczy neutralny komunikat:
-"Treść tej strony jest w przygotowaniu."
-
-============================================================
-8. BEZPIECZEŃSTWO
-============================================================
-
-Zarządzanie stronami:
-ADMIN + SUPER ADMIN.
-
-Zwykły User:
-403.
-
-HTML:
-sanityzowany istniejącym ArticleHtmlSanitizer.
-
-Automatyczne tłumaczenie:
-nie nadpisuje kompletnej ręcznie przygotowanej wersji.
+Nie trzeba wykonywać npm install.
 
 ============================================================
 PLIKI
 ============================================================
 
-NEW:
-- database/migrations/2026_09_01_400000_create_static_pages_tables.php
-- app/Models/StaticPage.php
-- app/Models/StaticPageTranslation.php
-- app/Services/StaticPageTranslationService.php
-- app/Http/Controllers/Admin/StaticPageController.php
-- app/Http/Controllers/StaticPageController.php
-- app/Providers/StaticPageServiceProvider.php
-- resources/views/admin/static-pages/index.blade.php
-- resources/views/admin/static-pages/edit.blade.php
-- resources/views/static-pages/show.blade.php
-- lang/pl/static_pages.php
-- lang/en/static_pages.php
-- tests/Feature/StaticPageCmsTest.php
-
 CHANGED:
-- bootstrap/providers.php
-- app/Services/AiTranslationProviderService.php
-- resources/views/admin/layout.blade.php
-- resources/views/partials/footer.blade.php
+- resources/js/admin-cms.js
+- resources/css/admin-cms.css
+- app/Services/ArticleHtmlSanitizer.php
+
+NEW:
+- tests/Feature/AdvancedWysiwygTest.php
+- README_PATCH.txt
 
 ============================================================
 INSTALACJA LOKALNA
 ============================================================
 
-Rozpakuj patch do:
+Rozpakuj ZIP do:
 C:\laragon\www\okulary-3d
+
+z nadpisaniem plików.
 
 Następnie:
 
 php artisan optimize:clear
-php artisan migrate
 
-============================================================
-TESTY
-============================================================
-
+php artisan test --filter=AdvancedWysiwygTest
+php artisan test --filter=ArticleCmsTest
+php artisan test --filter=ShopCatalogTest
+php artisan test --filter=NewsletterTest
 php artisan test --filter=StaticPageCmsTest
-php artisan test --filter=AiTranslationTest
-php artisan test --filter=MultilingualSeoTest
 
 Jeżeli zielono:
 
 php artisan test
+
+Następnie Windows / Laragon:
+
+$env:Path = "C:\laragon\bin\nodejs\node-v22;$env:Path"
+node -v
+npm -v
 npm run build
 
 ============================================================
 TEST RĘCZNY
 ============================================================
 
-1. Backend -> Strony statyczne.
+Sprawdź kolejno:
 
-2. Sprawdź dwie grupy:
-   Strony statyczne
-   Sklep
+1. Backend -> Artykuły -> Edytuj
+2. Backend -> Produkty -> Edytuj produkt
+3. Backend -> Newsletter -> kampania
+4. Backend -> Strony statyczne -> Edytuj
 
-3. Otwórz FAQ -> Edytuj.
+W każdym miejscu stary toolbar powinien być zastąpiony
+tym samym zaawansowanym edytorem.
 
-4. Sprawdź:
-   PL / EN tabs
-   WYSIWYG
-   SEO title
-   SEO description
+Test funkcji:
+- H2/H3/H4
+- B / I / U / S
+- lista
+- justowanie
+- kolor
+- link
+- tabela 3x3
+- obraz
+- source HTML
+- fullscreen
+- wklejenie treści z Worda
+- zapis
+- ponowne otwarcie dokumentu
 
-5. W PL wpisz przykładową treść i zapisz.
+Artykuły:
+sprawdź dodatkowo przycisk obrazu z Biblioteki mediów.
 
-6. Wróć do listy i kliknij:
-   Automatyczne tłumaczenie
-
-7. EN powinien zostać utworzony automatycznie.
-
-8. Otwórz:
-/pl/info/faq
-/en/info/faq
-
-9. Sprawdź stopkę:
-   każdy link Wsparcie prowadzi do realnej strony,
-   a w sekcji Sklep są:
-   Regulamin sklepu
-   Bezpieczne płatności.
-
-10. Zmień język wortalu:
-    linki w stopce muszą zachować bieżący locale.
+Newsletter:
+sprawdź istniejącą wysłaną/zablokowaną kampanię - readonly.
 
 ============================================================
 PO TESTACH
 ============================================================
 
 git add .
-git commit -m "Add static pages CMS and AI translations"
+git commit -m "Add global advanced WYSIWYG editor"
 git push origin develop

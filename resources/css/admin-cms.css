@@ -374,69 +374,333 @@
     font-size: .72rem;
 }
 
+
 .wysiwyg {
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid #dce3eb;
     border-radius: 11px;
     background: #fff;
 }
 
-.wysiwyg-toolbar {
+.wysiwyg-toolbar[hidden] {
+    display: none !important;
+}
+
+.advanced-wysiwyg {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .03);
+}
+
+.advanced-wysiwyg-toolbar {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 5px;
     padding: 8px;
     border-bottom: 1px solid #e6ebf1;
-    background: #f7f9fb;
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfe 0%,
+            #f5f7fa 100%
+        );
 }
 
-.wysiwyg-toolbar button {
-    min-width: 34px;
-    min-height: 31px;
-    padding: 0 8px;
-    border: 1px solid #dce3eb;
+.advanced-wysiwyg-button,
+.advanced-wysiwyg-select {
+    min-height: 32px;
+    border: 1px solid #d8e0e9;
     border-radius: 7px;
     background: #fff;
-    color: #46546a;
+    color: #344054;
+    font-family: inherit;
+    font-size: .65rem;
+    font-weight: 700;
+}
+
+.advanced-wysiwyg-button {
+    min-width: 34px;
+    padding: 0 8px;
     cursor: pointer;
-    font-size: .61rem;
+}
+
+.advanced-wysiwyg-button:hover,
+.advanced-wysiwyg-button:focus-visible,
+.advanced-wysiwyg-select:hover,
+.advanced-wysiwyg-select:focus-visible {
+    border-color: #12aedd;
+    outline: none;
+    color: #0089b9;
+    box-shadow: 0 0 0 2px rgba(18, 174, 221, .10);
+}
+
+.advanced-wysiwyg-button.is-active {
+    border-color: #0aa7df;
+    background: #eaf8fd;
+    color: #007da8;
+}
+
+.advanced-wysiwyg-button:disabled,
+.advanced-wysiwyg-select:disabled,
+.advanced-wysiwyg-color input:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+}
+
+.advanced-wysiwyg-select {
+    max-width: 128px;
+    padding: 0 24px 0 8px;
+    cursor: pointer;
+}
+
+.advanced-wysiwyg-separator {
+    width: 1px;
+    height: 24px;
+    margin: 0 2px;
+    background: #d9e1ea;
+}
+
+.advanced-wysiwyg-color {
+    position: relative;
+    min-width: 34px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8e0e9;
+    border-radius: 7px;
+    background: #fff;
+    cursor: pointer;
+    overflow: hidden;
+    color: #344054;
+    font-size: .67rem;
     font-weight: 800;
 }
 
-.wysiwyg-toolbar button:hover {
-    border-color: #12aedd;
-    color: #0089b9;
+.advanced-wysiwyg-color input {
+    position: absolute;
+    inset: auto 3px 2px;
+    width: calc(100% - 6px);
+    height: 5px;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
 }
 
-.wysiwyg-editor {
+.wysiwyg-editor,
+.advanced-wysiwyg-source {
+    width: 100%;
     min-height: 430px;
-    padding: 20px;
+    max-height: 72vh;
+    overflow: auto;
+    padding: 22px;
+    border: 0;
     outline: none;
+    background: #fff;
     color: #26344b;
-    font-size: .78rem;
-    line-height: 1.75;
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    font-size: .82rem;
+    line-height: 1.78;
+    resize: vertical;
+}
+
+.advanced-wysiwyg-source {
+    box-sizing: border-box;
+    background: #131b2a;
+    color: #e4ecf5;
+    font-family:
+        "Cascadia Code",
+        "Fira Code",
+        Consolas,
+        monospace;
+    font-size: .75rem;
+    line-height: 1.65;
+    tab-size: 4;
 }
 
 .wysiwyg-editor:empty::before {
-    content: 'Zacznij pisać treść artykułu…';
+    content: 'Zacznij pisać…';
     color: #a5aebb;
 }
 
 .wysiwyg-editor h2 {
-    margin-top: 1.5em;
-    font-size: 1.35rem;
+    margin: 1.55em 0 .55em;
+    color: #1f2f46;
+    font-size: 1.45rem;
+    line-height: 1.25;
 }
 
 .wysiwyg-editor h3 {
-    margin-top: 1.25em;
-    font-size: 1.08rem;
+    margin: 1.35em 0 .5em;
+    color: #27384f;
+    font-size: 1.18rem;
+    line-height: 1.3;
+}
+
+.wysiwyg-editor h4 {
+    margin: 1.25em 0 .45em;
+    color: #304159;
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.wysiwyg-editor p {
+    margin: 0 0 .85em;
 }
 
 .wysiwyg-editor blockquote {
-    margin-left: 0;
-    padding: 8px 14px;
-    border-left: 3px solid #13aee0;
+    margin: 1em 0;
+    padding: 10px 16px;
+    border-left: 4px solid #13aee0;
+    border-radius: 0 7px 7px 0;
     background: #f5fbfd;
+}
+
+.wysiwyg-editor pre {
+    overflow-x: auto;
+    padding: 14px;
+    border-radius: 8px;
+    background: #182230;
+    color: #ecf2f8;
+    font-family:
+        "Cascadia Code",
+        Consolas,
+        monospace;
+    line-height: 1.55;
+}
+
+.wysiwyg-editor a {
+    color: #008bb9;
+    text-decoration: underline;
+}
+
+.wysiwyg-editor img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 14px auto;
+    border-radius: 7px;
+}
+
+.wysiwyg-editor table {
+    width: 100%;
+    margin: 16px 0;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+.wysiwyg-editor th,
+.wysiwyg-editor td {
+    min-width: 70px;
+    padding: 9px 11px;
+    border: 1px solid #dbe3ec;
+    vertical-align: top;
+}
+
+.wysiwyg-editor th {
+    background: #f1f6f9;
+    color: #304159;
+    font-weight: 800;
+}
+
+.wysiwyg-editor tr:nth-child(even) td {
+    background: #fbfcfd;
+}
+
+.advanced-wysiwyg-status {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 5px 9px;
+    border-top: 1px solid #e5ebf1;
+    background: #f8fafc;
+    color: #7c899a;
+    font-size: .57rem;
+}
+
+.advanced-wysiwyg-status-left,
+.advanced-wysiwyg-status-right {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.advanced-wysiwyg-status strong {
+    color: #4b5a6f;
+}
+
+.advanced-wysiwyg-resize {
+    color: #a8b2bf;
+    font-size: .8rem;
+}
+
+.advanced-wysiwyg.is-source-mode
+.advanced-wysiwyg-status-left span:first-child {
+    opacity: .42;
+}
+
+.advanced-wysiwyg:not(.is-source-mode)
+.advanced-wysiwyg-status-left span:last-child {
+    opacity: .42;
+}
+
+.advanced-wysiwyg.is-readonly
+.advanced-wysiwyg-toolbar {
+    background: #f2f4f7;
+}
+
+.advanced-wysiwyg.is-readonly
+.wysiwyg-editor {
+    background: #fafbfc;
+    color: #667085;
+}
+
+.advanced-wysiwyg.is-fullscreen {
+    position: fixed;
+    inset: 12px;
+    z-index: 10050;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #cfd8e3;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 20px 70px rgba(15, 23, 42, .28);
+}
+
+.advanced-wysiwyg.is-fullscreen
+.wysiwyg-editor,
+.advanced-wysiwyg.is-fullscreen
+.advanced-wysiwyg-source {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+}
+
+body.advanced-editor-fullscreen-open {
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .advanced-wysiwyg-toolbar {
+        gap: 4px;
+    }
+
+    .advanced-wysiwyg-separator {
+        display: none;
+    }
+
+    .advanced-wysiwyg-select {
+        max-width: 112px;
+    }
 }
 
 .cms-current-image,
