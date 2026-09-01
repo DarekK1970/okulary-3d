@@ -72,6 +72,33 @@
                     @if ($order->shipping_point)<span>{{ $order->shipping_point }}</span>@endif
                 </div>
 
+
+                @if ($order->shipping_tracking_number)
+                    <div class="order-address">
+                        <span>{{ __('furgonetka.tracking.title') }}</span>
+
+                        @if ($order->shipping_carrier)
+                            <strong>{{ $order->shipping_carrier }}</strong>
+                        @endif
+
+                        <span>
+                            {{ __('furgonetka.tracking.number') }}:
+                            {{ $order->shipping_tracking_number }}
+                        </span>
+
+                        @if ($order->shipping_tracking_url)
+                            <a
+                                class="cart-secondary-button"
+                                href="{{ $order->shipping_tracking_url }}"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                {{ __('furgonetka.tracking.open') }}
+                            </a>
+                        @endif
+                    </div>
+                @endif
+
                 @if ($document = $order->salesDocuments->first())
                     <a
                         class="cart-secondary-button order-document-link"

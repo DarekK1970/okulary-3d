@@ -15,9 +15,12 @@ class FurgonetkaSettingsService
         string $key,
         ?string $default = null
     ): ?string {
-        $setting = $this->settings()->get($key);
+        $setting = $this
+            ->settings()
+            ->get($key);
 
-        return $setting?->value ?? $default;
+        return $setting?->value
+            ?? $default;
     }
 
     public function set(
@@ -25,16 +28,19 @@ class FurgonetkaSettingsService
         ?string $value,
         bool $secret = false
     ): void {
-        AppSetting::query()->updateOrCreate(
-            [
-                'group' => self::GROUP,
-                'key' => $key,
-            ],
-            [
-                'value' => $value,
-                'is_secret' => $secret,
-            ]
-        );
+        AppSetting::query()
+            ->updateOrCreate(
+                [
+                    'group' =>
+                        self::GROUP,
+                    'key' => $key,
+                ],
+                [
+                    'value' => $value,
+                    'is_secret' =>
+                        $secret,
+                ]
+            );
 
         $this->cache = null;
     }
@@ -42,193 +48,120 @@ class FurgonetkaSettingsService
     public function enabled(): bool
     {
         return filter_var(
-            $this->get('enabled', '0'),
+            $this->get(
+                'enabled',
+                '0'
+            ),
             FILTER_VALIDATE_BOOLEAN
         );
     }
 
-    public function clientId(): ?string
+    public function universalToken(): ?string
     {
-        return $this->get('client_id');
+        return $this->get(
+            'universal_token'
+        );
     }
 
-    public function clientSecret(): ?string
+    public function hasUniversalToken(): bool
     {
-        return $this->get('client_secret');
+        return filled(
+            $this->universalToken()
+        );
     }
 
-    public function accessToken(): ?string
+    public function generateUniversalToken(): string
     {
-        return $this->get('access_token');
-    }
+        $token = bin2hex(
+            random_bytes(32)
+        );
 
-    public function refreshToken(): ?string
-    {
-        return $this->get('refresh_token');
-    }
+        $this->set(
+            'universal_token',
+            $token,
+            true
+        );
 
-    public function tokenExpiresAt(): ?string
-    {
-        return $this->get('token_expires_at');
-    }
+        $this->removeLegacyOAuthCredentials();
 
-    public function connected(): bool
-    {
-        return filled($this->accessToken())
-            && filled($this->refreshToken());
+        return $token;
     }
 
     public function mapApiKey(): ?string
     {
-        return $this->get('map_api_key');
+        return $this->get(
+            'map_api_key'
+        );
     }
 
     public function mapEnabled(): bool
     {
         return $this->enabled()
-            && filled($this->mapApiKey());
-    }
-
-    public function sender(): array
-    {
-        return [
-            'name' => $this->get('sender.name'),
-            'company' => $this->get('sender.company'),
-            'email' => $this->get('sender.email'),
-            'phone' => $this->get('sender.phone'),
-            'street' => $this->get('sender.street'),
-            'city' => $this->get('sender.city'),
-            'country_code' => strtoupper(
-                $this->get('sender.country_code', 'PL')
-                ?? 'PL'
-            ),
-            'postcode' => $this->get('sender.postcode'),
-            'county' => $this->get('sender.county', ''),
-        ];
-    }
-
-    public function parcelDefaults(): array
-    {
-        return [
-            'width' => max(
-                1,
-                (int) ($this->get('parcel.width_cm', '30') ?? 30)
-            ),
-            'height' => max(
-                1,
-                (int) ($this->get('parcel.height_cm', '20') ?? 20)
-            ),
-            'depth' => max(
-                1,
-                (int) ($this->get('parcel.depth_cm', '40') ?? 40)
-            ),
-        ];
-    }
-
-    public function labelFormat(): string
-    {
-        return in_array(
-            $this->get('label.format', 'pdf'),
-            ['pdf', 'zpl', 'epl'],
-            true
-        )
-            ? (string) $this->get('label.format', 'pdf')
-            : 'pdf';
-    }
-
-    public function labelPageFormat(): string
-    {
-        return in_array(
-            $this->get('label.page_format', 'a6'),
-            ['a4', 'a6'],
-            true
-        )
-            ? (string) $this->get('label.page_format', 'a6')
-            : 'a6';
-    }
-
-    public function authorizationCallbackUrl(): string
-    {
-        return route(
-            'admin.shipping.furgonetka.callback'
-        );
-    }
-
-    public function masked(
-        string $key
-    ): string {
-        $value = $this->get($key);
-
-        if (blank($value)) {
-            return '';
-        }
-
-        $length = mb_strlen($value);
-
-        if ($length <= 8) {
-            return str_repeat('•', $length);
-        }
-
-        return mb_substr($value, 0, 4)
-            . str_repeat(
-                '•',
-                min(16, $length - 8)
-            )
-            . mb_substr($value, -4);
-    }
-
-    public function saveTokens(
-        string $accessToken,
-        ?string $refreshToken,
-        int $expiresIn
-    ): void {
-        $this->set(
-            'access_token',
-            $accessToken,
-            true
-        );
-
-        if (filled($refreshToken)) {
-            $this->set(
-                'refresh_token',
-                $refreshToken,
-                true
+            && filled(
+                $this->mapApiKey()
             );
-        }
+    }
 
-        $this->set(
-            'token_expires_at',
-            now()
-                ->addSeconds(
-                    max(60, $expiresIn)
-                )
-                ->toIso8601String()
+    public function integrationBaseUrl(): string
+    {
+        return rtrim(
+            (string) config(
+                'app.url'
+            ),
+            '/'
         );
     }
 
-    public function clearTokens(): void
+    public function ordersUrl(): string
     {
-        foreach ([
-            'access_token',
-            'refresh_token',
-            'token_expires_at',
-        ] as $key) {
-            AppSetting::query()
-                ->where('group', self::GROUP)
-                ->where('key', $key)
-                ->delete();
-        }
+        return $this
+            ->integrationBaseUrl()
+            . '/orders';
+    }
+
+    public function trackingUrlTemplate(): string
+    {
+        return $this
+            ->integrationBaseUrl()
+            . '/orders/{id}/tracking_number';
+    }
+
+    public function removeLegacyOAuthCredentials(): void
+    {
+        AppSetting::query()
+            ->where(
+                'group',
+                self::GROUP
+            )
+            ->whereIn(
+                'key',
+                [
+                    'client_id',
+                    'client_secret',
+                    'access_token',
+                    'refresh_token',
+                    'token_expires_at',
+                ]
+            )
+            ->delete();
 
         $this->cache = null;
     }
 
     private function settings(): Collection
     {
-        if ($this->cache === null) {
-            $this->cache = AppSetting::query()
-                ->where('group', self::GROUP)
-                ->get()
-                ->keyBy('key');
+        if (
+            $this->cache
+            === null
+        ) {
+            $this->cache =
+                AppSetting::query()
+                    ->where(
+                        'group',
+                        self::GROUP
+                    )
+                    ->get()
+                    ->keyBy('key');
         }
 
         return $this->cache;

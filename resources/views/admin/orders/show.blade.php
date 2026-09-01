@@ -13,15 +13,6 @@
         </div>
 
         <div class="catalog-heading-actions">
-            <a
-                class="cms-secondary-button"
-                href="{{ route(
-                    'admin.shipping.furgonetka.order',
-                    $order
-                ) }}"
-            >
-                🚚 Furgonetka.pl
-            </a>
             @foreach ($order->salesDocuments as $document)
                 <a
                     class="cms-secondary-button"
@@ -210,6 +201,37 @@
                     <span>{{ __('cart.admin.total') }}</span>
                     <strong>{{ number_format((float) $order->total_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
                 </div>
+
+
+                @if ($order->shipping_tracking_number)
+                    <div class="admin-payment-box">
+                        <strong>{{ __('furgonetka.tracking.title') }}</strong>
+
+                        @if ($order->shipping_carrier)
+                            <small>{{ __('furgonetka.tracking.carrier') }}: {{ $order->shipping_carrier }}</small>
+                        @endif
+
+                        <small>{{ __('furgonetka.tracking.number') }}: {{ $order->shipping_tracking_number }}</small>
+
+                        @if ($order->shipping_tracking_updated_at)
+                            <small>
+                                {{ __('furgonetka.tracking.updated_at') }}:
+                                {{ $order->shipping_tracking_updated_at->format('Y-m-d H:i') }}
+                            </small>
+                        @endif
+
+                        @if ($order->shipping_tracking_url)
+                            <a
+                                class="cms-secondary-button"
+                                href="{{ $order->shipping_tracking_url }}"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                {{ __('furgonetka.tracking.open') }}
+                            </a>
+                        @endif
+                    </div>
+                @endif
 
                 @if ($order->shipping_base_before_margin !== null)
                     <div class="admin-payment-box">

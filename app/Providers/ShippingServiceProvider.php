@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Http\Controllers\Admin\FurgonetkaController;
 use App\Http\Controllers\Admin\ShippingSettingsController;
+use App\Http\Controllers\Api\FurgonetkaUniversalController;
 use App\Http\Controllers\ShippingQuoteController;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyFurgonetkaUniversalToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -41,7 +43,8 @@ class ShippingServiceProvider extends ServiceProvider
         ])
             ->prefix('{locale}')
             ->where([
-                'locale' => $localePattern,
+                'locale' =>
+                    $localePattern,
             ])
             ->group(function (): void {
                 Route::get(
@@ -65,8 +68,12 @@ class ShippingServiceProvider extends ServiceProvider
                 . ','
                 . User::ROLE_SUPER_ADMIN,
         ])
-            ->prefix('admin/shipping')
-            ->name('admin.shipping.')
+            ->prefix(
+                'admin/shipping'
+            )
+            ->name(
+                'admin.shipping.'
+            )
             ->group(function (): void {
                 Route::get(
                     '/',
@@ -82,7 +89,9 @@ class ShippingServiceProvider extends ServiceProvider
                         ShippingSettingsController::class,
                         'updateSettings',
                     ]
-                )->name('settings.update');
+                )->name(
+                    'settings.update'
+                );
 
                 Route::put(
                     '/weights',
@@ -90,7 +99,9 @@ class ShippingServiceProvider extends ServiceProvider
                         ShippingSettingsController::class,
                         'updateWeights',
                     ]
-                )->name('weights.update');
+                )->name(
+                    'weights.update'
+                );
 
                 Route::post(
                     '/rates',
@@ -98,7 +109,9 @@ class ShippingServiceProvider extends ServiceProvider
                         ShippingSettingsController::class,
                         'storeRate',
                     ]
-                )->name('rates.store');
+                )->name(
+                    'rates.store'
+                );
 
                 Route::put(
                     '/rates/{shippingRate}',
@@ -110,8 +123,23 @@ class ShippingServiceProvider extends ServiceProvider
                     ->whereNumber(
                         'shippingRate'
                     )
-                    ->name('rates.update');
+                    ->name(
+                        'rates.update'
+                    );
 
+                Route::delete(
+                    '/rates/{shippingRate}',
+                    [
+                        ShippingSettingsController::class,
+                        'destroyRate',
+                    ]
+                )
+                    ->whereNumber(
+                        'shippingRate'
+                    )
+                    ->name(
+                        'rates.destroy'
+                    );
 
                 Route::get(
                     '/furgonetka',
@@ -133,117 +161,55 @@ class ShippingServiceProvider extends ServiceProvider
                     'furgonetka.update'
                 );
 
-                Route::get(
-                    '/furgonetka/connect',
-                    [
-                        FurgonetkaController::class,
-                        'connect',
-                    ]
-                )->name(
-                    'furgonetka.connect'
-                );
-
-                Route::get(
-                    '/furgonetka/callback',
-                    [
-                        FurgonetkaController::class,
-                        'callback',
-                    ]
-                )->name(
-                    'furgonetka.callback'
-                );
-
                 Route::post(
-                    '/furgonetka/disconnect',
+                    '/furgonetka/token',
                     [
                         FurgonetkaController::class,
-                        'disconnect',
+                        'generateToken',
                     ]
                 )->name(
-                    'furgonetka.disconnect'
+                    'furgonetka.token.generate'
                 );
-
-                Route::post(
-                    '/furgonetka/test',
-                    [
-                        FurgonetkaController::class,
-                        'test',
-                    ]
-                )->name(
-                    'furgonetka.test'
-                );
-
-                Route::delete(
-                    '/rates/{shippingRate}',
-                    [
-                        ShippingSettingsController::class,
-                        'destroyRate',
-                    ]
-                )
-                    ->whereNumber(
-                        'shippingRate'
-                    )
-                    ->name('rates.destroy');
-
             });
 
+        /*
+         * Furgonetka Universal E-commerce Integration calls
+         * these endpoints directly.
+         *
+         * Deliberately no "web" middleware:
+         * - no session,
+         * - no CSRF token,
+         * - Authorization token is verified by dedicated
+         *   constant-time middleware.
+         */
         Route::middleware([
-            'web',
-            'auth',
-            'admin.access',
-            'role:'
-                . User::ROLE_ADMIN
-                . ','
-                . User::ROLE_SUPER_ADMIN,
-        ])
-            ->prefix('admin/orders/{order}/shipping/furgonetka')
-            ->name('admin.shipping.furgonetka.')
-            ->group(function (): void {
-                Route::get(
-                    '/',
-                    [
-                        FurgonetkaController::class,
-                        'orderPage',
-                    ]
-                )->name('order');
+            VerifyFurgonetkaUniversalToken::class,
+            'throttle:120,1',
+        ])->group(function (): void {
+            Route::get(
+                '/orders',
+                [
+                    FurgonetkaUniversalController::class,
+                    'orders',
+                ]
+            )->name(
+                'furgonetka.universal.orders'
+            );
 
-                Route::post(
-                    '/shipments',
-                    [
-                        FurgonetkaController::class,
-                        'createShipment',
-                    ]
-                )->name('shipments.create');
-
-                Route::post(
-                    '/shipments/{shipment}/order',
-                    [
-                        FurgonetkaController::class,
-                        'orderShipment',
-                    ]
+            Route::post(
+                '/orders/{id}/tracking_number',
+                [
+                    FurgonetkaUniversalController::class,
+                    'tracking',
+                ]
+            )
+                ->where(
+                    'id',
+                    '[A-Za-z0-9\-]+'
                 )
-                    ->whereNumber('shipment')
-                    ->name('shipments.order');
-
-                Route::post(
-                    '/shipments/{shipment}/tracking',
-                    [
-                        FurgonetkaController::class,
-                        'tracking',
-                    ]
-                )
-                    ->whereNumber('shipment')
-                    ->name('shipments.tracking');
-
-                Route::get(
-                    '/shipments/{shipment}/label',
-                    [
-                        FurgonetkaController::class,
-                        'label',
-                    ]
-                )
-                    ->whereNumber('shipment')
-                    ->name('shipments.label');
-            });
+                ->name(
+                    'furgonetka.universal.tracking'
+                );
+        });
     }
 }

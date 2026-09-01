@@ -75,6 +75,11 @@ class Order extends Model
         'shipping_point_type',
         'shipping_point_original_id',
         'shipping_point_country_code',
+        'shipping_carrier',
+        'shipping_tracking_number',
+        'shipping_tracking_url',
+        'shipping_external_id',
+        'shipping_tracking_updated_at',
         'customer_note',
         'placed_at',
         'paid_at',
@@ -101,6 +106,8 @@ class Order extends Model
                 'decimal:2',
             'shipping_weight_grams' =>
                 'integer',
+            'shipping_tracking_updated_at' =>
+                'datetime',
             'total_gross' => 'decimal:2',
             'total_base_gross' => 'decimal:2',
             'shipping_same_as_billing' => 'boolean',

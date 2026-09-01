@@ -1,36 +1,72 @@
-OKULARY 3D — K87.3
-FURGONETKA.PL INTEGRATION
+OKULARY 3D — K87.3 FIX
+FURGONETKA UNIVERSAL E-COMMERCE INTEGRATION
 
-Cel:
-podłączyć K87.1/K87.2 do oficjalnego REST API Furgonetka.pl
-i Furgonetka Mapy.
+CEL:
+Zastąpić workflow OAuth2 / REST shop->Furgonetka integracją „Własne”,
+w której Furgonetka pobiera zamówienia ze sklepu i odsyła numer przesyłki.
 
-Zakres:
-- OAuth2 authorization_code + refresh_token,
-- szyfrowane Client ID / Client Secret / tokeny,
-- dane nadawcy i domyślne gabaryty,
-- GET /account/services,
-- POST /packages/validate (v2),
-- POST /packages (v2),
-- PUT + GET /order-commands/{uuid},
-- GET /packages/{id},
-- GET /packages/{id}/tracking,
-- GET /packages/{id}/label,
-- order_shipments + snapshot API,
-- Furgonetka Mapa w checkout,
-- zapis point.code/name/type/original_point_id/country_code.
+PODSTAWA:
+https://furgonetka.pl/api/universal-integration-example
+https://github.com/heseya/furgonetka-integration
 
-WAŻNE:
-Automatyczne tworzenie paczki dla metody parcel_locker jest
-celowo zablokowane. Mapa i snapshot punktu działają, ale nie
-zgadujemy niepotwierdzonego pola payloadu dla konkretnego
-przewoźnika. Po połączeniu realnego konta wykonamy K87.3A
-dla konkretnych service_id punktowych dostępnych na koncie.
+Potwierdzony wzór:
+GET  /orders
+POST /orders/{id}/tracking_number
+Authorization: <TOKEN>
+GET /orders: datetime + limit (domyślnie 30)
+Callback: tracking.number, HTTP 204.
 
-TEST:
+CO ZMIENIAMY:
+- usuwamy z aktywnego workflow Client ID/Secret, OAuth2, access/refresh token,
+  /account/services, /packages, /order-commands i etykiety generowane przez sklep;
+- Furgonetka sama pobiera zamówienia i obsługuje wybór przewoźnika/nadanie;
+- Backend generuje 64-znakowy token integracji i przechowuje go zaszyfrowany;
+- stare OAuth sekrety są usuwane po zapisie/generowaniu tokenu;
+- Furgonetka Mapa pozostaje niezależnym komponentem checkoutu.
+
+ADMIN -> DOSTAWY -> FURGONETKA.PL:
+Nazwa wyświetlana: Okulary3D
+Adres sklepu: APP_URL (produkcja https://okulary-3d.pl)
+Token: wygenerowany przez Backend
+Zaznaczyć w Furgonetka.pl:
+[x] Włącz synchronizację zamówień
+[x] Wysyłaj informacje o przesyłce
+
+PUBLICZNE API:
+GET /orders
+POST /orders/{sourceOrderId}/tracking_number
+
+Bez web/session/CSRF. Dedykowany middleware wymaga aktywnej integracji i
+Authorization: TOKEN. Bearer TOKEN jest wspierany dodatkowo.
+
+WALUTY:
+Universal przykład nie ma pola currency. Dlatego eksportowane są immutable
+wartości bazowe PLN: total_base_gross, shipping_base_gross,
+base_unit_price_gross. Nie wysyłamy kwoty EUR/GBP/USD bez symbolu waluty.
+
+WAGA:
+totalWeight = shipping_weight_grams / 1000.
+Odbiór osobisty nie jest eksportowany.
+
+TRACKING:
+tracking.number jest wymagany. Opcjonalnie przyjmujemy carrier/service,
+url/tracking_url oraz id/shipment_id. Zapis do orders:
+shipping_tracking_number, shipping_carrier, shipping_tracking_url,
+shipping_external_id, shipping_tracking_updated_at.
+Identyczny callback jest idempotentny i nie zmienia statusu zamówienia.
+Tracking jest widoczny w Adminie i na koncie klienta.
+
+STARY K87.3:
+Nie cofamy migracji 380000. order_shipments i stary widok realizacji mogą
+pozostać jako nieaktywne artefakty; routing do nich został usunięty.
+FurgonetkaApiService jest oznaczony jako deprecated i blokuje przypadkowe
+ponowne użycie OAuth2.
+
+INSTALACJA:
 php artisan optimize:clear
 php artisan migrate
 
+TESTY:
 php artisan test --filter=FurgonetkaIntegrationTest
 php artisan test --filter=FurgonetkaMapCheckoutTest
 php artisan test --filter=DynamicShippingCheckoutTest
@@ -43,19 +79,25 @@ Jeżeli zielono:
 php artisan test
 npm run build
 
-TEST RĘCZNY:
+TEST LOKALNY ENDPOINTU:
 1. Backend -> Produkty -> Dostawy -> Furgonetka.pl.
-2. Wpisz Client ID / Client Secret / dane nadawcy.
-3. Skopiuj Redirect URI z panelu do aplikacji OAuth2 Furgonetka.
-4. Połącz konto i wykonaj test połączenia.
-5. Dodaj osobny Furgonetka Map API Key dla domeny.
-6. Checkout -> metoda punktowa -> wybierz punkt na mapie.
-7. Złóż kontrolowane zamówienie kurierskie.
-8. Admin -> Zamówienie -> Furgonetka.pl.
-9. Wybierz usługę, utwórz przesyłkę, zamów, pobierz etykietę,
-   odśwież tracking.
+2. Wygeneruj token integracji.
+3. Włącz integrację i zapisz.
+4. PowerShell:
+
+$token = "TU_WKLEJ_TOKEN"
+Invoke-RestMethod `
+  -Uri "http://localhost:8000/orders?limit=30" `
+  -Headers @{ Authorization = $token }
+
+Brak tokenu powinien zwrócić 401.
+
+PRODUKCJA:
+Furgonetka.pl nie połączy się z localhost. Dopiero po zielonych testach i
+wdrożeniu FIX na produkcję wygeneruj osobny PRODUKCYJNY token i wklej go w:
+Furgonetka.pl -> Integracje -> Własne.
 
 COMMIT:
 git add .
-git commit -m "Add Furgonetka shipping integration"
+git commit -m "Switch Furgonetka to universal integration"
 git push origin develop
