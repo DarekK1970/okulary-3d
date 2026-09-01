@@ -88,14 +88,17 @@
             <a href="{{ route('home', ['locale' => $locale]) }}#shop">{{ __('site.footer.lenticular') }}</a>
             <a href="{{ route('home', ['locale' => $locale]) }}#shop">{{ __('site.footer.stereoscopes') }}</a>
             <a href="{{ route('home', ['locale' => $locale]) }}#shop">{{ __('site.footer.cameras') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'shop-terms']) }}">{{ __('static_pages.footer.shop_terms') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'secure-payments']) }}">{{ __('static_pages.footer.secure_payments') }}</a>
         </div>
 
         <div class="footer-column">
             <h3>{{ __('site.footer.support') }}</h3>
-            <a href="#">{{ __('site.footer.faq') }}</a>
-            <a href="#">{{ __('site.footer.shipping') }}</a>
-            <a href="#">{{ __('site.footer.returns') }}</a>
-            <a href="#">{{ __('site.footer.privacy') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'faq']) }}">{{ __('site.footer.faq') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'shipping-payments']) }}">{{ __('site.footer.shipping') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'returns-complaints']) }}">{{ __('site.footer.returns') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'privacy-policy']) }}">{{ __('site.footer.privacy') }}</a>
+            <a href="{{ route('static-pages.show', ['locale' => $locale, 'key' => 'portal-terms']) }}">{{ __('static_pages.footer.portal_terms') }}</a>
         </div>
 
         <div class="footer-column">

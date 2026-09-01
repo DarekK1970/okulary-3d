@@ -274,13 +274,15 @@ class AiTranslationProviderService
         string $sourceLocale,
         string $targetLocale
     ): string {
-        $source = $sourceLocale === 'pl'
-            ? 'Polish'
-            : 'English';
+        $source = (string) config(
+            "locales.supported.{$sourceLocale}.name",
+            strtoupper($sourceLocale)
+        );
 
-        $target = $targetLocale === 'pl'
-            ? 'Polish'
-            : 'English';
+        $target = (string) config(
+            "locales.supported.{$targetLocale}.name",
+            strtoupper($targetLocale)
+        );
 
         $prompt = <<<PROMPT
 You are a professional translation engine for a specialist portal about stereoscopy, 3D imaging, lenticular printing, historical optical media and 3D products.

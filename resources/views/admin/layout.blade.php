@@ -114,6 +114,14 @@
                     {{ __('gallery.admin.menu') }}
                 </a>
 
+                <a
+                    class="admin-nav-link {{ request()->routeIs('admin.static-pages.*') ? 'is-active' : '' }}"
+                    href="{{ route('admin.static-pages.index') }}"
+                >
+                    <span>▤</span>
+                    {{ __('static_pages.admin.menu') }}
+                </a>
+
                 <a class="admin-nav-link {{ request()->routeIs('admin.translations*') ? 'is-active' : '' }}" href="{{ route('admin.translations') }}">
                     <span>文</span>
                     {{ __('admin.menu.translations') }}
