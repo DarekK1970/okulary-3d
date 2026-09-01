@@ -7,6 +7,13 @@
         'resources/css/cart.css',
         'resources/js/cart.js'
     ])
+
+    @if ($furgonetkaMapEnabled)
+        <script
+            src="https://furgonetka.pl/js/dist/map/map.js"
+            async
+        ></script>
+    @endif
 @endpush
 
 @section('content')
@@ -15,6 +22,7 @@
         'shipping_method',
         array_key_first($shippingMethods)
     );
+
     $selectedPayment = old(
         'payment_method',
         array_key_first($paymentMethods)
@@ -30,7 +38,12 @@
                 <p>{{ __('checkout71.checkout.description') }}</p>
             </div>
 
-            <a class="cart-back-link" href="{{ route('cart.index', ['locale' => app()->getLocale()]) }}">
+            <a
+                class="cart-back-link"
+                href="{{ route('cart.index', [
+                    'locale' => app()->getLocale()
+                ]) }}"
+            >
                 ← {{ __('cart.checkout.back_to_cart') }}
             </a>
         </div>
@@ -48,11 +61,24 @@
         <form
             class="checkout-grid"
             method="post"
-            action="{{ route('checkout.store', ['locale' => app()->getLocale()]) }}"
+            action="{{ route('checkout.store', [
+                'locale' => app()->getLocale()
+            ]) }}"
             data-checkout-form
             data-subtotal-cents="{{ $subtotalCents }}"
             data-currency="{{ $currency }}"
             data-locale="{{ app()->getLocale() }}"
+            data-shipping-options-url="{{ route(
+                'checkout.shipping-options',
+                ['locale' => app()->getLocale()]
+            ) }}"
+            data-loading-label="{{ __('shipping.checkout.loading') }}"
+            data-no-methods-label="{{ __('shipping.checkout.no_methods') }}"
+            data-error-label="{{ __('shipping.checkout.quote_error') }}"
+            data-furgonetka-map-enabled="{{ $furgonetkaMapEnabled ? '1' : '0' }}"
+            data-furgonetka-map-api-key="{{ $furgonetkaMapEnabled ? $furgonetkaMapApiKey : '' }}"
+            data-furgonetka-map-not-ready="{{ __('furgonetka.map.not_ready') }}"
+            data-furgonetka-map-selected="{{ __('furgonetka.map.selected') }}"
         >
             @csrf
 
@@ -121,7 +147,16 @@
 
                         <label>
                             <span>{{ __('cart.checkout.country') }} *</span>
-                            <input type="text" name="billing_country_code" value="{{ old('billing_country_code', 'PL') }}" maxlength="2" required>
+                            <input
+                                type="text"
+                                name="billing_country_code"
+                                value="{{ old(
+                                    'billing_country_code',
+                                    $selectedShippingCountry
+                                ) }}"
+                                maxlength="2"
+                                required
+                            >
                         </label>
                     </div>
                 </section>
@@ -130,7 +165,55 @@
                     <span class="checkout-step">03</span>
                     <h2>{{ __('checkout71.checkout.shipping_method') }}</h2>
 
-                    <div class="checkout-methods">
+                    <div class="checkout-country-block">
+                        <label class="checkout-country-field">
+                            <span>{{ __('shipping.checkout.country') }} *</span>
+
+                            <select
+                                name="shipping_country_code"
+                                data-shipping-country
+                                required
+                            >
+                                @foreach ($shippingCountries as $country)
+                                    <option
+                                        value="{{ $country['code'] }}"
+                                        @selected(
+                                            $selectedShippingCountry
+                                            === $country['code']
+                                        )
+                                    >
+                                        {{ $country['name'] }}
+                                        ({{ $country['code'] }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <p class="checkout-weight-note">
+                            {{ __('shipping.checkout.weight', [
+                                'weight' => number_format(
+                                    $shippingWeightGrams / 1000,
+                                    3,
+                                    ',',
+                                    ' '
+                                ),
+                            ]) }}
+                        </p>
+                    </div>
+
+                    <p
+                        class="shipping-quote-status"
+                        data-shipping-status
+                        @if ($shippingMethods !== [])
+                            hidden
+                        @endif
+                    >
+                        {{ $shippingMethods === []
+                            ? __('shipping.checkout.no_methods')
+                            : '' }}
+                    </p>
+
+                    <div class="checkout-methods" data-shipping-methods>
                         @foreach ($shippingMethods as $method)
                             <label class="checkout-method">
                                 <input
@@ -160,12 +243,42 @@
                     <div class="checkout-point-field" data-shipping-point-wrap>
                         <label>
                             <span>{{ __('checkout71.checkout.shipping_point') }}</span>
+
                             <input
                                 type="text"
                                 name="shipping_point"
                                 value="{{ old('shipping_point') }}"
                                 placeholder="{{ __('checkout71.checkout.shipping_point_placeholder') }}"
+                                data-shipping-point-code
+                                @readonly($furgonetkaMapEnabled)
                             >
+
+                            <input type="hidden" name="shipping_point_name"
+                                   value="{{ old('shipping_point_name') }}"
+                                   data-shipping-point-name>
+                            <input type="hidden" name="shipping_point_type"
+                                   value="{{ old('shipping_point_type') }}"
+                                   data-shipping-point-type>
+                            <input type="hidden" name="shipping_point_original_id"
+                                   value="{{ old('shipping_point_original_id') }}"
+                                   data-shipping-point-original-id>
+                            <input type="hidden" name="shipping_point_country_code"
+                                   value="{{ old('shipping_point_country_code') }}"
+                                   data-shipping-point-country>
+
+                            @if ($furgonetkaMapEnabled)
+                                <button
+                                    class="cart-secondary-button"
+                                    type="button"
+                                    data-furgonetka-map-button
+                                >
+                                    {{ __('furgonetka.map.choose') }}
+                                </button>
+
+                                <small data-furgonetka-map-summary>
+                                    {{ old('shipping_point_name') }}
+                                </small>
+                            @endif
                         </label>
                     </div>
 
@@ -215,11 +328,6 @@
                             <span>{{ __('cart.checkout.city') }}</span>
                             <input type="text" name="shipping_city" value="{{ old('shipping_city') }}">
                         </label>
-
-                        <label>
-                            <span>{{ __('cart.checkout.country') }}</span>
-                            <input type="text" name="shipping_country_code" value="{{ old('shipping_country_code', 'PL') }}" maxlength="2">
-                        </label>
                     </div>
                 </section>
 
@@ -228,7 +336,7 @@
                     <h2>{{ __('checkout71.checkout.payment_method') }}</h2>
 
                     <div class="checkout-methods">
-                        @foreach ($paymentMethods as $method)
+                        @forelse ($paymentMethods as $method)
                             <label class="checkout-method">
                                 <input
                                     type="radio"
@@ -247,7 +355,11 @@
                                     </small>
                                 </span>
                             </label>
-                        @endforeach
+                        @empty
+                            <div class="cart-alert cart-alert-error">
+                                {{ __('checkout71.validation.no_payment_methods') }}
+                            </div>
+                        @endforelse
                     </div>
                 </section>
 
@@ -290,10 +402,12 @@
 
                 <div class="cart-summary-row">
                     <span>{{ __('cart.summary.products') }}</span>
-                    <strong>{{ $currencyService->formatCents(
+                    <strong>
+                        {{ $currencyService->formatCents(
                             $subtotalCents,
                             $currency
-                        ) }}</strong>
+                        ) }}
+                    </strong>
                 </div>
 
                 <div class="cart-summary-row">
@@ -316,7 +430,15 @@
                     <span>{{ __('cart.checkout.accept_terms') }}</span>
                 </label>
 
-                <button class="cart-primary-button" type="submit">
+                <button
+                    class="cart-primary-button"
+                    type="submit"
+                    data-place-order
+                    @disabled(
+                        $shippingMethods === []
+                        || $paymentMethods === []
+                    )
+                >
                     {{ __('cart.checkout.place_order') }}
                 </button>
 

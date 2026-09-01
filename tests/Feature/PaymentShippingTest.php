@@ -72,6 +72,7 @@ class PaymentShippingTest extends TestCase
             'vat_rate' => 23,
             'currency' => 'PLN',
             'stock_quantity' => 20,
+            'weight_grams' => 500,
             'track_stock' => true,
             'is_active' => true,
             'sort_order' => 0,
@@ -102,7 +103,7 @@ class PaymentShippingTest extends TestCase
             'shipping_address_line2' => '',
             'shipping_postal_code' => '',
             'shipping_city' => '',
-            'shipping_country_code' => '',
+            'shipping_country_code' => 'PL',
 
             'shipping_method' => 'courier',
             'shipping_point' => '',
@@ -233,12 +234,18 @@ class PaymentShippingTest extends TestCase
 
     public function test_paynow_checkout_redirects_to_gateway(): void
     {
-        $settings = app(CommerceSettingsService::class);
-        $settings->setMany([
-            'paynow.enabled' => '1',
-            'paynow.sandbox' => '1',
-            'paynow.timeout' => '15',
-        ]);
+        $settings = app(
+            CommerceSettingsService::class
+        );
+
+        $settings->set(
+            'paynow.enabled',
+            '1'
+        );
+        $settings->set(
+            'paynow.sandbox',
+            '1'
+        );
         $settings->set(
             'paynow.api_key',
             'test-api-key',
@@ -247,6 +254,15 @@ class PaymentShippingTest extends TestCase
         $settings->set(
             'paynow.signature_key',
             'test-signature-key',
+            true
+        );
+        $settings->set(
+            'paynow.timeout',
+            '15'
+        );
+
+        config()->set(
+            'shop.payments.paynow.active',
             true
         );
 
@@ -295,11 +311,23 @@ class PaymentShippingTest extends TestCase
 
     public function test_valid_paynow_notification_marks_order_paid(): void
     {
-        $settings = app(CommerceSettingsService::class);
-        $settings->setMany([
-            'paynow.enabled' => '1',
-            'paynow.sandbox' => '1',
-        ]);
+        $settings = app(
+            CommerceSettingsService::class
+        );
+
+        $settings->set(
+            'paynow.enabled',
+            '1'
+        );
+        $settings->set(
+            'paynow.sandbox',
+            '1'
+        );
+        $settings->set(
+            'paynow.api_key',
+            'test-api-key',
+            true
+        );
         $settings->set(
             'paynow.signature_key',
             'notification-secret',

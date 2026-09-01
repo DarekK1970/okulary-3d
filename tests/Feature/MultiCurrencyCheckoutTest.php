@@ -101,6 +101,7 @@ class MultiCurrencyCheckoutTest extends TestCase
             'vat_rate' => 23,
             'currency' => 'PLN',
             'stock_quantity' => 10,
+            'weight_grams' => 500,
             'track_stock' => true,
             'is_active' => true,
             'sort_order' => 0,
@@ -134,7 +135,7 @@ class MultiCurrencyCheckoutTest extends TestCase
             'shipping_address_line2' => '',
             'shipping_postal_code' => '',
             'shipping_city' => '',
-            'shipping_country_code' => '',
+            'shipping_country_code' => 'PL',
 
             'shipping_method' => 'courier',
             'shipping_point' => '',

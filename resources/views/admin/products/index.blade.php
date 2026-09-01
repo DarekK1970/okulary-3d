@@ -94,6 +94,13 @@
         <div class="catalog-heading-actions">
             <a
                 class="cms-secondary-button"
+                href="{{ route('admin.shipping.index') }}"
+            >
+                🚚 {{ __('shipping.admin.menu') }}
+            </a>
+
+            <a
+                class="cms-secondary-button"
                 href="{{ route('admin.product-categories.index') }}"
             >
                 {{ __('catalog.admin.categories.title') }}

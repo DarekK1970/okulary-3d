@@ -772,163 +772,83 @@
 }
 
 
-/* KROK 71 — shipping and payment methods */
+/* K87.2 — dynamic country and shipping-rate checkout */
 
-.checkout-methods {
+.checkout-country-block {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
-    margin-top: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid #dfe7ee;
+    border-radius: 11px;
+    background: #f8fbfd;
 }
 
-.checkout-method {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    padding: 13px;
-    border: 1px solid #dfe5ec;
-    border-radius: 10px;
-    background: #fbfcfd;
-    cursor: pointer;
-}
-
-.checkout-method:has(input:checked) {
-    border-color: #12a8d8;
-    background: #f0fbfe;
-    box-shadow: 0 0 0 1px rgba(18,168,216,.12);
-}
-
-.checkout-method input {
-    margin-top: 3px;
-}
-
-.checkout-method span {
-    min-width: 0;
-}
-
-.checkout-method strong {
-    display: block;
-    color: #3d4b61;
-    font-size: .67rem;
-}
-
-.checkout-method small {
-    display: block;
-    margin-top: 3px;
-    color: #8b96a7;
-    font-size: .53rem;
-    line-height: 1.4;
-}
-
-.checkout-point-field {
-    margin-top: 12px;
-}
-
-.checkout-point-field.is-hidden {
-    display: none;
-}
-
-.checkout-point-field label {
+.checkout-country-field {
     display: grid;
     gap: 5px;
 }
 
-.checkout-point-field span {
+.checkout-country-field > span {
     color: #667085;
     font-size: .57rem;
     font-weight: 800;
 }
 
-.checkout-point-field input {
+.checkout-country-field select {
+    width: 100%;
     min-height: 42px;
     padding: 0 10px;
     border: 1px solid #dce3eb;
     border-radius: 8px;
+    background: #fff;
     font: inherit;
     font-size: .68rem;
 }
 
-.checkout-address-separator {
-    margin: 18px 0 12px;
-    padding-top: 15px;
-    border-top: 1px solid #edf1f5;
-    color: #4c5a70;
-    font-size: .68rem;
-}
-
-.bank-transfer-box {
-    margin-top: 20px;
-    padding: 16px;
-    border: 1px solid #dfe6ed;
-    border-radius: 12px;
-    background: #f8fafc;
-    text-align: left;
-}
-
-.bank-transfer-box > strong {
-    color: #354258;
-    font-size: .75rem;
-}
-
-.bank-transfer-box > p {
-    margin: 5px 0 12px;
+.checkout-weight-note {
+    margin: 0;
     color: #7d899a;
-    font-size: .61rem;
+    font-size: .56rem;
+    white-space: nowrap;
 }
 
-.bank-transfer-box dl {
-    margin: 0;
+.shipping-quote-status {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid #d9e7ee;
+    border-radius: 9px;
+    background: #f4fafc;
+    color: #557287;
+    font-size: .6rem;
+    line-height: 1.45;
 }
 
-.bank-transfer-box dl > div {
-    display: grid;
-    grid-template-columns: 130px minmax(0, 1fr);
-    gap: 10px;
-    padding: 5px 0;
-    border-bottom: 1px solid #edf1f5;
-    font-size: .61rem;
+.shipping-quote-status.is-error {
+    border-color: #efc9cf;
+    background: #fff4f5;
+    color: #9e4050;
 }
 
-.bank-transfer-box dl > div:last-child {
-    border-bottom: 0;
+.checkout-methods.is-loading {
+    opacity: .55;
+    pointer-events: none;
 }
 
-.bank-transfer-box dt {
-    color: #8a95a6;
-}
-
-.bank-transfer-box dd {
-    margin: 0;
-    color: #3f4d62;
-    font-weight: 800;
-    overflow-wrap: anywhere;
-}
-
-.paynow-retry {
-    margin-top: 18px;
-}
-
-.order-success-actions {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.order-document-link {
-    width: 100%;
-    margin-top: 16px;
+.cart-primary-button:disabled {
+    background: #cfd8e2;
+    color: #7c899a;
+    cursor: not-allowed;
 }
 
 @media (max-width: 680px) {
-    .checkout-methods {
+    .checkout-country-block {
         grid-template-columns: 1fr;
     }
 
-    .bank-transfer-box dl > div {
-        grid-template-columns: 1fr;
-        gap: 2px;
-    }
-
-    .order-success-actions {
-        grid-template-columns: 1fr;
+    .checkout-weight-note {
+        white-space: normal;
     }
 }

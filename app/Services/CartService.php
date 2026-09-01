@@ -147,6 +147,11 @@ class CartService
                 'translation' => $translation,
                 'media' => $variant->product->primaryMedia(),
                 'quantity' => $quantity,
+                'weight_grams' => $variant->weight_grams,
+                'line_weight_grams' =>
+                    $variant->weight_grams
+                        ? $variant->weight_grams * $quantity
+                        : null,
 
                 'base_currency' => $pricing['base_currency'],
                 'unit_price_base_cents' => $baseUnitPriceCents,
@@ -183,6 +188,36 @@ class CartService
         $first = $this->resolvedItems($locale)->first();
 
         return $first['currency'] ?? null;
+    }
+
+    public function shippingWeightGrams(
+        string $locale
+    ): int {
+        $items = $this->resolvedItems($locale);
+
+        if ($items->isEmpty()) {
+            throw ValidationException::withMessages([
+                'cart' => __('cart.messages.empty'),
+            ]);
+        }
+
+        $missing = $items->first(
+            fn (array $item): bool =>
+                empty($item['weight_grams'])
+                || (int) $item['weight_grams'] <= 0
+        );
+
+        if ($missing) {
+            throw ValidationException::withMessages([
+                'cart' => __(
+                    'shipping.checkout.weight_missing'
+                ),
+            ]);
+        }
+
+        return (int) $items->sum(
+            'line_weight_grams'
+        );
     }
 
     private function assertPurchasable(

@@ -13,6 +13,15 @@
         </div>
 
         <div class="catalog-heading-actions">
+            <a
+                class="cms-secondary-button"
+                href="{{ route(
+                    'admin.shipping.furgonetka.order',
+                    $order
+                ) }}"
+            >
+                🚚 Furgonetka.pl
+            </a>
             @foreach ($order->salesDocuments as $document)
                 <a
                     class="cms-secondary-button"
@@ -92,6 +101,18 @@
                         <small>{{ $order->shipping_address_line1 }}</small>
                         <small>{{ $order->shipping_postal_code }} {{ $order->shipping_city }}, {{ $order->shipping_country_code }}</small>
                         @if ($order->shipping_point)<small>{{ __('checkout71.admin.point') }}: {{ $order->shipping_point }}</small>@endif
+
+                        @if ($order->shipping_weight_grams)
+                            <small>
+                                {{ __('shipping.admin_order.weight') }}:
+                                {{ number_format(
+                                    $order->shipping_weight_grams / 1000,
+                                    3,
+                                    ',',
+                                    ' '
+                                ) }} kg
+                            </small>
+                        @endif
                     </div>
                 </div>
             </section>
@@ -189,6 +210,61 @@
                     <span>{{ __('cart.admin.total') }}</span>
                     <strong>{{ number_format((float) $order->total_gross, 2, ',', ' ') }} {{ $order->currency }}</strong>
                 </div>
+
+                @if ($order->shipping_base_before_margin !== null)
+                    <div class="admin-payment-box">
+                        <strong>
+                            {{ __('shipping.admin_order.snapshot') }}
+                        </strong>
+
+                        <small>
+                            {{ __('shipping.admin_order.country') }}:
+                            {{ $order->shipping_country_name_snapshot
+                                ?: $order->shipping_country_code }}
+                            ({{ $order->shipping_country_code }})
+                        </small>
+
+                        <small>
+                            {{ __('shipping.admin_order.weight') }}:
+                            {{ number_format(
+                                ((int) $order->shipping_weight_grams) / 1000,
+                                3,
+                                ',',
+                                ' '
+                            ) }} kg
+                        </small>
+
+                        <small>
+                            {{ __('shipping.admin_order.base_before_margin') }}:
+                            {{ number_format(
+                                (float) $order->shipping_base_before_margin,
+                                2,
+                                ',',
+                                ' '
+                            ) }} PLN
+                        </small>
+
+                        <small>
+                            {{ __('shipping.admin_order.logistics_margin') }}:
+                            {{ number_format(
+                                (float) $order->shipping_logistics_margin_percent,
+                                2,
+                                ',',
+                                ' '
+                            ) }}%
+                        </small>
+
+                        <small>
+                            {{ __('shipping.admin_order.base_after_margin') }}:
+                            {{ number_format(
+                                (float) $order->shipping_base_gross,
+                                2,
+                                ',',
+                                ' '
+                            ) }} PLN
+                        </small>
+                    </div>
+                @endif
 
                 @if (
                     $order->currency

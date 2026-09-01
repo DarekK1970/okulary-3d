@@ -32,7 +32,11 @@ class Order extends Model
         'shipping_gross',
         'shipping_base_gross',
         'shipping_method',
+        'shipping_rate_id',
         'shipping_name_snapshot',
+        'shipping_weight_grams',
+        'shipping_base_before_margin',
+        'shipping_logistics_margin_percent',
 
         'payment_method',
         'payment_status',
@@ -65,7 +69,12 @@ class Order extends Model
         'shipping_postal_code',
         'shipping_city',
         'shipping_country_code',
+        'shipping_country_name_snapshot',
         'shipping_point',
+        'shipping_point_name',
+        'shipping_point_type',
+        'shipping_point_original_id',
+        'shipping_point_country_code',
         'customer_note',
         'placed_at',
         'paid_at',
@@ -86,6 +95,12 @@ class Order extends Model
             'subtotal_base_gross' => 'decimal:2',
             'shipping_gross' => 'decimal:2',
             'shipping_base_gross' => 'decimal:2',
+            'shipping_base_before_margin' =>
+                'decimal:2',
+            'shipping_logistics_margin_percent' =>
+                'decimal:2',
+            'shipping_weight_grams' =>
+                'integer',
             'total_gross' => 'decimal:2',
             'total_base_gross' => 'decimal:2',
             'shipping_same_as_billing' => 'boolean',
@@ -105,6 +120,13 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(
+            OrderShipment::class
+        );
     }
 
     public function salesDocuments(): HasMany

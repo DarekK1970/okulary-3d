@@ -18,6 +18,7 @@ class ProductVariant extends Model
         'vat_rate',
         'currency',
         'stock_quantity',
+        'weight_grams',
         'track_stock',
         'is_active',
         'sort_order',
@@ -29,6 +30,7 @@ class ProductVariant extends Model
             'price_gross' => 'decimal:2',
             'vat_rate' => 'decimal:2',
             'stock_quantity' => 'integer',
+            'weight_grams' => 'integer',
             'track_stock' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
@@ -42,6 +44,7 @@ class ProductVariant extends Model
 
     public function inStock(): bool
     {
-        return ! $this->track_stock || $this->stock_quantity > 0;
+        return ! $this->track_stock
+            || $this->stock_quantity > 0;
     }
 }

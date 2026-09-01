@@ -48,6 +48,7 @@ class CheckoutService
             $preparedItems = [];
             $subtotalCents = 0;
             $subtotalBaseCents = 0;
+            $shippingWeightGrams = 0;
             $sourceCurrency = null;
 
             foreach ($entries as $variantId => $quantity) {
@@ -97,6 +98,21 @@ class CheckoutService
                 }
 
                 if (
+                    empty($variant->weight_grams)
+                    || (int) $variant->weight_grams <= 0
+                ) {
+                    throw ValidationException::withMessages([
+                        'cart' => __(
+                            'shipping.checkout.weight_missing'
+                        ),
+                    ]);
+                }
+
+                $shippingWeightGrams +=
+                    (int) $variant->weight_grams
+                    * $quantity;
+
+                if (
                     $sourceCurrency !== null
                     && $sourceCurrency !== $variant->currency
                 ) {
@@ -143,12 +159,39 @@ class CheckoutService
 
             $currency = $pricingSnapshot['currency'];
 
-            $shippingMethod = $this->shippingMethods->resolve(
-                $data['shipping_method'],
-                $locale,
-                $currency,
-                $pricingSnapshot
+            $shippingCountryCode = strtoupper(
+                $data['shipping_country_code']
             );
+
+            if (
+                (bool) $data[
+                    'shipping_same_as_billing'
+                ]
+                && strtoupper(
+                    $data[
+                        'billing_country_code'
+                    ]
+                ) !== $shippingCountryCode
+            ) {
+                throw ValidationException::withMessages([
+                    'shipping_country_code' => __(
+                        'shipping.checkout.same_address_country_mismatch'
+                    ),
+                ]);
+            }
+
+            $shippingMethod =
+                $this->shippingMethods
+                    ->resolve(
+                        $data[
+                            'shipping_method'
+                        ],
+                        $locale,
+                        $currency,
+                        $shippingCountryCode,
+                        $shippingWeightGrams,
+                        $pricingSnapshot
+                    );
 
             if (
                 $shippingMethod['requires_point']
@@ -168,8 +211,20 @@ class CheckoutService
             );
 
             $shipping = $this->shippingData($data);
-            $shippingGrossCents = $shippingMethod['price_cents'];
-            $shippingBaseGrossCents = $shippingMethod['base_price_cents'];
+            $shippingGrossCents =
+                $shippingMethod[
+                    'price_cents'
+                ];
+
+            $shippingBaseBeforeMarginCents =
+                $shippingMethod[
+                    'base_price_before_margin_cents'
+                ];
+
+            $shippingBaseGrossCents =
+                $shippingMethod[
+                    'base_price_cents'
+                ];
             $totalCents = $subtotalCents + $shippingGrossCents;
             $totalBaseCents = $subtotalBaseCents + $shippingBaseGrossCents;
 
@@ -190,10 +245,30 @@ class CheckoutService
                 'subtotal_gross' => $this->centsToMoney($subtotalCents),
                 'subtotal_base_gross' => $this->centsToMoney($subtotalBaseCents),
 
-                'shipping_gross' => $this->centsToMoney($shippingGrossCents),
-                'shipping_base_gross' => $this->centsToMoney($shippingBaseGrossCents),
-                'shipping_method' => $shippingMethod['key'],
-                'shipping_name_snapshot' => $shippingMethod['name'],
+                'shipping_gross' =>
+                    $this->centsToMoney(
+                        $shippingGrossCents
+                    ),
+                'shipping_base_gross' =>
+                    $this->centsToMoney(
+                        $shippingBaseGrossCents
+                    ),
+                'shipping_base_before_margin' =>
+                    $this->centsToMoney(
+                        $shippingBaseBeforeMarginCents
+                    ),
+                'shipping_logistics_margin_percent' =>
+                    $shippingMethod[
+                        'logistics_margin_percent'
+                    ],
+                'shipping_method' =>
+                    $shippingMethod['key'],
+                'shipping_rate_id' =>
+                    $shippingMethod['rate_id'],
+                'shipping_name_snapshot' =>
+                    $shippingMethod['name'],
+                'shipping_weight_grams' =>
+                    $shippingWeightGrams,
 
                 'payment_method' => $paymentMethod['key'],
                 'payment_status' => PaymentStatus::Unpaid,
@@ -221,9 +296,44 @@ class CheckoutService
                 'shipping_address_line1' => $shipping['address_line1'],
                 'shipping_address_line2' => $shipping['address_line2'],
                 'shipping_postal_code' => $shipping['postal_code'],
-                'shipping_city' => $shipping['city'],
-                'shipping_country_code' => $shipping['country_code'],
-                'shipping_point' => ($data['shipping_point'] ?? null) ?: null,
+                'shipping_city' =>
+                    $shipping['city'],
+                'shipping_country_code' =>
+                    $shippingCountryCode,
+                'shipping_country_name_snapshot' =>
+                    $shippingMethod[
+                        'country_name'
+                    ],
+                'shipping_point' =>
+                    (
+                        $data[
+                            'shipping_point'
+                        ] ?? null
+                    ) ?: null,
+                'shipping_point_name' =>
+                    (
+                        $data[
+                            'shipping_point_name'
+                        ] ?? null
+                    ) ?: null,
+                'shipping_point_type' =>
+                    (
+                        $data[
+                            'shipping_point_type'
+                        ] ?? null
+                    ) ?: null,
+                'shipping_point_original_id' =>
+                    (
+                        $data[
+                            'shipping_point_original_id'
+                        ] ?? null
+                    ) ?: null,
+                'shipping_point_country_code' =>
+                    (
+                        $data[
+                            'shipping_point_country_code'
+                        ] ?? null
+                    ) ?: null,
 
                 'customer_note' => $data['customer_note'] ?? null,
                 'placed_at' => now(),
