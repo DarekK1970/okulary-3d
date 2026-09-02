@@ -14,7 +14,6 @@ class DashboardController extends Controller
     public function __invoke(Request $request): View
     {
         $user = $request->user();
-
         $cards = [
             [
                 'key' => 'content',
@@ -53,6 +52,15 @@ class DashboardController extends Controller
                     User::ROLE_SUPER_ADMIN,
                 ],
                 'icon' => '◎',
+            ],
+            [
+                'key' => 'partners',
+                'route' => 'admin.partners.index',
+                'roles' => [
+                    User::ROLE_ADMIN,
+                    User::ROLE_SUPER_ADMIN,
+                ],
+                'icon' => '↔',
             ],
             [
                 'key' => 'translations',

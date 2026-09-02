@@ -55,6 +55,10 @@ return [
             'title' => 'Użytkownicy',
             'description' => 'Konta, role, uprawnienia i zarządzanie dostępem do systemu.',
         ],
+        'partners' => [
+            'title' => 'Zgłoszone linki partnerskie',
+            'description' => 'Weryfikacja zgłoszeń, moderacja partnerów i dane kontaktowe.',
+        ],
         'translations' => [
             'title' => 'Tłumaczenia AI',
             'description' => 'Wersje językowe PL/EN i przygotowanie kolejnych języków.',

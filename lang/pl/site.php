@@ -1,5 +1,4 @@
 <?php
-
 return [
     'title' => 'Wortal Okulary 3D',
     'meta_description' => 'Wortal o stereoskopii, obrazie 3D, fotografii przestrzennej, technikach lentikularnych i narzędziach online.',
@@ -16,7 +15,6 @@ return [
     'search' => 'Szukaj',
     'account' => 'Konto',
     'cart' => 'Koszyk',
-
     'nav' => [
         'home' => 'Start',
         'articles' => 'Artykuły',
@@ -27,12 +25,10 @@ return [
         'shop' => 'Sklep',
         'about' => 'O nas',
     ],
-
     'layout_preview' => [
         'eyebrow' => 'Krok 61 — layout globalny',
         'note' => 'Nagłówek, menu, przełącznik języka i stopka są już częścią wspólnego layoutu. W Kroku 62 tę przestrzeń zastąpi kompletna strona główna zgodna z zaakceptowaną wizualizacją.',
     ],
-
     'newsletter' => [
         'title' => 'Dołącz do społeczności i odbieraj inspiracje 3D!',
         'description' => 'Nowe artykuły, porady, narzędzia i promocje — prosto na Twoją skrzynkę.',
@@ -40,7 +36,6 @@ return [
         'email_placeholder' => 'Twój adres e-mail',
         'submit' => 'Zapisz się',
     ],
-
     'footer' => [
         'description' => 'Portal o stereoskopii i obrazowaniu 3D. Wiedza, narzędzia online i sklep dla pasjonatów głębi.',
         'portal' => 'Portal',

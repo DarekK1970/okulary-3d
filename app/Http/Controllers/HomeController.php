@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ArchiveTranslationStatus;
+use App\Enums\ArticlePortalSection;
 use App\Enums\ArticleTranslationStatus;
+use App\Models\ArchiveItem;
 use App\Models\Article;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -10,96 +13,135 @@ use Illuminate\View\View;
 
 class HomeController extends Controller
 {
-    public function __invoke(
-        string $locale
-    ): View {
-        $latestArticles = $this
-            ->latestArticles(
-                $locale
-            );
-
-        return view(
-            'home',
-            [
-                'latestArticles' =>
-                    $latestArticles,
-            ]
-        );
+    public function __invoke(string $locale): View
+    {
+        return view('home', [
+            'latestArticles' => $this->latestArticles($locale),
+            'techniqueArticles' => $this->articlesForSection(
+                $locale,
+                ArticlePortalSection::Techniques,
+                3
+            ),
+            'archiveItems' => $this->latestArchiveItems($locale),
+        ]);
     }
 
     /**
      * @return Collection<int, Article>
      */
-    private function latestArticles(
-        string $locale
-    ): Collection {
-        /*
-         * Keeps the homepage usable during a fresh install before
-         * migrations, and keeps old layout-only tests independent
-         * from the content database.
-         */
-        if (
-            ! Schema::hasTable(
-                'articles'
-            )
-            || ! Schema::hasTable(
-                'article_translations'
-            )
-        ) {
+    private function latestArticles(string $locale): Collection
+    {
+        if (! $this->articleTablesReady()) {
             return collect();
         }
 
-        $publicStatuses =
-            ArticleTranslationStatus
-                ::publicValues();
+        return $this->articleQueryForLocale($locale)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->limit(3)
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, Article>
+     */
+    private function articlesForSection(
+        string $locale,
+        ArticlePortalSection $section,
+        int $limit
+    ): Collection {
+        if (! $this->articleTablesReady()) {
+            return collect();
+        }
+
+        return $this->articleQueryForLocale($locale)
+            ->whereHas(
+                'category',
+                fn ($query) => $query
+                    ->where('is_active', true)
+                    ->where('portal_section', $section->value)
+            )
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    private function articleQueryForLocale(string $locale)
+    {
+        $publicStatuses = ArticleTranslationStatus::publicValues();
 
         return Article::query()
             ->published()
             ->whereHas(
                 'translations',
-                function (
+                function ($query) use ($locale, $publicStatuses): void {
                     $query
-                ) use (
-                    $locale,
-                    $publicStatuses
-                ): void {
-                    $query
-                        ->where(
-                            'locale',
-                            $locale
-                        )
-                        ->whereIn(
-                            'translation_status',
-                            $publicStatuses
-                        );
+                        ->where('locale', $locale)
+                        ->whereIn('translation_status', $publicStatuses);
                 }
             )
             ->with([
                 'category',
                 'heroMedia',
-                'translations' =>
-                    function (
-                        $query
-                    ) use (
-                        $locale,
-                        $publicStatuses
-                    ): void {
-                        $query
-                            ->where(
-                                'locale',
-                                $locale
-                            )
-                            ->whereIn(
-                                'translation_status',
-                                $publicStatuses
-                            );
-                    },
-            ])
-            ->orderByDesc(
-                'published_at'
+                'translations' => function ($query) use (
+                    $locale,
+                    $publicStatuses
+                ): void {
+                    $query
+                        ->where('locale', $locale)
+                        ->whereIn('translation_status', $publicStatuses);
+                },
+            ]);
+    }
+
+    private function articleTablesReady(): bool
+    {
+        return Schema::hasTable('articles')
+            && Schema::hasTable('article_translations')
+            && Schema::hasTable('article_categories')
+            && Schema::hasColumn('article_categories', 'portal_section');
+    }
+
+    /**
+     * @return Collection<int, ArchiveItem>
+     */
+    private function latestArchiveItems(string $locale): Collection
+    {
+        if (
+            ! Schema::hasTable('archive_items')
+            || ! Schema::hasTable('archive_item_translations')
+        ) {
+            return collect();
+        }
+
+        $publicStatuses = ArchiveTranslationStatus::publicValues();
+
+        return ArchiveItem::query()
+            ->published()
+            ->where('published_at', '<=', now())
+            ->whereNotNull('original_image_path')
+            ->whereHas(
+                'translations',
+                function ($query) use ($locale, $publicStatuses): void {
+                    $query
+                        ->where('locale', $locale)
+                        ->whereIn('translation_status', $publicStatuses);
+                }
             )
+            ->with([
+                'translations' => function ($query) use (
+                    $locale,
+                    $publicStatuses
+                ): void {
+                    $query
+                        ->where('locale', $locale)
+                        ->whereIn('translation_status', $publicStatuses);
+                },
+            ])
+            ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->limit(3)
+            ->limit(5)
             ->get();
     }
 }

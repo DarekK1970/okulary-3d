@@ -26,7 +26,7 @@ class StaticPageCmsTest extends TestCase
     public function test_migration_seeds_required_static_pages(): void
     {
         $this->assertSame(
-            9,
+            10,
             StaticPage::query()
                 ->count()
         );
@@ -39,6 +39,7 @@ class StaticPageCmsTest extends TestCase
                 'privacy-policy',
                 'portal-terms',
                 'editorial-policy',
+                'partner-program',
                 'shop-terms',
                 'secure-payments',
             ]

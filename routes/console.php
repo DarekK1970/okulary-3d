@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\PartnerLinkStatus;
+use App\Models\PartnerLink;
 use App\Models\User;
+use App\Services\PartnerBacklinkMonitor;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -16,7 +19,6 @@ Artisan::command('user:set-role {email} {role}', function (string $email, string
         User::ROLE_ADMIN,
         User::ROLE_SUPER_ADMIN,
     ];
-
     if (! in_array($role, $roles, true)) {
         $this->error('Nieprawidłowa rola. Dostępne: ' . implode(', ', $roles));
 
@@ -38,9 +40,65 @@ Artisan::command('user:set-role {email} {role}', function (string $email, string
     $user->save();
 
     $this->info("Zmieniono rolę {$email}: {$previousRole} -> {$role}");
-
     return 0;
 })->purpose('Nadaj użytkownikowi rolę RBAC');
+
+Artisan::command('partners:check-backlinks {--partner=}', function () {
+    $partnerId = trim((string) $this->option('partner'));
+    $monitor = app(PartnerBacklinkMonitor::class);
+
+    $query = PartnerLink::query()
+        ->whereNotNull('email_verified_at')
+        ->whereNotNull('approved_at')
+        ->whereIn('status', [
+            PartnerLinkStatus::Active->value,
+            PartnerLinkStatus::SuspendedBacklink->value,
+            PartnerLinkStatus::SuspendedUnreachable->value,
+        ]);
+
+    if ($partnerId !== '') {
+        if (! ctype_digit($partnerId)) {
+            $this->error('Opcja --partner musi zawierać numeryczne ID partnera.');
+            return 1;
+        }
+
+        $query->whereKey((int) $partnerId);
+    }
+
+    $total = (clone $query)->count();
+
+    if ($total === 0) {
+        $this->info('Brak partnerów wymagających kontroli.');
+        return 0;
+    }
+
+    $checked = 0;
+    $problems = 0;
+
+    $query->orderBy('id')->chunkById(25, function ($partners) use ($monitor, &$checked, &$problems): void {
+        foreach ($partners as $partner) {
+            $result = $monitor->check($partner);
+            $checked++;
+
+            if (! $result['backlink_found']) {
+                $problems++;
+            }
+
+            $this->line(sprintf(
+                '#%d %s | HTTP %s | backlink: %s | status: %s | failures: %d',
+                $partner->id,
+                $partner->domain,
+                $result['http_status'] ?? '—',
+                $result['backlink_found'] ? 'OK' : 'BRAK',
+                $result['current_status'],
+                $result['consecutive_failures']
+            ));
+        }
+    });
+
+    $this->info("Sprawdzono: {$checked}; wpisy wymagające uwagi: {$problems}.");
+    return 0;
+})->purpose('Sprawdza linki zwrotne aktywnych i zawieszonych partnerów');
 
 Schedule::command('articles:publish-scheduled')
     ->everyMinute()
@@ -53,6 +111,10 @@ Schedule::command('newsletter:send-due --limit=100')
 Schedule::command('portal:analytics-prune --days=180')
     ->dailyAt('03:30')
     ->withoutOverlapping();
+
+Schedule::command('partners:check-backlinks')
+    ->weeklyOn(1, '04:10')
+    ->withoutOverlapping(120);
 
 /*
  * The configured update time lives in the database. The lightweight

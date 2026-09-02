@@ -2,24 +2,21 @@
     $locale = app()->getLocale();
     $routeName = request()->route()?->getName();
     $routeParameters = request()->route()?->parameters() ?? [];
+    $routeQuery = request()->query();
 
     $headerSeo = $pageSeo
         ?? app(\App\Services\SeoService::class)->current();
 
-    $headerAlternates =
-        $headerSeo['alternates'] ?? [];
+    $headerAlternates = $headerSeo['alternates'] ?? [];
+    $headerPrivatePage = str_starts_with(
+        (string) ($headerSeo['robots'] ?? ''),
+        'noindex'
+    );
 
-    $headerPrivatePage =
-        str_starts_with(
-            (string) (
-                $headerSeo['robots']
-                ?? ''
-            ),
-            'noindex'
-        );
     $localizedUrl = static function (string $code) use (
         $routeName,
         $routeParameters,
+        $routeQuery,
         $headerAlternates,
         $headerPrivatePage
     ): string {
@@ -28,15 +25,13 @@
         }
 
         if ($headerPrivatePage) {
-            return route(
-                'home',
-                ['locale' => $code]
-            );
+            return route('home', ['locale' => $code]);
         }
 
         if (! $routeName) {
             return url('/' . $code);
         }
+
         try {
             if (in_array(
                 $routeName,
@@ -47,18 +42,19 @@
                 ],
                 true
             )) {
-                return route(
-                    'home',
-                    ['locale' => $code]
-                );
+                return route('home', ['locale' => $code]);
             }
-            return route(
-                $routeName,
-                array_merge(
-                    $routeParameters,
-                    ['locale' => $code]
-                )
+
+            $parameters = array_merge(
+                $routeParameters,
+                ['locale' => $code]
             );
+
+            if ($routeName === 'articles.index') {
+                $parameters = array_merge($parameters, $routeQuery);
+            }
+
+            return route($routeName, $parameters);
         } catch (\Throwable) {
             return url('/' . $code);
         }
@@ -68,15 +64,104 @@
         ? route('account', ['locale' => $locale])
         : route('login', ['locale' => $locale]);
 
-    $currencyService = app(
-        \App\Services\CurrencyService::class
-    );
-    $headerCurrencies =
-        $currencyService->selectableCurrencies();
+    $currencyService = app(\App\Services\CurrencyService::class);
+    $headerCurrencies = $currencyService->selectableCurrencies();
+    $selectedCurrencyCode = $currencyService->selectedCode();
 
-    $selectedCurrencyCode =
-        $currencyService->selectedCode();
+    $articleSection = request()->routeIs('articles.index')
+        ? request()->query('section')
+        : null;
+    $isGeneralArticles = request()->routeIs('articles.*') && ! $articleSection;
+    $isHistorySection = request()->routeIs('archive.*')
+        || $articleSection === \App\Enums\ArticlePortalSection::HistoryCuriosities->value;
+    $isTechniquesSection = $articleSection === \App\Enums\ArticlePortalSection::Techniques->value;
 @endphp
+
+<style>
+    .nav-dropdown {
+        position: relative;
+    }
+    .nav-dropdown > summary {
+        list-style: none;
+        cursor: pointer;
+    }
+    .nav-dropdown > summary::-webkit-details-marker {
+        display: none;
+    }
+    .nav-dropdown-caret {
+        margin-left: 5px;
+        font-size: .72em;
+        transition: transform 160ms ease;
+    }
+    .nav-dropdown[open] .nav-dropdown-caret {
+        transform: rotate(180deg);
+    }
+    .nav-dropdown-menu {
+        position: absolute;
+        z-index: 1100;
+        top: calc(100% - 8px);
+        left: 50%;
+        min-width: 235px;
+        display: none;
+        padding: 8px;
+        border: 1px solid #e8edf4;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 16px 38px rgba(16, 24, 44, .14);
+        transform: translateX(-50%);
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown:focus-within .nav-dropdown-menu,
+    .nav-dropdown[open] .nav-dropdown-menu {
+        display: grid;
+    }
+    .nav-dropdown-item {
+        display: block;
+        padding: 10px 12px;
+        border-radius: 9px;
+        color: #344054;
+        font-size: .82rem;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+    .nav-dropdown-item:hover,
+    .nav-dropdown-item.is-active {
+        background: #f4f7fb;
+        color: var(--color-red);
+    }
+    @media (max-width: 1180px) {
+        .nav-dropdown {
+            width: 100%;
+        }
+        .nav-dropdown > summary {
+            width: 100%;
+        }
+        .nav-dropdown-menu {
+            position: static;
+            min-width: 0;
+            margin: -6px 12px 8px;
+            padding: 5px;
+            border: 0;
+            border-left: 2px solid #e8edf4;
+            border-radius: 0;
+            box-shadow: none;
+            transform: none;
+        }
+        .nav-dropdown:not([open]) .nav-dropdown-menu {
+            display: none;
+        }
+        .nav-dropdown[open] .nav-dropdown-menu {
+            display: grid;
+        }
+        .nav-dropdown:hover:not([open]) .nav-dropdown-menu {
+            display: none;
+        }
+        .nav-dropdown-item {
+            white-space: normal;
+        }
+    }
+</style>
+
 <header class="site-header" data-site-header>
     <div class="site-container header-inner">
         <a
@@ -92,6 +177,7 @@
                 height="46"
             >
         </a>
+
         <nav
             class="primary-navigation"
             id="primary-navigation"
@@ -109,6 +195,7 @@
                     ×
                 </button>
             </div>
+
             <a
                 class="nav-link {{ request()->routeIs('home') ? 'is-active' : '' }}"
                 href="{{ route('home', ['locale' => $locale]) }}"
@@ -117,36 +204,67 @@
             </a>
 
             <a
-                class="nav-link {{ request()->routeIs('articles.*') ? 'is-active' : '' }}"
+                class="nav-link {{ $isGeneralArticles ? 'is-active' : '' }}"
                 href="{{ route('articles.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.articles') }}
             </a>
-            <a
-                class="nav-link {{ request()->routeIs('archive.*') ? 'is-active' : '' }}"
-                href="{{ route('archive.index', ['locale' => $locale]) }}"
-            >
-                {{ __('site.nav.history') }}
-            </a>
+
+            <details class="nav-dropdown" @if ($isHistorySection) open @endif>
+                <summary class="nav-link {{ $isHistorySection ? 'is-active' : '' }}">
+                    {{ __('site.nav.history') }}
+                    <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
+                </summary>
+                <div class="nav-dropdown-menu">
+                    <a
+                        class="nav-dropdown-item {{ $articleSection === \App\Enums\ArticlePortalSection::HistoryCuriosities->value ? 'is-active' : '' }}"
+                        href="{{ route('articles.index', [
+                            'locale' => $locale,
+                            'section' => \App\Enums\ArticlePortalSection::HistoryCuriosities->value,
+                        ]) }}"
+                    >
+                        {{ __('article_sections.history_menu.curiosities') }}
+                    </a>
+                    <a
+                        class="nav-dropdown-item {{ request()->routeIs('archive.*') ? 'is-active' : '' }}"
+                        href="{{ route('archive.index', ['locale' => $locale]) }}"
+                    >
+                        {{ __('article_sections.history_menu.archive') }}
+                    </a>
+                </div>
+            </details>
 
             <a
-                class="nav-link"
-                href="{{ route('home', ['locale' => $locale]) }}#techniques"
+                class="nav-link {{ $isTechniquesSection ? 'is-active' : '' }}"
+                href="{{ route('articles.index', [
+                    'locale' => $locale,
+                    'section' => \App\Enums\ArticlePortalSection::Techniques->value,
+                ]) }}"
             >
                 {{ __('site.nav.techniques') }}
             </a>
+
             <a
                 class="nav-link {{ request()->routeIs('lab.*') ? 'is-active' : '' }}"
                 href="{{ route('lab.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.lab') }}
             </a>
+
             <a
                 class="nav-link {{ request()->routeIs('gallery.*') || request()->routeIs('account.gallery.*') ? 'is-active' : '' }}"
                 href="{{ route('gallery.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.gallery') }}
             </a>
+
+            <a
+                class="nav-link {{ request()->routeIs('partners.*') ? 'is-active' : '' }}"
+                href="{{ route('partners.create', ['locale' => $locale]) }}"
+            >
+                {{ __('partners.nav') }}
+            </a>
+
             <a
                 class="nav-link {{ request()->routeIs('shop.*') ? 'is-active' : '' }}"
                 href="{{ route('shop.index', ['locale' => $locale]) }}"
@@ -163,6 +281,7 @@
             >
                 {{ __('site.nav.about') }}
             </a>
+
             <div class="mobile-nav-actions">
                 <div
                     class="mobile-language-switcher"
@@ -182,19 +301,15 @@
                         </a>
                     @endforeach
                 </div>
+
                 @if ($headerCurrencies->isNotEmpty())
                     <form
                         class="mobile-currency-switcher"
                         method="post"
-                        action="{{ route('currency.update', [
-                            'locale' => $locale,
-                        ]) }}"
+                        action="{{ route('currency.update', ['locale' => $locale]) }}"
                     >
                         @csrf
-                        <label
-                            for="mobile-currency-select"
-                            class="sr-only"
-                        >
+                        <label for="mobile-currency-select" class="sr-only">
                             {{ __('currency.switcher') }}
                         </label>
                         <select
@@ -206,35 +321,24 @@
                             @foreach ($headerCurrencies as $currency)
                                 <option
                                     value="{{ $currency->code }}"
-                                    @selected(
-                                        $selectedCurrencyCode
-                                        === $currency->code
-                                    )
+                                    @selected($selectedCurrencyCode === $currency->code)
                                 >
-                                    {{ $currency->code }}
-                                    · {{ $currency->symbol }}
+                                    {{ $currency->code }} · {{ $currency->symbol }}
                                 </option>
                             @endforeach
                         </select>
                         <noscript>
-                            <button type="submit">
-                                {{ __('currency.apply') }}
-                            </button>
+                            <button type="submit">{{ __('currency.apply') }}</button>
                         </noscript>
                     </form>
                 @endif
+
                 <div class="mobile-utility-row">
-                    <button
-                        class="mobile-utility-button"
-                        type="button"
-                    >
+                    <button class="mobile-utility-button" type="button">
                         <span aria-hidden="true">⌕</span>
                         {{ __('site.search') }}
                     </button>
-                    <a
-                        class="mobile-utility-button"
-                        href="{{ $accountUrl }}"
-                    >
+                    <a class="mobile-utility-button" href="{{ $accountUrl }}">
                         <span aria-hidden="true">○</span>
                         {{ auth()->check()
                             ? __('portal_auth.common.my_account')
@@ -243,9 +347,7 @@
                     @auth
                         <a
                             class="mobile-utility-button"
-                            href="{{ route('account.orders.index', [
-                                'locale' => $locale,
-                            ]) }}"
+                            href="{{ route('account.orders.index', ['locale' => $locale]) }}"
                         >
                             <span aria-hidden="true">▤</span>
                             {{ __('cart.header.orders') }}
@@ -253,9 +355,7 @@
                     @endauth
                     <a
                         class="mobile-utility-button"
-                        href="{{ route('cart.index', [
-                            'locale' => $locale,
-                        ]) }}"
+                        href="{{ route('cart.index', ['locale' => $locale]) }}"
                     >
                         <span aria-hidden="true">🛒</span>
                         {{ __('site.cart') }}
@@ -264,6 +364,7 @@
                 </div>
             </div>
         </nav>
+
         <div class="header-actions">
             <div
                 class="language-switcher"
@@ -282,26 +383,19 @@
                         {{ strtoupper($code) }}
                     </a>
                     @if (! $loop->last)
-                        <span
-                            class="language-separator"
-                            aria-hidden="true"
-                        >/</span>
+                        <span class="language-separator" aria-hidden="true">/</span>
                     @endif
                 @endforeach
             </div>
+
             @if ($headerCurrencies->isNotEmpty())
                 <form
                     class="currency-switcher"
                     method="post"
-                    action="{{ route('currency.update', [
-                        'locale' => $locale,
-                    ]) }}"
+                    action="{{ route('currency.update', ['locale' => $locale]) }}"
                 >
                     @csrf
-                    <label
-                        for="desktop-currency-select"
-                        class="sr-only"
-                    >
+                    <label for="desktop-currency-select" class="sr-only">
                         {{ __('currency.switcher') }}
                     </label>
                     <select
@@ -314,22 +408,18 @@
                         @foreach ($headerCurrencies as $currency)
                             <option
                                 value="{{ $currency->code }}"
-                                @selected(
-                                    $selectedCurrencyCode
-                                    === $currency->code
-                                )
+                                @selected($selectedCurrencyCode === $currency->code)
                             >
                                 {{ $currency->code }}
                             </option>
                         @endforeach
                     </select>
                     <noscript>
-                        <button type="submit">
-                            {{ __('currency.apply') }}
-                        </button>
+                        <button type="submit">{{ __('currency.apply') }}</button>
                     </noscript>
                 </form>
             @endif
+
             <button
                 class="icon-button"
                 type="button"
@@ -340,6 +430,7 @@
                     <path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/>
                 </svg>
             </button>
+
             <a
                 class="icon-button"
                 href="{{ $accountUrl }}"
@@ -350,12 +441,11 @@
                     <path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/>
                 </svg>
             </a>
+
             @auth
                 <a
                     class="icon-button"
-                    href="{{ route('account.orders.index', [
-                        'locale' => $locale,
-                    ]) }}"
+                    href="{{ route('account.orders.index', ['locale' => $locale]) }}"
                     aria-label="{{ __('cart.header.orders') }}"
                     title="{{ __('cart.header.orders') }}"
                 >
@@ -364,11 +454,10 @@
                     </svg>
                 </a>
             @endauth
+
             <a
                 class="icon-button cart-button"
-                href="{{ route('cart.index', [
-                    'locale' => $locale,
-                ]) }}"
+                href="{{ route('cart.index', ['locale' => $locale]) }}"
                 aria-label="{{ __('site.cart') }}"
                 title="{{ __('site.cart') }}"
             >
@@ -380,6 +469,7 @@
                 </span>
             </a>
         </div>
+
         <button
             class="mobile-menu-toggle"
             type="button"
@@ -394,8 +484,5 @@
         </button>
     </div>
 
-    <div
-        class="mobile-nav-backdrop"
-        data-menu-backdrop
-    ></div>
+    <div class="mobile-nav-backdrop" data-menu-backdrop></div>
 </header>

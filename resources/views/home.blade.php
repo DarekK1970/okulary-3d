@@ -13,22 +13,17 @@
                 </span>
 
                 <h1>{!! __('home.hero.title_html') !!}</h1>
-
-                <p class="hero-lead">
-                    {{ __('home.hero.lead') }}
-                </p>
+                <p class="hero-lead">{{ __('home.hero.lead') }}</p>
 
                 <div class="hero-actions">
                     <a class="button button-primary" href="{{ route('lab.anaglyph', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">◉</span>
                         {{ __('home.hero.cta_anaglyph') }}
                     </a>
-
                     <a class="button button-secondary" href="{{ route('lab.lenticular', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">▥</span>
                         {{ __('home.hero.cta_lenticular') }}
                     </a>
-
                     <a class="button button-light" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
                         <span class="button-icon" aria-hidden="true">🛒</span>
                         {{ __('home.hero.cta_shop') }}
@@ -71,12 +66,9 @@
                     <span class="section-kicker">{{ __('home.articles.kicker') }}</span>
                     <h2>{{ __('home.articles.title') }}</h2>
                 </div>
-
                 <a
                     class="section-link"
-                    href="{{ route('articles.index', [
-                        'locale' => app()->getLocale()
-                    ]) }}"
+                    href="{{ route('articles.index', ['locale' => app()->getLocale()]) }}"
                 >
                     {{ __('home.articles.all') }}
                     <span aria-hidden="true">→</span>
@@ -85,150 +77,11 @@
 
             <div class="home-publications-grid">
                 @forelse ($latestArticles as $index => $article)
-                    @php
-                        $translation =
-                            $article->publicTranslation(
-                                app()->getLocale()
-                            );
-
-                        $imageUrl =
-                            $article
-                                ->heroMedia
-                                ?->url();
-
-                        if (
-                            ! $imageUrl
-                            && filled(
-                                $article
-                                    ->hero_image_path
-                            )
-                        ) {
-                            $imageUrl =
-                                \Illuminate\Support\Facades\Storage
-                                    ::disk('public')
-                                    ->url(
-                                        $article
-                                            ->hero_image_path
-                                    );
-                        }
-
-                        $articleUrl =
-                            $translation
-                                ? route(
-                                    'articles.show',
-                                    [
-                                        'locale' =>
-                                            app()->getLocale(),
-                                        'slug' =>
-                                            $translation
-                                                ->slug,
-                                    ]
-                                )
-                                : null;
-
-                        $intro = trim(
-                            (string) (
-                                $translation
-                                    ?->excerpt
-                                ?: \Illuminate\Support\Str::limit(
-                                    trim(
-                                        preg_replace(
-                                            '/\s+/u',
-                                            ' ',
-                                            strip_tags(
-                                                (string)
-                                                $translation
-                                                    ?->body_html
-                                            )
-                                        ) ?? ''
-                                    ),
-                                    165
-                                )
-                            )
-                        );
-                    @endphp
-
-                    @if ($translation && $articleUrl)
-                        <article class="home-publication-card">
-                            <a
-                                class="home-publication-image"
-                                href="{{ $articleUrl }}"
-                                aria-label="{{ $translation->title }}"
-                            >
-                                <img
-                                    src="{{ $imageUrl ?: asset(
-                                        'images/home/article-history.svg'
-                                    ) }}"
-                                    alt="{{ $translation->title }}"
-                                    width="260"
-                                    height="390"
-                                    loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
-                                >
-                            </a>
-
-                            <div class="home-publication-copy">
-                                <div class="home-publication-meta">
-                                    @if ($article->category)
-                                        <a
-                                            class="home-publication-category"
-                                            href="{{ route(
-                                                'articles.index',
-                                                [
-                                                    'locale' =>
-                                                        app()->getLocale(),
-                                                    'category' =>
-                                                        $article
-                                                            ->category
-                                                            ->slug,
-                                                ]
-                                            ) }}"
-                                        >
-                                            {{ $article->category->name }}
-                                        </a>
-                                    @endif
-
-                                    <time
-                                        datetime="{{ $article
-                                            ->published_at
-                                            ?->toAtomString() }}"
-                                    >
-                                        {{ $article
-                                            ->published_at
-                                            ?->format('d.m.Y') }}
-                                    </time>
-                                </div>
-
-                                <h3>
-                                    <a href="{{ $articleUrl }}">
-                                        {{ $translation->title }}
-                                    </a>
-                                </h3>
-
-                                @if ($intro !== '')
-                                    <p>
-                                        {{ $intro }}
-                                    </p>
-                                @endif
-
-                                <a
-                                    class="home-publication-cta"
-                                    href="{{ $articleUrl }}"
-                                >
-                                    {{ __('articles_public.read_more') }}
-                                    <span aria-hidden="true">→</span>
-                                </a>
-                            </div>
-                        </article>
-                    @endif
+                    <x-publication-card :article="$article" :index="$index" />
                 @empty
                     <div class="article-home-empty">
-                        <strong>
-                            {{ __('articles_public.empty_title') }}
-                        </strong>
-
-                        <p>
-                            {{ __('articles_public.empty_description') }}
-                        </p>
+                        <strong>{{ __('articles_public.empty_title') }}</strong>
+                        <p>{{ __('articles_public.empty_description') }}</p>
                     </div>
                 @endforelse
             </div>
@@ -259,9 +112,7 @@
             <div class="lab-grid">
                 @foreach (__('home.lab.tools') as $index => $tool)
                     <article class="lab-card">
-                        <div class="lab-icon" aria-hidden="true">
-                            {!! $tool['icon'] !!}
-                        </div>
+                        <div class="lab-icon" aria-hidden="true">{!! $tool['icon'] !!}</div>
 
                         <div class="lab-copy">
                             <h3>{{ $tool['title'] }}</h3>
@@ -291,7 +142,6 @@
                     <span class="section-kicker">{{ __('home.shop.kicker') }}</span>
                     <h2>{{ __('home.shop.title') }}</h2>
                 </div>
-
                 <a class="section-link" href="{{ route('shop.index', ['locale' => app()->getLocale()]) }}">
                     {{ __('home.shop.all') }}
                     <span aria-hidden="true">→</span>
@@ -310,7 +160,6 @@
                                 loading="lazy"
                             >
                         </div>
-
                         <div class="shop-card-body">
                             <h3>{{ $category['title'] }}</h3>
 
@@ -335,35 +184,39 @@
         </div>
     </section>
 
-    <section class="home-section section-tinted today-section" id="techniques">
-        <div class="site-container">
-            <div class="section-heading-row">
-                <div>
-                    <span class="section-kicker">{{ __('home.today.kicker') }}</span>
-                    <h2>{{ __('home.today.title') }}</h2>
+    @if ($techniqueArticles->isNotEmpty())
+        <section class="home-section section-tinted home-latest-publications" id="techniques">
+            <div class="site-container">
+                <div class="section-heading-row">
+                    <div>
+                        <span class="section-kicker">
+                            {{ \App\Enums\ArticlePortalSection::Techniques->kicker() }}
+                        </span>
+                        <h2>{{ \App\Enums\ArticlePortalSection::Techniques->title() }}</h2>
+                        <p class="section-intro">
+                            {{ \App\Enums\ArticlePortalSection::Techniques->description() }}
+                        </p>
+                    </div>
+                    <a
+                        class="section-link"
+                        href="{{ route('articles.index', [
+                            'locale' => app()->getLocale(),
+                            'section' => \App\Enums\ArticlePortalSection::Techniques->value,
+                        ]) }}"
+                    >
+                        {{ __('article_sections.all') }}
+                        <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+
+                <div class="home-publications-grid">
+                    @foreach ($techniqueArticles as $index => $article)
+                        <x-publication-card :article="$article" :index="$index" />
+                    @endforeach
                 </div>
             </div>
-
-            <div class="today-grid">
-                @foreach (__('home.today.items') as $item)
-                    <article class="today-card">
-                        <div class="today-visual {{ $item['class'] }}" aria-hidden="true">
-                            <span class="today-orbit orbit-a"></span>
-                            <span class="today-orbit orbit-b"></span>
-                            <span class="today-symbol">{{ $item['symbol'] }}</span>
-                        </div>
-
-                        <div class="today-content">
-                            <span class="today-label">{{ $item['label'] }}</span>
-                            <h3>{{ $item['title'] }}</h3>
-                            <p>{{ $item['description'] }}</p>
-                            <a href="#" aria-label="{{ $item['title'] }}">→</a>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
+        </section>
+    @endif
 
     <section class="home-section" id="gallery">
         <div class="site-container">
@@ -372,7 +225,6 @@
                     <span class="section-kicker">{{ __('home.gallery.kicker') }}</span>
                     <h2>{{ __('home.gallery.title') }}</h2>
                 </div>
-
                 <div class="home-gallery-actions">
                     <a
                         class="gallery-tab is-active"
@@ -380,7 +232,6 @@
                     >
                         {{ __('gallery.home.open') }}
                     </a>
-
                     @auth
                         <a
                             class="gallery-tab"
@@ -415,7 +266,6 @@
                             >
                             <span class="gallery-mode">{{ $item['mode'] }}</span>
                         </div>
-
                         <div class="gallery-card-footer">
                             <span class="gallery-user">{{ $item['user'] }}</span>
                             <span class="gallery-likes">♡ {{ $item['likes'] }}</span>
@@ -426,47 +276,56 @@
         </div>
     </section>
 
-    <section class="home-section archive-section" id="history">
-        <div class="site-container">
-            <div class="section-heading-row">
-                <div>
-                    <span class="section-kicker">{{ __('home.archive.kicker') }}</span>
-                    <h2>{{ __('home.archive.title') }}</h2>
-                    <p class="section-intro">{{ __('home.archive.description') }}</p>
-                </div>
-
-                <a
-                    class="section-link"
-                    href="{{ route('archive.index', ['locale' => app()->getLocale()]) }}"
-                >
-                    {{ __('home.archive.all') }}
-                    <span aria-hidden="true">→</span>
-                </a>
-            </div>
-
-            <div class="archive-grid">
-                @foreach (__('home.archive.items') as $index => $item)
+    @if ($archiveItems->isNotEmpty())
+        <section class="home-section archive-section" id="history">
+            <div class="site-container">
+                <div class="section-heading-row">
+                    <div>
+                        <span class="section-kicker">{{ __('home.archive.kicker') }}</span>
+                        <h2>{{ __('home.archive.title') }}</h2>
+                        <p class="section-intro">{{ __('home.archive.description') }}</p>
+                    </div>
                     <a
-                        class="archive-card"
+                        class="section-link"
                         href="{{ route('archive.index', ['locale' => app()->getLocale()]) }}"
                     >
-                        <div class="archive-image">
-                            <img
-                                src="{{ asset('images/home/archive-' . ($index + 1) . '.svg') }}"
-                                alt=""
-                                width="520"
-                                height="340"
-                                loading="lazy"
-                            >
-                        </div>
-                        <div class="archive-copy">
-                            <span>{{ $item['type'] }}</span>
-                            <h3>{{ $item['title'] }}</h3>
-                            <p>{{ $item['year'] }}</p>
-                        </div>
+                        {{ __('home.archive.all') }}
+                        <span aria-hidden="true">→</span>
                     </a>
-                @endforeach
+                </div>
+
+                <div class="archive-grid">
+                    @foreach ($archiveItems as $item)
+                        @php
+                            $archiveTranslation = $item->publicTranslation(app()->getLocale());
+                            $archiveUrl = $archiveTranslation
+                                ? route('archive.show', [
+                                    'locale' => app()->getLocale(),
+                                    'slug' => $archiveTranslation->slug,
+                                ])
+                                : route('archive.index', ['locale' => app()->getLocale()]);
+                        @endphp
+                        @if ($archiveTranslation)
+                            <a class="archive-card" href="{{ $archiveUrl }}">
+                                <div class="archive-image">
+                                    <img
+                                        src="{{ $item->originalImageUrl() }}"
+                                        alt="{{ $archiveTranslation->title }}"
+                                        width="520"
+                                        height="340"
+                                        loading="lazy"
+                                    >
+                                </div>
+                                <div class="archive-copy">
+                                    <span>{{ \Illuminate\Support\Str::headline($item->technique) }}</span>
+                                    <h3>{{ $archiveTranslation->title }}</h3>
+                                    <p>{{ $item->yearLabel() }}</p>
+                                </div>
+                            </a>
+                        @endif
+                    @endforeach
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    @endif
 @endsection

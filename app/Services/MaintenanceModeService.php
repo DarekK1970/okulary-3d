@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AppSetting;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class MaintenanceModeService
 {
@@ -138,13 +139,24 @@ class MaintenanceModeService
      */
     private function settings(): Collection
     {
-        if ($this->cache === null) {
-            $this->cache = AppSetting::query()
-                ->where('group', self::GROUP)
-                ->get()
-                ->keyBy('key');
+        if ($this->cache !== null) {
+            return $this->cache;
         }
 
-        return $this->cache;
+        /*
+         * Some lightweight feature tests intentionally boot the HTTP stack
+         * without running database migrations. Maintenance mode must fail
+         * open in that situation instead of turning every public request into
+         * a 500 response. In a migrated application the table is present and
+         * the normal database-backed settings are used.
+         */
+        if (! Schema::hasTable((new AppSetting())->getTable())) {
+            return $this->cache = collect();
+        }
+
+        return $this->cache = AppSetting::query()
+            ->where('group', self::GROUP)
+            ->get()
+            ->keyBy('key');
     }
 }

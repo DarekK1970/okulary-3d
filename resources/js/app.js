@@ -1,3 +1,5 @@
+import '../css/partners.css';
+
 const initNavigation = () => {
     const toggle = document.querySelector('[data-menu-toggle]');
     const navigation = document.querySelector('[data-primary-navigation]');
@@ -7,7 +9,6 @@ const initNavigation = () => {
     if (!toggle || !navigation) {
         return;
     }
-
     const closeMenu = () => {
         navigation.classList.remove('is-open');
         backdrop?.classList.remove('is-visible');
@@ -21,7 +22,6 @@ const initNavigation = () => {
         toggle.setAttribute('aria-expanded', 'true');
         document.body.classList.add('menu-open');
     };
-
     toggle.addEventListener('click', () => {
         const isOpen = toggle.getAttribute('aria-expanded') === 'true';
         isOpen ? closeMenu() : openMenu();
@@ -33,7 +33,6 @@ const initNavigation = () => {
     navigation.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', closeMenu);
     });
-
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeMenu();
@@ -49,7 +48,6 @@ const initNavigation = () => {
 
 const initGalleryTabs = () => {
     const tabs = document.querySelectorAll('.gallery-tab');
-
     tabs.forEach((tab) => {
         tab.addEventListener('click', () => {
             tabs.forEach((item) => item.classList.remove('is-active'));
@@ -58,9 +56,42 @@ const initGalleryTabs = () => {
     });
 };
 
+const initPartnerCarousels = () => {
+    document.querySelectorAll('[data-partner-carousel]').forEach((carousel) => {
+        const sequence = carousel.querySelector('[data-partner-sequence]');
+
+        if (!sequence) {
+            return;
+        }
+
+        const update = () => {
+            const overflowing = sequence.scrollWidth > carousel.clientWidth + 2;
+            carousel.classList.toggle('is-overflowing', overflowing);
+
+            if (overflowing) {
+                const duration = Math.max(20, Math.round(sequence.scrollWidth / 55));
+                carousel.style.setProperty('--partner-carousel-duration', `${duration}s`);
+            } else {
+                carousel.style.removeProperty('--partner-carousel-duration');
+            }
+        };
+
+        update();
+
+        if ('ResizeObserver' in window) {
+            const observer = new ResizeObserver(update);
+            observer.observe(carousel);
+            observer.observe(sequence);
+        } else {
+            window.addEventListener('resize', update);
+        }
+    });
+};
+
 const initApp = () => {
     initNavigation();
     initGalleryTabs();
+    initPartnerCarousels();
 };
 
 if (document.readyState === 'loading') {

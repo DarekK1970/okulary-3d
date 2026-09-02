@@ -1,6 +1,76 @@
 @php
     $locale = app()->getLocale();
 @endphp
+@if (($footerPartners ?? collect())->isNotEmpty())
+    <section class="partner-showcase" aria-labelledby="partner-showcase-title" data-partner-showcase>
+        <div class="site-container partner-showcase-inner">
+            <div class="partner-showcase-heading">
+                <div>
+                    <span class="section-kicker">{{ __('partners.public.kicker') }}</span>
+                    <h2 id="partner-showcase-title">{{ __('partners.public.title') }}</h2>
+                    <p>{{ __('partners.public.description') }}</p>
+                </div>
+                <a
+                    class="partner-showcase-cta"
+                    href="{{ route('partners.create', ['locale' => $locale]) }}"
+                >
+                    {{ __('partners.public.join') }} <span aria-hidden="true">→</span>
+                </a>
+            </div>
+
+            <div
+                class="partner-carousel"
+                data-partner-carousel
+                aria-label="{{ __('partners.public.title') }}"
+            >
+                <div class="partner-carousel-track" data-partner-track>
+                    <div class="partner-carousel-sequence" data-partner-sequence>
+                        @foreach ($footerPartners as $partner)
+                            <a
+                                class="partner-tile"
+                                href="{{ route('partners.go', ['locale' => $locale, 'partner' => $partner]) }}"
+                                target="_blank"
+                                rel="noopener"
+                                aria-label="{{ __('partners.public.visit', ['name' => $partner->name]) }}"
+                            >
+                                <span class="partner-tile-logo">
+                                    @if ($partner->logoUrl())
+                                        <img
+                                            src="{{ $partner->logoUrl() }}"
+                                            alt="{{ __('partners.public.logo_alt', ['name' => $partner->name]) }}"
+                                            loading="lazy"
+                                            decoding="async"
+                                        >
+                                    @endif
+                                </span>
+                                <span class="partner-tile-name">{{ $partner->name }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+
+                    <div class="partner-carousel-sequence" aria-hidden="true">
+                        @foreach ($footerPartners as $partner)
+                            <span class="partner-tile partner-tile-clone" aria-hidden="true">
+                                <span class="partner-tile-logo">
+                                    @if ($partner->logoUrl())
+                                        <img
+                                            src="{{ $partner->logoUrl() }}"
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                        >
+                                    @endif
+                                </span>
+                                <span class="partner-tile-name">{{ $partner->name }}</span>
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endif
+
 <footer class="site-footer" id="about">
     <section class="newsletter-strip" id="newsletter" aria-label="{{ __('site.newsletter.title') }}">
         <div class="site-container newsletter-inner">
@@ -96,7 +166,7 @@
             <h3>{{ __('site.footer.community') }}</h3>
             <a href="{{ route('home', ['locale' => $locale]) }}#gallery">{{ __('site.nav.gallery') }}</a>
             <a href="#newsletter">{{ __('site.footer.newsletter') }}</a>
-            <a href="#">{{ __('site.footer.cooperation') }}</a>
+            <a href="{{ route('partners.create', ['locale' => $locale]) }}">{{ __('site.footer.cooperation') }}</a>
         </div>
         <div class="footer-column footer-contact">
             <h3>{{ __('site.footer.contact') }}</h3>

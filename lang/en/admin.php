@@ -43,6 +43,7 @@ return [
         'media' => ['title' => 'Media library', 'description' => 'Central images, metadata, folders and reusable assets.'],
         'shop' => ['title' => 'Shop', 'description' => 'Products, categories, pricing, stock and future order handling.'],
         'users' => ['title' => 'Users', 'description' => 'Accounts, roles, permissions and access management.'],
+        'partners' => ['title' => 'Partner link submissions', 'description' => 'Submission verification, partner moderation and private contact data.'],
         'translations' => ['title' => 'AI translations', 'description' => 'PL/EN language versions and future languages.'],
         'orchestrator' => ['title' => 'Orchestrator', 'description' => 'Discovery, publishing plans, generation and scheduling.'],
         'analytics' => ['title' => 'Analytics', 'description' => 'Traffic, publications, conversions and tool/shop effectiveness.'],

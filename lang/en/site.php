@@ -1,5 +1,4 @@
 <?php
-
 return [
     'title' => '3D Glasses Portal',
     'meta_description' => 'Portal about stereoscopy, 3D imaging, spatial photography, lenticular techniques and online 3D tools.',
@@ -16,7 +15,6 @@ return [
     'search' => 'Search',
     'account' => 'Account',
     'cart' => 'Cart',
-
     'nav' => [
         'home' => 'Home',
         'articles' => 'Articles',
@@ -27,12 +25,10 @@ return [
         'shop' => 'Shop',
         'about' => 'About',
     ],
-
     'layout_preview' => [
         'eyebrow' => 'Step 61 — global layout',
         'note' => 'The header, navigation, language switcher and footer are now part of the shared layout. In Step 62 this area will be replaced by the complete homepage based on the approved visual concept.',
     ],
-
     'newsletter' => [
         'title' => 'Join the community and get 3D inspiration!',
         'description' => 'New articles, guides, tools and promotions delivered straight to your inbox.',
@@ -40,7 +36,6 @@ return [
         'email_placeholder' => 'Your email address',
         'submit' => 'Subscribe',
     ],
-
     'footer' => [
         'description' => 'A portal about stereoscopy and 3D imaging. Knowledge, online tools and a shop for depth enthusiasts.',
         'portal' => 'Portal',

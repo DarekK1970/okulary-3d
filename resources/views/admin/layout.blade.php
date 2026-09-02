@@ -85,6 +85,13 @@
                         <span>◎</span>
                         {{ __('admin.menu.users') }}
                     </a>
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.partners.*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.partners.index') }}"
+                    >
+                        <span>↔</span>
+                        {{ __('partners.admin.menu') }}
+                    </a>
                 @endif
                 <a
                     class="admin-nav-link {{ request()->routeIs('admin.archive.*') ? 'is-active' : '' }}"

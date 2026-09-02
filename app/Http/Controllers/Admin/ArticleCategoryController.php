@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ArticlePortalSection;
 use App\Http\Controllers\Controller;
 use App\Models\ArticleCategory;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class ArticleCategoryController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
+            'portalSections' => ArticlePortalSection::cases(),
         ]);
     }
 
@@ -33,6 +35,8 @@ class ArticleCategoryController extends Controller
                 ($validated['slug'] ?? null) ?: $validated['name']
             ),
             'description' => ($validated['description'] ?? null) ?: null,
+            'portal_section' => $validated['portal_section']
+                ?? ArticlePortalSection::Articles->value,
             'is_active' => $request->boolean('is_active'),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
         ]);
@@ -51,6 +55,9 @@ class ArticleCategoryController extends Controller
                 $category
             ),
             'description' => ($validated['description'] ?? null) ?: null,
+            'portal_section' => $validated['portal_section']
+                ?? $category->portal_section?->value
+                ?? ArticlePortalSection::Articles->value,
             'is_active' => $request->boolean('is_active'),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
         ]);
@@ -86,6 +93,10 @@ class ArticleCategoryController extends Controller
                 Rule::unique('article_categories', 'slug')->ignore($category?->id),
             ],
             'description' => ['nullable', 'string', 'max:1000'],
+            'portal_section' => [
+                'nullable',
+                Rule::in(ArticlePortalSection::values()),
+            ],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
