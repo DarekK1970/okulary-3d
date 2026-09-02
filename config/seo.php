@@ -12,6 +12,7 @@ return [
 
     'indexable_routes' => [
         'home',
+        'articles.index',
         'shop.index',
         'lab.index',
         'lab.anaglyph',
@@ -42,6 +43,7 @@ return [
 
     'sitemap_static_routes' => [
         'home',
+        'articles.index',
         'shop.index',
         'lab.index',
         'lab.anaglyph',

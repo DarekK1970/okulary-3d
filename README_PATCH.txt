@@ -1,290 +1,201 @@
-OKULARY 3D — K90
-BOT TRAFFIC ANALYTICS / HUMAN TRAFFIC SEPARATION
+OKULARY 3D — K91
+PUBLIC ARTICLES ROUTING + DYNAMIC HOMEPAGE
 
 CEL:
-Dodać do Portal Analytics osobną analizę ruchu botów internetowych
-oraz zagwarantować, że rozpoznane crawlery NIE zwiększają:
-- odsłon użytkowników,
-- unikalnych wizyt,
-- aktywnych użytkowników,
-- źródeł ruchu,
-- urządzeń,
-- lejka,
-- eventów użytkowników.
+Naprawić publiczny routing artykułów i usunąć atrapę artykułów
+ze strony głównej.
 
-Rozwiązanie jest wzorowane funkcjonalnie na panelu wdrożonym
-wcześniej w projekcie powiedznie.org.
-
-============================================================
-NAJWAŻNIEJSZA ZMIANA ARCHITEKTONICZNA
-============================================================
-
-PRZED K90:
-
-Request
-  -> prosty regex "czy bot?"
-  -> jeżeli rozpoznany: ignoruj
-  -> jeżeli nierozpoznany: może trafić do sesji użytkownika
-
-Problem:
-prosty regex rozpoznawał podstawowe boty, ale nie dawał:
-- osobnej statystyki,
-- klasyfikacji,
-- listy najaktywniejszych botów,
-- listy crawlowanych URL,
-- szerokiego katalogu agentów AI / SEO / social / monitoring.
-
-PO K90:
-
-Request
-  -> BotDetectorService
-       |
-       +-- BOT
-       |    -> portal_analytics_bot_requests
-       |    -> STOP dla human analytics
-       |
-       +-- HUMAN
-            -> portal_analytics_sessions
-            -> portal_analytics_page_views
-            -> portal_analytics_events
-
-Bot i User nie współdzielą licznika.
+DIAGNOZA PRODUKCJI:
+- bezpośredni artykuł /pl/articles/{slug} działa,
+- /pl/articles nie ma route i zwraca 404,
+- menu "Artykuły" prowadzi do /pl#articles,
+- "Zobacz wszystkie artykuły" prowadzi do #,
+- karty na stronie głównej są wpisane na sztywno z lang/home.php,
+- strzałki kart prowadzą do #,
+- dlatego opublikowany przez Orchestrator artykuł istnieje,
+  ale nie pojawia się automatycznie w sekcji publikacji.
 
 ============================================================
-DETEKCJA
+PO K91
 ============================================================
 
-Kategorie:
+Nowy publiczny route:
 
-1. search_engine
-   Googlebot
-   Bingbot
-   DuckDuckBot
-   Applebot
-   YandexBot
-   Baiduspider
-   Yahoo Slurp
-   PetalBot
-   Qwantify
-   Sogou
-   SeznamBot
+/{locale}/articles
 
-2. ai
-   OAI-SearchBot
-   ChatGPT-User
-   GPTBot
-   PerplexityBot
-   ClaudeBot
-   CohereBot
-   Meta-ExternalAgent
-   Applebot-Extended
-   Amazonbot
-   Bytespider
-   CCBot
-   YouBot
-   Google-Extended
+Nazwa:
+articles.index
 
-3. seo
-   SerpstatBot
-   AhrefsBot
-   SemrushBot
-   MJ12bot
-   DotBot
-   BLEXBot
-   DataForSeoBot
-   SeobilityBot
-   Screaming Frog
-   SiteAuditBot
-   Rogerbot
-   MegaIndex
+Przykłady:
+/pl/articles
+/en/articles
 
-4. social_preview
-   FacebookExternalHit
-   LinkedInBot
-   Twitterbot
-   PinterestBot
-   TelegramBot
-   WhatsApp
-   Discordbot
-   Slackbot
-
-5. monitoring
-   Google Lighthouse / PageSpeed
-   UptimeRobot
-   Pingdom
-   StatusCake
-   GTmetrix
-   Site24x7
-   Checkly
-   HeadlessChrome
-
-6. other
-   AwarioBot
-   AdsBot-Google
-   Mediapartners-Google
-   oraz fallback:
-   bot/crawler/spider/scraper,
-   python-requests,
-   aiohttp,
-   Go HTTP Client,
-   curl/wget,
-   Java HTTP,
-   okhttp,
-   PostmanRuntime,
-   node-fetch,
-   axios itd.
+Route szczegółu pozostaje:
+/{locale}/articles/{slug}
 
 ============================================================
-NOWA TABELA
+STRONA GŁÓWNA
 ============================================================
 
-portal_analytics_bot_requests
+Sekcja "Najnowsze w świecie 3D" nie używa już atrap:
 
-Pola:
-- bot_name
-- category
-- route_name
-- path
-- method
-- status_code
-- locale
-- user_agent_hash
-- occurred_at
+Historia stereoskopii w pigułce
+Jak zrobić zdjęcie 3D smartfonem?
+Spatial Photo i nowa era 3D
 
-NIE zapisujemy:
-- IP,
-- query string,
-- request body,
-- surowego User-Agent.
+Zamiast tego HomeController pobiera 3 najnowsze PRAWDZIWE artykuły:
 
-User-Agent jest tylko hashowany SHA-256.
+- status = published,
+- published_at <= teraz,
+- istnieje publiczna wersja dla aktualnego języka,
+- kolejność: najnowsza data publikacji.
 
-============================================================
-PRYWATNE ADRESY / TOKENY
-============================================================
+Karty pokazują:
+- hero image z Media Library / legacy storage,
+- kategorię,
+- datę,
+- tytuł,
+- excerpt,
+- wyliczony czas czytania,
+- realny link do artykułu.
 
-Jeżeli bot wejdzie na trasę prywatną, np.:
-password.*
-order.*
-payment.*
-account.*
-
-do tabeli NIE zapisujemy konkretnego URL z tokenem.
-
-Zapisujemy szablon route, np.:
-
-/{locale}/reset-password/{token}
-
-zamiast realnego:
-.../reset-password/SECRET_TOKEN
+Jeżeli Orchestrator opublikuje nowy artykuł:
+pojawia się automatycznie na stronie głównej bez edycji Blade/lang.
 
 ============================================================
-PANEL ADMIN -> ANALITYKA
+PUBLICZNA LISTA ARTYKUŁÓW
 ============================================================
 
-W tym samym zakresie czasu:
-Dzisiaj / 7 dni / 30 dni
+Nowa strona:
+Backend content -> public:
+https://okulary-3d.pl/pl/articles
 
-pojawia się osobny blok:
+Funkcje:
+- wszystkie opublikowane artykuły,
+- tylko aktualny locale,
+- paginacja 12,
+- sortowanie od najnowszych,
+- filtr kategorii,
+- wyszukiwarka tytuł/excerpt/body,
+- realne hero images,
+- czas czytania,
+- linki do szczegółów.
 
-BOTY INTERNETOWE
+Parametry:
+?category=historia-3d
+?q=vistascreen
 
-Metryki:
-- Żądania botów
-- Rozpoznane boty
-- Odwiedzone adresy
-- Ostatnia aktywność
-
-Kategorie:
-- Wyszukiwarki
-- AI
-- SEO
-- Social / podglądy
-- Monitoring
-- Pozostałe
-
-Tabele:
-- Najaktywniejsze boty
-  BOT
-  TYP
-  ŻĄDANIA
-  OSTATNIO
-
-- Najczęściej crawlowane adresy
-  ADRES
-  ŻĄDANIA
-  LICZBA BOTÓW
+Filtry/search otrzymują noindex,follow przez istniejący SeoService.
+Czysty /pl/articles jest index,follow.
 
 ============================================================
-UNIKALNE WIZYTY
+NAWIGACJA
 ============================================================
 
-Etykieta "Sesje" w głównych metrykach zostaje doprecyzowana jako:
+HEADER:
+Artykuły
+PRZED:
+  /pl#articles
+PO:
+  /pl/articles
 
-UNIKALNE WIZYTY
+Na liście i szczególe route articles.* link jest aktywny.
 
-podpis:
-sesje użytkowników — bez botów
+STOPKA:
+Artykuły -> /pl/articles
 
-Ważne:
-po wdrożeniu K90 każdy rozpoznany bot jest odcinany PRZED
-utworzeniem PortalAnalyticsSession.
-
-To dotyczy również:
-active_sessions
-oraz eventów JS/backend.
+Przy okazji usunięta została niespójność:
+Historia 3D w stopce -> /pl/archive
+zamiast /pl#history.
 
 ============================================================
-DANE HISTORYCZNE
+SZCZEGÓŁ ARTYKUŁU
 ============================================================
 
-Nie wykonujemy ryzykownego "czyszczenia" starych sesji.
+Breadcrumb:
+Strona główna
+> Artykuły
+> Kategoria
 
-Powód:
-przed K90 tabela sesji nie przechowywała surowego User-Agent,
-więc nie da się wiarygodnie stwierdzić, czy już zapisana historyczna
-sesja była botem, bez zgadywania.
+Kategoria w breadcrumbs jest klikalna i otwiera:
+articles.index?category=...
 
-Od momentu wdrożenia K90 ruch jest rozdzielany prawidłowo.
+"Wróć do artykułów":
+PRZED -> /pl#articles
+PO -> /pl/articles
+
+Hero:
+obsługuje:
+1. heroMedia
+2. legacy hero_image_path
+
+============================================================
+SEO
+============================================================
+
+articles.index dodano do:
+config/seo.php -> indexable_routes
+config/seo.php -> sitemap_static_routes
+
+Dzięki temu:
+/pl/articles
+/en/articles
+
+otrzymują canonical/hreflang i trafiają do sitemap.xml.
+
+============================================================
+BAZA
+============================================================
+
+BRAK NOWEJ MIGRACJI.
+
+K91 korzysta z istniejących:
+articles
+article_translations
+article_categories
+media_assets
 
 ============================================================
 PLIKI
 ============================================================
 
 NEW:
-- database/migrations/2026_09_02_410000_create_portal_analytics_bot_requests_table.php
-- app/Models/PortalAnalyticsBotRequest.php
-- app/Services/BotDetectorService.php
-- app/Services/PortalBotReportService.php
-- tests/Feature/BotTrafficAnalyticsTest.php
+- resources/views/articles/index.blade.php
+- tests/Feature/PublicArticleRoutingTest.php
 
 CHANGED:
-- app/Services/PortalAnalyticsService.php
-- app/Services/PortalAnalyticsReportService.php
-- app/Http/Middleware/TrackPortalAnalytics.php
-- resources/views/admin/analytics/index.blade.php
-- resources/css/admin-analytics.css
-- lang/pl/analytics.php
-- lang/en/analytics.php
+- routes/web.php
+- app/Http/Controllers/HomeController.php
+- app/Http/Controllers/ArticleController.php
+- resources/views/home.blade.php
+- resources/views/articles/show.blade.php
+- resources/views/partials/header.blade.php
+- resources/views/partials/footer.blade.php
+- resources/css/article.css
+- lang/pl/articles_public.php
+- lang/en/articles_public.php
+- config/seo.php
+- tests/Feature/HomepageTest.php
 
 ============================================================
 INSTALACJA LOKALNA
 ============================================================
 
-Rozpakuj patch do:
+Rozpakuj do:
 C:\laragon\www\okulary-3d
 
-z nadpisaniem plików.
+z nadpisaniem.
 
-Następnie:
+Nie ma migracji.
 
 php artisan optimize:clear
-php artisan migrate
 
 TESTY:
 
-php artisan test --filter=BotTrafficAnalyticsTest
-php artisan test --filter=PortalAnalyticsTest
+php artisan test --filter=PublicArticleRoutingTest
+php artisan test --filter=MultilingualArticleTest
+php artisan test --filter=HomepageTest
+php artisan test --filter=MultilingualSeoTest
 php artisan test --filter=ProductionReadinessTest
 
 Jeżeli zielono:
@@ -300,42 +211,40 @@ npm run build
 TEST RĘCZNY
 ============================================================
 
-1. Backend -> Analityka.
-2. Wybierz "7 dni".
-3. Sprawdź nowy blok "Boty internetowe".
+1. Otwórz:
+/pl
 
-Lokalnie ruch botów można zasymulować PowerShell:
+W "Najnowsze w świecie 3D" powinien pojawić się najnowszy
+rzeczywiście opublikowany artykuł, a nie demo z 28.08.2026.
 
-curl.exe `
-  -A "Googlebot/2.1" `
-  http://okulary-3d.test/pl
+2. Kliknij:
+Artykuły
 
-curl.exe `
-  -A "PerplexityBot/1.0" `
-  http://okulary-3d.test/pl
+Powinno otworzyć:
+/pl/articles
 
-curl.exe `
-  -A "SerpstatBot/2.1" `
-  http://okulary-3d.test/pl/shop
+3. Kliknij kartę / tytuł / strzałkę.
+Powinno otworzyć:
+/pl/articles/{realny-slug}
 
-curl.exe `
-  -A "facebookexternalhit/1.1" `
-  http://okulary-3d.test/pl
+4. Kliknij kategorię artykułu.
+Powinno otworzyć:
+/pl/articles?category={slug-kategorii}
 
-Po odświeżeniu Admin -> Analityka:
-- 4 żądania botów powinny być widoczne osobno,
-- Googlebot = Wyszukiwarki,
-- PerplexityBot = AI,
-- SerpstatBot = SEO,
-- FacebookExternalHit = Social / podglądy.
+5. Na szczególe kliknij:
+Wróć do artykułów
 
-Jednocześnie te 4 wejścia NIE mogą zwiększyć:
-"Unikalne wizyty".
+Powinno wrócić do:
+/pl/articles
+
+6. Przełącz PL/EN na liście artykułów.
+Powinno przejść:
+/pl/articles <-> /en/articles
 
 ============================================================
 PO TESTACH
 ============================================================
 
 git add .
-git commit -m "Separate bot traffic from portal analytics"
+git commit -m "Fix public article routing and dynamic homepage"
 git push origin develop

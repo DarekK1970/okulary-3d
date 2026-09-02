@@ -72,41 +72,200 @@
                     <h2>{{ __('home.articles.title') }}</h2>
                 </div>
 
-                <a class="section-link" href="#">
+                <a
+                    class="section-link"
+                    href="{{ route('articles.index', [
+                        'locale' => app()->getLocale()
+                    ]) }}"
+                >
                     {{ __('home.articles.all') }}
                     <span aria-hidden="true">→</span>
                 </a>
             </div>
 
             <div class="article-grid">
-                @foreach (__('home.articles.items') as $index => $article)
-                    <article class="article-card {{ $index === 0 ? 'featured-card' : '' }}">
-                        <div class="article-image">
-                            <img
-                                src="{{ asset('images/home/' . $article['image']) }}"
-                                alt=""
-                                width="640"
-                                height="390"
-                                loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                @forelse ($latestArticles as $index => $article)
+                    @php
+                        $translation =
+                            $article->publicTranslation(
+                                app()->getLocale()
+                            );
+
+                        $imageUrl =
+                            $article
+                                ->heroMedia
+                                ?->url();
+
+                        if (
+                            ! $imageUrl
+                            && filled(
+                                $article
+                                    ->hero_image_path
+                            )
+                        ) {
+                            $imageUrl =
+                                \Illuminate\Support\Facades\Storage
+                                    ::disk('public')
+                                    ->url(
+                                        $article
+                                            ->hero_image_path
+                                    );
+                        }
+
+                        $plainBody = trim(
+                            preg_replace(
+                                '/\s+/u',
+                                ' ',
+                                strip_tags(
+                                    (string)
+                                    $translation
+                                        ?->body_html
+                                )
+                            ) ?? ''
+                        );
+
+                        $wordCount =
+                            $plainBody === ''
+                                ? 0
+                                : count(
+                                    preg_split(
+                                        '/\s+/u',
+                                        $plainBody,
+                                        -1,
+                                        PREG_SPLIT_NO_EMPTY
+                                    )
+                                );
+
+                        $readingMinutes =
+                            max(
+                                1,
+                                (int) ceil(
+                                    $wordCount / 220
+                                )
+                            );
+                    @endphp
+
+                    @if ($translation)
+                        <article class="article-card {{ $index === 0 ? 'featured-card' : '' }}">
+                            <a
+                                class="article-image"
+                                href="{{ route(
+                                    'articles.show',
+                                    [
+                                        'locale' =>
+                                            app()->getLocale(),
+                                        'slug' =>
+                                            $translation
+                                                ->slug,
+                                    ]
+                                ) }}"
+                                aria-label="{{ $translation->title }}"
                             >
-                        </div>
+                                <img
+                                    src="{{ $imageUrl ?: asset(
+                                        'images/home/article-history.svg'
+                                    ) }}"
+                                    alt="{{ $translation->title }}"
+                                    width="640"
+                                    height="390"
+                                    loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                >
+                            </a>
 
-                        <div class="article-content">
-                            <div class="article-meta-top">
-                                <span class="article-tag">{{ $article['tag'] }}</span>
-                                <span class="article-date">{{ $article['date'] }}</span>
+                            <div class="article-content">
+                                <div class="article-meta-top">
+                                    @if ($article->category)
+                                        <a
+                                            class="article-tag"
+                                            href="{{ route(
+                                                'articles.index',
+                                                [
+                                                    'locale' =>
+                                                        app()->getLocale(),
+                                                    'category' =>
+                                                        $article
+                                                            ->category
+                                                            ->slug,
+                                                ]
+                                            ) }}"
+                                        >
+                                            {{ $article->category->name }}
+                                        </a>
+                                    @endif
+
+                                    <span class="article-date">
+                                        {{ $article
+                                            ->published_at
+                                            ?->format(
+                                                'd.m.Y'
+                                            ) }}
+                                    </span>
+                                </div>
+
+                                <h3>
+                                    <a
+                                        href="{{ route(
+                                            'articles.show',
+                                            [
+                                                'locale' =>
+                                                    app()->getLocale(),
+                                                'slug' =>
+                                                    $translation
+                                                        ->slug,
+                                            ]
+                                        ) }}"
+                                    >
+                                        {{ $translation->title }}
+                                    </a>
+                                </h3>
+
+                                @if ($translation->excerpt)
+                                    <p>
+                                        {{ $translation->excerpt }}
+                                    </p>
+                                @endif
+
+                                <div class="article-footer">
+                                    <span>
+                                        {{ __(
+                                            'articles_public.reading_minutes',
+                                            [
+                                                'minutes' =>
+                                                    $readingMinutes,
+                                            ]
+                                        ) }}
+                                    </span>
+
+                                    <a
+                                        href="{{ route(
+                                            'articles.show',
+                                            [
+                                                'locale' =>
+                                                    app()->getLocale(),
+                                                'slug' =>
+                                                    $translation
+                                                        ->slug,
+                                            ]
+                                        ) }}"
+                                        aria-label="{{ $translation->title }}"
+                                    >
+                                        →
+                                    </a>
+                                </div>
                             </div>
+                        </article>
+                    @endif
+                @empty
+                    <div class="article-home-empty">
+                        <strong>
+                            {{ __('articles_public.empty_title') }}
+                        </strong>
 
-                            <h3>{{ $article['title'] }}</h3>
-                            <p>{{ $article['description'] }}</p>
-
-                            <div class="article-footer">
-                                <span>{{ $article['reading_time'] }}</span>
-                                <a href="#" aria-label="{{ $article['title'] }}">→</a>
-                            </div>
-                        </div>
-                    </article>
-                @endforeach
+                        <p>
+                            {{ __('articles_public.empty_description') }}
+                        </p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>

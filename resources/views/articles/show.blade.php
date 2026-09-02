@@ -14,8 +14,23 @@
             <a href="{{ route('home', ['locale' => app()->getLocale()]) }}">
                 {{ __('articles_public.home') }}
             </a>
+
             <span>›</span>
-            <span>{{ $article->category?->name }}</span>
+
+            <a href="{{ route('articles.index', ['locale' => app()->getLocale()]) }}">
+                {{ __('articles_public.articles') }}
+            </a>
+
+            @if ($article->category)
+                <span>›</span>
+
+                <a href="{{ route('articles.index', [
+                    'locale' => app()->getLocale(),
+                    'category' => $article->category->slug
+                ]) }}">
+                    {{ $article->category->name }}
+                </a>
+            @endif
         </nav>
 
         <header class="article-header">
@@ -51,10 +66,29 @@
             @endif
         </header>
 
-        @if ($article->hero_image_path)
+        @php
+            $articleHeroUrl =
+                $article->heroMedia?->url();
+
+            if (
+                ! $articleHeroUrl
+                && filled(
+                    $article->hero_image_path
+                )
+            ) {
+                $articleHeroUrl =
+                    \Illuminate\Support\Facades\Storage
+                        ::disk('public')
+                        ->url(
+                            $article->hero_image_path
+                        );
+            }
+        @endphp
+
+        @if ($articleHeroUrl)
             <figure class="article-hero">
                 <img
-                    src="{{ Storage::url($article->hero_image_path) }}"
+                    src="{{ $articleHeroUrl }}"
                     alt="{{ $translation->title }}"
                 >
             </figure>
@@ -87,9 +121,6 @@
                                 <a
                                     class="contextual-tool-card"
                                     href="{{ route($tool['route'], ['locale' => app()->getLocale()]) }}"
-                                    data-analytics-event="recommendation_click"
-                                    data-analytics-category="tool"
-                                    data-analytics-label="{{ $tool['key'] }}"
                                 >
                                     <div class="contextual-tool-icon">3D</div>
 
@@ -121,9 +152,6 @@
                                         'locale' => app()->getLocale(),
                                         'slug' => $card['translation']->slug
                                     ]) }}"
-                                    data-analytics-event="recommendation_click"
-                                    data-analytics-category="product"
-                                    data-analytics-label="{{ $card['product']->id }}"
                                 >
                                     <div class="contextual-product-image">
                                         @if ($card['media'])
@@ -170,7 +198,7 @@
         @endif
 
         <footer class="article-footer">
-            <a href="{{ route('home', ['locale' => app()->getLocale()]) }}#articles">
+            <a href="{{ route('articles.index', ['locale' => app()->getLocale()]) }}">
                 ← {{ __('articles_public.back') }}
             </a>
         </footer>

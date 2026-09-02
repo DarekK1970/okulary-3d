@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class HomepageTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_polish_homepage_contains_main_portal_sections(): void
     {
         $response = $this->get('/pl');

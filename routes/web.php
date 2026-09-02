@@ -105,6 +105,9 @@ Route::prefix('{locale}')
         Route::get('/', HomeController::class)
             ->name('home');
 
+        Route::get('/articles', [ArticleController::class, 'index'])
+            ->name('articles.index');
+
         Route::get('/articles/{slug}', [ArticleController::class, 'show'])
             ->name('articles.show');
 

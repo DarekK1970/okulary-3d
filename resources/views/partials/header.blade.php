@@ -124,8 +124,8 @@
             </a>
 
             <a
-                class="nav-link"
-                href="{{ route('home', ['locale' => $locale]) }}#articles"
+                class="nav-link {{ request()->routeIs('articles.*') ? 'is-active' : '' }}"
+                href="{{ route('articles.index', ['locale' => $locale]) }}"
             >
                 {{ __('site.nav.articles') }}
             </a>
