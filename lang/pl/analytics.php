@@ -9,8 +9,8 @@ return [
 
     'metrics' => [
         'pageviews' => 'Odsłony',
-        'sessions' => 'Sesje',
-        'anonymous_sessions' => 'anonimowe sesje',
+        'sessions' => 'Unikalne wizyty',
+        'anonymous_sessions' => 'sesje użytkowników — bez botów',
         'pages_per_session' => 'Odsłony / sesję',
         'average' => 'średnio',
         'active_sessions' => 'Aktywne teraz',
@@ -83,7 +83,7 @@ return [
         'title' => 'Portal Analytics',
         'description' => 'Ruch, popularność treści, źródła odwiedzin, 3D LAB, rekomendacje kontekstowe i podstawowy lejek sklepu — bez zewnętrznego systemu analitycznego.',
         'privacy_title' => 'Privacy-first:',
-        'privacy_text' => 'nie zapisujemy adresów IP i nie tworzymy dodatkowego cookies analitycznego. Sesja analityczna powstaje z jednokierunkowego HMAC istniejącego identyfikatora sesji Laravel i wygasa po 30 minutach bez aktywności. Nagłówek DNT=1 wyłącza pomiar.',
+        'privacy_text' => 'nie zapisujemy adresów IP i nie tworzymy dodatkowego cookies analitycznego. Sesja analityczna powstaje z jednokierunkowego HMAC istniejącego identyfikatora sesji Laravel i wygasa po 30 minutach bez aktywności. Nagłówek DNT=1 wyłącza pomiar. Rozpoznane boty są zapisywane osobno i nie zwiększają odsłon, unikalnych wizyt ani aktywnych użytkowników.',
         'traffic_kicker' => 'Ruch w czasie',
         'traffic_title' => 'Odsłony',
         'top_pages_kicker' => 'Najczęściej oglądane',
@@ -104,5 +104,34 @@ return [
         'recent_events' => 'Ostatnie zdarzenia',
         'no_data' => 'Brak danych w wybranym okresie.',
         'no_events' => 'Nie zarejestrowano jeszcze zdarzeń.',
+    ],
+
+
+    'bot_categories' => [
+        'search_engine' => 'Wyszukiwarki',
+        'ai' => 'AI',
+        'seo' => 'SEO',
+        'social_preview' => 'Social / podglądy',
+        'monitoring' => 'Monitoring',
+        'other' => 'Pozostałe',
+    ],
+
+    'bots' => [
+        'kicker' => 'Ruch automatyczny',
+        'title' => 'Boty internetowe',
+        'description' => 'Rozpoznane crawlery, agenci AI, narzędzia SEO, podglądy social i systemy monitorujące są zapisywane osobno. Nie są doliczane do odsłon użytkowników, unikalnych wizyt ani panelu aktywności.',
+        'requests' => 'Żądania botów',
+        'recognized' => 'Rozpoznane boty',
+        'crawled_paths' => 'Odwiedzone adresy',
+        'last_activity' => 'Ostatnia aktywność',
+        'of_bot_requests' => 'żądań botów',
+        'top_bots' => 'Najaktywniejsze boty',
+        'request_count' => 'liczba żądań',
+        'top_paths' => 'Najczęściej crawlowane adresy',
+        'portal_urls' => 'URL portalu',
+        'bots_short' => 'botów',
+        'no_data' => 'Nie zarejestrowano ruchu botów w wybranym okresie.',
+        'exclusion_title' => 'Oddzielny licznik:',
+        'exclusion_text' => 'od wdrożenia K90 wykryty ruch automatyczny trafia wyłącznie do rejestru botów. Historycznych sesji zapisanych przed wdrożeniem nie przeklasyfikowujemy automatycznie, ponieważ wcześniejszy model nie przechowywał danych potrzebnych do wiarygodnej identyfikacji.',
     ],
 ];

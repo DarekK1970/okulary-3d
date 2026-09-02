@@ -1,225 +1,277 @@
-OKULARY 3D — K89
-GLOBAL ADVANCED WYSIWYG
+OKULARY 3D — K90
+BOT TRAFFIC ANALYTICS / HUMAN TRAFFIC SEPARATION
 
 CEL:
-Zastąpić bardzo prosty edytor contenteditable jednym wspólnym,
-rozbudowanym edytorem WYSIWYG we wszystkich modułach, które już
-używają atrybutu data-wysiwyg.
+Dodać do Portal Analytics osobną analizę ruchu botów internetowych
+oraz zagwarantować, że rozpoznane crawlery NIE zwiększają:
+- odsłon użytkowników,
+- unikalnych wizyt,
+- aktywnych użytkowników,
+- źródeł ruchu,
+- urządzeń,
+- lejka,
+- eventów użytkowników.
+
+Rozwiązanie jest wzorowane funkcjonalnie na panelu wdrożonym
+wcześniej w projekcie powiedznie.org.
 
 ============================================================
-ARCHITEKTURA
+NAJWAŻNIEJSZA ZMIANA ARCHITEKTONICZNA
 ============================================================
 
-K89 NIE kopiuje osobnych edytorów do:
-- Artykułów
-- Produktów
-- Newslettera
-- Stron statycznych
+PRZED K90:
 
-Wszystkie te moduły już używają wspólnego:
-resources/js/admin-cms.js
-oraz:
-resources/css/admin-cms.css
+Request
+  -> prosty regex "czy bot?"
+  -> jeżeli rozpoznany: ignoruj
+  -> jeżeli nierozpoznany: może trafić do sesji użytkownika
 
-K89 rozbudowuje właśnie ten globalny komponent.
+Problem:
+prosty regex rozpoznawał podstawowe boty, ale nie dawał:
+- osobnej statystyki,
+- klasyfikacji,
+- listy najaktywniejszych botów,
+- listy crawlowanych URL,
+- szerokiego katalogu agentów AI / SEO / social / monitoring.
 
-Dzięki temu każde obecne i przyszłe pole:
-<div data-wysiwyg>...</div>
-automatycznie otrzyma ten sam edytor.
+PO K90:
 
-Nie zmieniamy:
-- modeli danych,
-- nazw pól,
-- istniejących body_html / description_html,
-- mechanizmu zapisu formularzy.
+Request
+  -> BotDetectorService
+       |
+       +-- BOT
+       |    -> portal_analytics_bot_requests
+       |    -> STOP dla human analytics
+       |
+       +-- HUMAN
+            -> portal_analytics_sessions
+            -> portal_analytics_page_views
+            -> portal_analytics_events
 
-============================================================
-DLACZEGO K89 NIE DODAJE CIĘŻKIEJ BIBLIOTEKI NPM
-============================================================
-
-Analizowany @synapxlab/wysiwyg jest bardzo dobrym punktem odniesienia
-funkcjonalnego, ale jego aktualny pakiet npm deklaruje zależności m.in.
-od React / ReactDOM / Excalidraw / KaTeX.
-
-W naszym wortalu potrzebujemy zaawansowanego rich-text CMS,
-a nie pełnego page-buildera / Excalidraw.
-
-Dlatego K89 realizuje potrzebny zakres jako lekki komponent
-projektowy bez nowych zależności runtime.
-
-Efekt użytkowy:
-zaawansowany edytor podobny do klasycznych WYSIWYG,
-ale bez dokładania dużego stosu zależności do całego wortalu.
+Bot i User nie współdzielą licznika.
 
 ============================================================
-FUNKCJE EDYTORA
+DETEKCJA
 ============================================================
 
-- Undo / Redo
-- Akapit
-- H2
-- H3
-- H4
-- Blockquote
-- PRE / kod
-- Bold
-- Italic
-- Underline
-- Strike
-- Superscript
-- Subscript
-- Lista UL
-- Lista OL
-- Wcięcie +
-- Wcięcie -
-- Wyrównanie lewo
-- Wyśrodkowanie
-- Wyrównanie prawo
-- Justowanie
-- Kolor tekstu
-- Kolor tła tekstu
-- Link
-- Tabela
-- Obraz z URL
-- Linia pozioma
-- Usuń formatowanie
-- Głębokie czyszczenie HTML
-- HTML SOURCE
-- Fullscreen
-- licznik słów
-- licznik znaków
-- bezpieczne wklejanie HTML z Word/WWW
-- responsywny toolbar
+Kategorie:
+
+1. search_engine
+   Googlebot
+   Bingbot
+   DuckDuckBot
+   Applebot
+   YandexBot
+   Baiduspider
+   Yahoo Slurp
+   PetalBot
+   Qwantify
+   Sogou
+   SeznamBot
+
+2. ai
+   OAI-SearchBot
+   ChatGPT-User
+   GPTBot
+   PerplexityBot
+   ClaudeBot
+   CohereBot
+   Meta-ExternalAgent
+   Applebot-Extended
+   Amazonbot
+   Bytespider
+   CCBot
+   YouBot
+   Google-Extended
+
+3. seo
+   SerpstatBot
+   AhrefsBot
+   SemrushBot
+   MJ12bot
+   DotBot
+   BLEXBot
+   DataForSeoBot
+   SeobilityBot
+   Screaming Frog
+   SiteAuditBot
+   Rogerbot
+   MegaIndex
+
+4. social_preview
+   FacebookExternalHit
+   LinkedInBot
+   Twitterbot
+   PinterestBot
+   TelegramBot
+   WhatsApp
+   Discordbot
+   Slackbot
+
+5. monitoring
+   Google Lighthouse / PageSpeed
+   UptimeRobot
+   Pingdom
+   StatusCake
+   GTmetrix
+   Site24x7
+   Checkly
+   HeadlessChrome
+
+6. other
+   AwarioBot
+   AdsBot-Google
+   Mediapartners-Google
+   oraz fallback:
+   bot/crawler/spider/scraper,
+   python-requests,
+   aiohttp,
+   Go HTTP Client,
+   curl/wget,
+   Java HTTP,
+   okhttp,
+   PostmanRuntime,
+   node-fetch,
+   axios itd.
 
 ============================================================
-BIBLIOTEKA MEDIÓW
+NOWA TABELA
 ============================================================
 
-Jeżeli na aktualnym ekranie istnieje:
-data-media-picker-modal
+portal_analytics_bot_requests
 
-edytor automatycznie pokazuje dodatkowy przycisk:
-"Wstaw obraz z Biblioteki mediów".
+Pola:
+- bot_name
+- category
+- route_name
+- path
+- method
+- status_code
+- locale
+- user_agent_hash
+- occurred_at
 
-Dotyczy to przede wszystkim edytora artykułów,
-gdzie biblioteka mediów jest już dostarczona do formularza.
+NIE zapisujemy:
+- IP,
+- query string,
+- request body,
+- surowego User-Agent.
 
-Kliknięcie obrazu w tym trybie:
-- NIE ustawia go jako hero,
-- wstawia go do miejsca kursora w treści,
-- zamyka picker.
-
-Na ekranach bez istniejącego pickera nadal dostępne jest:
-"Wstaw obraz z URL".
-
-============================================================
-NEWSLETTER
-============================================================
-
-Jeżeli istniejący newsletter jest zablokowany i ma:
-contenteditable="false"
-
-K89 rozpoznaje tryb readonly:
-- treść pozostaje widoczna,
-- toolbar jest disabled,
-- edycja nie jest możliwa.
+User-Agent jest tylko hashowany SHA-256.
 
 ============================================================
-HTML SOURCE
+PRYWATNE ADRESY / TOKENY
 ============================================================
 
-Przycisk:
-</>
+Jeżeli bot wejdzie na trasę prywatną, np.:
+password.*
+order.*
+payment.*
+account.*
 
-przełącza:
-WYSIWYG <-> HTML source.
+do tabeli NIE zapisujemy konkretnego URL z tokenem.
 
-Po powrocie z source HTML jest czyszczony przed ponownym
-umieszczeniem w edytorze.
+Zapisujemy szablon route, np.:
 
-Przy submit zawsze synchronizujemy finalny HTML do istniejącego:
-data-editor-output.
+/{locale}/reset-password/{token}
 
-============================================================
-PASTE CLEAN
-============================================================
-
-Wklejenie treści z Worda / strony WWW:
-- usuwa script/style/iframe/form itd.,
-- usuwa event handlery,
-- usuwa class/id,
-- ogranicza style do bezpiecznej listy,
-- pozostawia semantyczne formatowanie.
+zamiast realnego:
+.../reset-password/SECRET_TOKEN
 
 ============================================================
-SANITIZER BACKEND
+PANEL ADMIN -> ANALITYKA
 ============================================================
 
-ArticleHtmlSanitizer został rozszerzony, bo stary sanitizer usuwałby
-część HTML generowanego przez nowy toolbar.
+W tym samym zakresie czasu:
+Dzisiaj / 7 dni / 30 dni
 
-Nowa lista obsługuje m.in.:
-h2/h3/h4
-u/s
-sup/sub
-table/thead/tbody/tfoot/tr/th/td
-hr
-pre/code
-img
-span
+pojawia się osobny blok:
 
-Dozwolone style:
-- text-align
-- color
-- background-color
-- font-size
-- font-family
-- text-decoration
+BOTY INTERNETOWE
 
-Nadal blokowane:
-- script
-- iframe
-- object
-- embed
-- event attributes on*
-- javascript:
-- data: dla obrazów/linków
-- niebezpieczne CSS url()/expression()/behavior
-- dowolne niewspierane atrybuty
+Metryki:
+- Żądania botów
+- Rozpoznane boty
+- Odwiedzone adresy
+- Ostatnia aktywność
 
-Link target="_blank" automatycznie otrzymuje:
-rel="noopener noreferrer".
+Kategorie:
+- Wyszukiwarki
+- AI
+- SEO
+- Social / podglądy
+- Monitoring
+- Pozostałe
+
+Tabele:
+- Najaktywniejsze boty
+  BOT
+  TYP
+  ŻĄDANIA
+  OSTATNIO
+
+- Najczęściej crawlowane adresy
+  ADRES
+  ŻĄDANIA
+  LICZBA BOTÓW
 
 ============================================================
-WAŻNE
+UNIKALNE WIZYTY
 ============================================================
 
-Nie ma migracji bazy.
+Etykieta "Sesje" w głównych metrykach zostaje doprecyzowana jako:
 
-Nie ma zmian package.json.
+UNIKALNE WIZYTY
 
-Nie ma nowych paczek npm.
+podpis:
+sesje użytkowników — bez botów
 
-Nie trzeba wykonywać npm install.
+Ważne:
+po wdrożeniu K90 każdy rozpoznany bot jest odcinany PRZED
+utworzeniem PortalAnalyticsSession.
+
+To dotyczy również:
+active_sessions
+oraz eventów JS/backend.
+
+============================================================
+DANE HISTORYCZNE
+============================================================
+
+Nie wykonujemy ryzykownego "czyszczenia" starych sesji.
+
+Powód:
+przed K90 tabela sesji nie przechowywała surowego User-Agent,
+więc nie da się wiarygodnie stwierdzić, czy już zapisana historyczna
+sesja była botem, bez zgadywania.
+
+Od momentu wdrożenia K90 ruch jest rozdzielany prawidłowo.
 
 ============================================================
 PLIKI
 ============================================================
 
-CHANGED:
-- resources/js/admin-cms.js
-- resources/css/admin-cms.css
-- app/Services/ArticleHtmlSanitizer.php
-
 NEW:
-- tests/Feature/AdvancedWysiwygTest.php
-- README_PATCH.txt
+- database/migrations/2026_09_02_410000_create_portal_analytics_bot_requests_table.php
+- app/Models/PortalAnalyticsBotRequest.php
+- app/Services/BotDetectorService.php
+- app/Services/PortalBotReportService.php
+- tests/Feature/BotTrafficAnalyticsTest.php
+
+CHANGED:
+- app/Services/PortalAnalyticsService.php
+- app/Services/PortalAnalyticsReportService.php
+- app/Http/Middleware/TrackPortalAnalytics.php
+- resources/views/admin/analytics/index.blade.php
+- resources/css/admin-analytics.css
+- lang/pl/analytics.php
+- lang/en/analytics.php
 
 ============================================================
 INSTALACJA LOKALNA
 ============================================================
 
-Rozpakuj ZIP do:
+Rozpakuj patch do:
 C:\laragon\www\okulary-3d
 
 z nadpisaniem plików.
@@ -227,63 +279,63 @@ z nadpisaniem plików.
 Następnie:
 
 php artisan optimize:clear
+php artisan migrate
 
-php artisan test --filter=AdvancedWysiwygTest
-php artisan test --filter=ArticleCmsTest
-php artisan test --filter=ShopCatalogTest
-php artisan test --filter=NewsletterTest
-php artisan test --filter=StaticPageCmsTest
+TESTY:
+
+php artisan test --filter=BotTrafficAnalyticsTest
+php artisan test --filter=PortalAnalyticsTest
+php artisan test --filter=ProductionReadinessTest
 
 Jeżeli zielono:
 
 php artisan test
 
-Następnie Windows / Laragon:
+Następnie:
 
 $env:Path = "C:\laragon\bin\nodejs\node-v22;$env:Path"
-node -v
-npm -v
 npm run build
 
 ============================================================
 TEST RĘCZNY
 ============================================================
 
-Sprawdź kolejno:
+1. Backend -> Analityka.
+2. Wybierz "7 dni".
+3. Sprawdź nowy blok "Boty internetowe".
 
-1. Backend -> Artykuły -> Edytuj
-2. Backend -> Produkty -> Edytuj produkt
-3. Backend -> Newsletter -> kampania
-4. Backend -> Strony statyczne -> Edytuj
+Lokalnie ruch botów można zasymulować PowerShell:
 
-W każdym miejscu stary toolbar powinien być zastąpiony
-tym samym zaawansowanym edytorem.
+curl.exe `
+  -A "Googlebot/2.1" `
+  http://okulary-3d.test/pl
 
-Test funkcji:
-- H2/H3/H4
-- B / I / U / S
-- lista
-- justowanie
-- kolor
-- link
-- tabela 3x3
-- obraz
-- source HTML
-- fullscreen
-- wklejenie treści z Worda
-- zapis
-- ponowne otwarcie dokumentu
+curl.exe `
+  -A "PerplexityBot/1.0" `
+  http://okulary-3d.test/pl
 
-Artykuły:
-sprawdź dodatkowo przycisk obrazu z Biblioteki mediów.
+curl.exe `
+  -A "SerpstatBot/2.1" `
+  http://okulary-3d.test/pl/shop
 
-Newsletter:
-sprawdź istniejącą wysłaną/zablokowaną kampanię - readonly.
+curl.exe `
+  -A "facebookexternalhit/1.1" `
+  http://okulary-3d.test/pl
+
+Po odświeżeniu Admin -> Analityka:
+- 4 żądania botów powinny być widoczne osobno,
+- Googlebot = Wyszukiwarki,
+- PerplexityBot = AI,
+- SerpstatBot = SEO,
+- FacebookExternalHit = Social / podglądy.
+
+Jednocześnie te 4 wejścia NIE mogą zwiększyć:
+"Unikalne wizyty".
 
 ============================================================
 PO TESTACH
 ============================================================
 
 git add .
-git commit -m "Add global advanced WYSIWYG editor"
+git commit -m "Separate bot traffic from portal analytics"
 git push origin develop

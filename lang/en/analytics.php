@@ -9,8 +9,8 @@ return [
 
     'metrics' => [
         'pageviews' => 'Page views',
-        'sessions' => 'Sessions',
-        'anonymous_sessions' => 'anonymous sessions',
+        'sessions' => 'Unique visits',
+        'anonymous_sessions' => 'user sessions — bots excluded',
         'pages_per_session' => 'Pages / session',
         'average' => 'average',
         'active_sessions' => 'Active now',
@@ -104,5 +104,34 @@ return [
         'recent_events' => 'Recent events',
         'no_data' => 'No data for the selected period.',
         'no_events' => 'No events have been recorded yet.',
+    ],
+
+
+    'bot_categories' => [
+        'search_engine' => 'Search engines',
+        'ai' => 'AI',
+        'seo' => 'SEO',
+        'social_preview' => 'Social / previews',
+        'monitoring' => 'Monitoring',
+        'other' => 'Other',
+    ],
+
+    'bots' => [
+        'kicker' => 'Automated traffic',
+        'title' => 'Internet bots',
+        'description' => 'Recognized crawlers, AI agents, SEO tools, social previews and monitoring systems are stored separately. They are not included in user page views, unique visits or active-user metrics.',
+        'requests' => 'Bot requests',
+        'recognized' => 'Recognized bots',
+        'crawled_paths' => 'Visited URLs',
+        'last_activity' => 'Last activity',
+        'of_bot_requests' => 'of bot requests',
+        'top_bots' => 'Most active bots',
+        'request_count' => 'request count',
+        'top_paths' => 'Most crawled URLs',
+        'portal_urls' => 'Portal URLs',
+        'bots_short' => 'bots',
+        'no_data' => 'No bot traffic was recorded in the selected period.',
+        'exclusion_title' => 'Separate counter:',
+        'exclusion_text' => 'from K90 onward, detected automated traffic is written only to the bot log. Historical sessions recorded before this deployment are not reclassified automatically because the previous data model did not retain enough information for reliable identification.',
     ],
 ];

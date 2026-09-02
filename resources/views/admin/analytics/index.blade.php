@@ -19,6 +19,16 @@
         1,
         collect($topPages)->max('value') ?? 1
     );
+
+    $botTopMax = max(
+        1,
+        collect($bots['top_bots'] ?? [])->max('requests') ?? 1
+    );
+
+    $botPathMax = max(
+        1,
+        collect($bots['top_paths'] ?? [])->max('requests') ?? 1
+    );
 @endphp
 
 <section class="portal-analytics-page">
@@ -289,6 +299,248 @@
                     <b>→</b>
                 @endif
             @endforeach
+        </div>
+    </section>
+
+
+    <section class="cms-panel analytics-bot-panel">
+        <div class="analytics-bot-heading">
+            <div>
+                <span class="admin-eyebrow">
+                    {{ __('analytics.bots.kicker') }}
+                </span>
+
+                <h2>
+                    {{ __('analytics.bots.title') }}
+                </h2>
+
+                <p>
+                    {{ __('analytics.bots.description') }}
+                </p>
+            </div>
+
+            <span class="analytics-bot-range">
+                {{ $rangeLabel }}
+            </span>
+        </div>
+
+        <div class="analytics-bot-metrics">
+            <article>
+                <span>
+                    {{ __('analytics.bots.requests') }}
+                </span>
+
+                <strong>
+                    {{ number_format(
+                        $bots['requests'],
+                        0,
+                        ',',
+                        ' '
+                    ) }}
+                </strong>
+            </article>
+
+            <article>
+                <span>
+                    {{ __('analytics.bots.recognized') }}
+                </span>
+
+                <strong>
+                    {{ number_format(
+                        $bots['recognized_bots'],
+                        0,
+                        ',',
+                        ' '
+                    ) }}
+                </strong>
+            </article>
+
+            <article>
+                <span>
+                    {{ __('analytics.bots.crawled_paths') }}
+                </span>
+
+                <strong>
+                    {{ number_format(
+                        $bots['crawled_paths'],
+                        0,
+                        ',',
+                        ' '
+                    ) }}
+                </strong>
+            </article>
+
+            <article>
+                <span>
+                    {{ __('analytics.bots.last_activity') }}
+                </span>
+
+                <strong class="analytics-bot-date">
+                    {{ $bots['last_activity']
+                        ? $bots['last_activity']->format('d.m.Y H:i:s')
+                        : '—' }}
+                </strong>
+            </article>
+        </div>
+
+        <div class="analytics-bot-categories">
+            @foreach ($bots['categories'] as $category)
+                <article
+                    class="analytics-bot-category analytics-bot-category-{{ $category['key'] }}"
+                >
+                    <div>
+                        <span>
+                            {{ __('analytics.bot_categories.' . $category['key']) }}
+                        </span>
+
+                        <strong>
+                            {{ number_format(
+                                $category['value'],
+                                0,
+                                ',',
+                                ' '
+                            ) }}
+                        </strong>
+                    </div>
+
+                    <div class="analytics-bot-category-track">
+                        <i
+                            style="width: {{ max(
+                                $category['value'] > 0 ? 2 : 0,
+                                $category['percent']
+                            ) }}%"
+                        ></i>
+                    </div>
+
+                    <small>
+                        {{ $category['percent'] }}%
+                        {{ __('analytics.bots.of_bot_requests') }}
+                    </small>
+                </article>
+            @endforeach
+        </div>
+
+        <div class="analytics-bot-columns">
+            <section>
+                <div class="analytics-bot-table-heading">
+                    <h3>
+                        {{ __('analytics.bots.top_bots') }}
+                    </h3>
+
+                    <span>
+                        {{ __('analytics.bots.request_count') }}
+                    </span>
+                </div>
+
+                <div class="analytics-bot-list">
+                    @forelse ($bots['top_bots'] as $bot)
+                        <div class="analytics-bot-row">
+                            <div class="analytics-bot-copy">
+                                <strong>
+                                    {{ $bot['name'] }}
+                                </strong>
+
+                                <span
+                                    class="analytics-bot-badge analytics-bot-badge-{{ $bot['category'] }}"
+                                >
+                                    {{ __('analytics.bot_categories.' . $bot['category']) }}
+                                </span>
+                            </div>
+
+                            <div class="analytics-bot-row-bar">
+                                <i
+                                    style="width: {{ max(
+                                        2,
+                                        round(
+                                            (
+                                                $bot['requests']
+                                                / $botTopMax
+                                            ) * 100,
+                                            2
+                                        )
+                                    ) }}%"
+                                ></i>
+                            </div>
+
+                            <b>
+                                {{ $bot['requests'] }}
+                            </b>
+
+                            <time>
+                                {{ $bot['last_activity']
+                                    ? $bot['last_activity']->format('d.m.Y H:i:s')
+                                    : '—' }}
+                            </time>
+                        </div>
+                    @empty
+                        <p class="analytics-empty">
+                            {{ __('analytics.bots.no_data') }}
+                        </p>
+                    @endforelse
+                </div>
+            </section>
+
+            <section>
+                <div class="analytics-bot-table-heading">
+                    <h3>
+                        {{ __('analytics.bots.top_paths') }}
+                    </h3>
+
+                    <span>
+                        {{ __('analytics.bots.portal_urls') }}
+                    </span>
+                </div>
+
+                <div class="analytics-bot-list">
+                    @forelse ($bots['top_paths'] as $path)
+                        <div class="analytics-bot-row analytics-bot-path-row">
+                            <div class="analytics-bot-copy">
+                                <strong>
+                                    {{ $path['path'] }}
+                                </strong>
+
+                                <span>
+                                    {{ $path['bots'] }}
+                                    {{ __('analytics.bots.bots_short') }}
+                                </span>
+                            </div>
+
+                            <div class="analytics-bot-row-bar">
+                                <i
+                                    style="width: {{ max(
+                                        2,
+                                        round(
+                                            (
+                                                $path['requests']
+                                                / $botPathMax
+                                            ) * 100,
+                                            2
+                                        )
+                                    ) }}%"
+                                ></i>
+                            </div>
+
+                            <b>
+                                {{ $path['requests'] }}
+                            </b>
+                        </div>
+                    @empty
+                        <p class="analytics-empty">
+                            {{ __('analytics.bots.no_data') }}
+                        </p>
+                    @endforelse
+                </div>
+            </section>
+        </div>
+
+        <div class="analytics-bot-note">
+            <strong>
+                {{ __('analytics.bots.exclusion_title') }}
+            </strong>
+
+            <span>
+                {{ __('analytics.bots.exclusion_text') }}
+            </span>
         </div>
     </section>
 

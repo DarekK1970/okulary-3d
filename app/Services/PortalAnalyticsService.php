@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PortalAnalyticsBotRequest;
 use App\Models\PortalAnalyticsEvent;
 use App\Models\PortalAnalyticsPageView;
 use App\Models\PortalAnalyticsSession;
@@ -12,6 +13,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PortalAnalyticsService
 {
+    public function __construct(
+        private readonly BotDetectorService $botDetector
+    ) {
+    }
+
     private const SESSION_MINUTES = 30;
 
     /**
@@ -365,22 +371,132 @@ class PortalAnalyticsService
         ) === '1';
     }
 
+    /**
+     * @return array{
+     *     name: string,
+     *     category: string,
+     *     user_agent_hash: string|null
+     * }|null
+     */
+    public function detectBot(
+        Request $request
+    ): ?array {
+        return $this
+            ->botDetector
+            ->detect($request);
+    }
+
+    public function shouldTrackBotRequest(
+        Request $request
+    ): bool {
+        /*
+         * We record bot requests separately from human analytics.
+         * Query strings and request bodies are never persisted.
+         */
+        return in_array(
+            strtoupper(
+                $request->method()
+            ),
+            [
+                'GET',
+                'HEAD',
+                'POST',
+            ],
+            true
+        );
+    }
+
+    /**
+     * @param array{
+     *     name: string,
+     *     category: string,
+     *     user_agent_hash: string|null
+     * } $detection
+     */
+    public function trackBotRequest(
+        Request $request,
+        Response $response,
+        array $detection
+    ): void {
+        PortalAnalyticsBotRequest::create([
+            'bot_name' =>
+                $detection['name'],
+            'category' =>
+                $detection[
+                    'category'
+                ],
+            'route_name' =>
+                $request->route()
+                    ?->getName(),
+            'path' =>
+                $this->safeBotPath(
+                    $request
+                ),
+            'method' =>
+                strtoupper(
+                    $request
+                        ->method()
+                ),
+            'status_code' =>
+                $response
+                    ->getStatusCode(),
+            'locale' =>
+                $request->route(
+                    'locale'
+                ),
+            'user_agent_hash' =>
+                $detection[
+                    'user_agent_hash'
+                ],
+            'occurred_at' =>
+                now(),
+        ]);
+    }
+
     private function isBot(
         Request $request
     ): bool {
-        $agent = strtolower(
-            (string)
-            $request->userAgent()
-        );
+        return $this
+            ->detectBot($request)
+            !== null;
+    }
 
-        if ($agent === '') {
-            return false;
+    private function safeBotPath(
+        Request $request
+    ): string {
+        $route =
+            $request->route();
+
+        $routeName =
+            $route?->getName();
+
+        /*
+         * For private routes use the route template, not the concrete
+         * URL. This prevents reset/order/payment tokens from being
+         * written into analytics.
+         */
+        if (
+            $route
+            && $this->isPrivateRoute(
+                $routeName
+            )
+        ) {
+            return '/'
+                . ltrim(
+                    $route->uri(),
+                    '/'
+                );
         }
 
-        return preg_match(
-            '/bot|crawler|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegrambot|discordbot|linkedinbot|googleother|headless|lighthouse|pagespeed/i',
-            $agent
-        ) === 1;
+        return Str::limit(
+            '/'
+            . ltrim(
+                $request->path(),
+                '/'
+            ),
+            500,
+            ''
+        );
     }
 
     private function isPrivateRoute(

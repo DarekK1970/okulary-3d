@@ -10,6 +10,11 @@ use Illuminate\Support\Collection;
 
 class PortalAnalyticsReportService
 {
+    public function __construct(
+        private readonly PortalBotReportService $botReports
+    ) {
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -201,6 +206,9 @@ class PortalAnalyticsReportService
                     $pageViewRows,
                     $eventRows
                 ),
+            'bots' =>
+                $this->botReports
+                    ->report($start),
         ];
     }
 
