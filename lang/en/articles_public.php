@@ -7,6 +7,7 @@ return [
     'other_languages' => 'Other versions:',
     'back' => 'Back to articles',
     'reading_minutes' => ':minutes min read',
+    'read_more' => 'Read more',
     'empty_title' => 'No published articles',
     'empty_description' => 'New publications will appear here after they are published in the portal.',
 

@@ -1490,3 +1490,215 @@ svg {
 .newsletter-result-card a { display:inline-flex; min-height:40px; align-items:center; padding:0 14px; border-radius:8px; background:#17233a; color:#fff; font-size:.54rem; font-weight:900; text-decoration:none; }
 @media (max-width:720px) { .newsletter-form-wrap { width:100%; } }
 .newsletter-unsubscribe-button { display:inline-flex; min-height:40px; align-items:center; padding:0 14px; border:0; border-radius:8px; background:#17233a; color:#fff; cursor:pointer; font:inherit; font-size:.54rem; font-weight:900; }
+
+
+/* K93 — compact latest-publication cards on the homepage. */
+.home-latest-publications {
+    padding-top: 58px;
+    padding-bottom: 64px;
+}
+
+.home-latest-publications .section-heading-row {
+    margin-bottom: 24px;
+}
+
+.home-publications-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.home-publication-card {
+    min-width: 0;
+    min-height: 220px;
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #e7ebf0;
+    border-radius: 16px;
+    background: #f7f8fa;
+    box-shadow: 0 8px 24px rgba(16, 24, 44, .035);
+    transition:
+        transform 170ms ease,
+        box-shadow 170ms ease,
+        border-color 170ms ease;
+}
+
+.home-publication-card:hover {
+    transform: translateY(-2px);
+    border-color: #d6dfe8;
+    box-shadow: 0 13px 30px rgba(16, 24, 44, .07);
+}
+
+.home-publication-image {
+    min-height: 220px;
+    overflow: hidden;
+    display: block;
+    background: #e9edf2;
+}
+
+.home-publication-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 220ms ease;
+}
+
+.home-publication-card:hover
+.home-publication-image img {
+    transform: scale(1.025);
+}
+
+.home-publication-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 17px 17px 15px 18px;
+}
+
+.home-publication-meta {
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #8b96a7;
+    font-size: .58rem;
+    line-height: 1.25;
+}
+
+.home-publication-meta time {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.home-publication-category {
+    overflow: hidden;
+    color: var(--color-cyan-dark);
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.home-publication-category:hover {
+    color: var(--color-red);
+}
+
+.home-publication-copy h3 {
+    margin: 0 0 8px;
+    color: var(--color-navy);
+    font-size: .98rem;
+    line-height: 1.3;
+    letter-spacing: -.018em;
+}
+
+.home-publication-copy h3 a {
+    color: inherit;
+}
+
+.home-publication-copy h3 a:hover {
+    color: var(--color-cyan-dark);
+}
+
+.home-publication-copy p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 12px;
+    color: #687487;
+    font-size: .71rem;
+    line-height: 1.52;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+.home-publication-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    align-self: flex-start;
+    margin-top: auto;
+    color: var(--color-cyan-dark);
+    font-size: .68rem;
+    font-weight: 800;
+}
+
+.home-publication-cta span {
+    transition: transform 150ms ease;
+}
+
+.home-publication-cta:hover {
+    color: var(--color-red);
+}
+
+.home-publication-cta:hover span {
+    transform: translateX(3px);
+}
+
+@media (max-width: 1120px) {
+    .home-publications-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-publication-card {
+        grid-template-columns: 145px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .home-latest-publications {
+        padding-top: 46px;
+        padding-bottom: 52px;
+    }
+
+    .home-publications-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-publication-card {
+        min-height: 210px;
+        grid-template-columns: 132px minmax(0, 1fr);
+    }
+
+    .home-publication-image,
+    .home-publication-image img {
+        min-height: 210px;
+    }
+}
+
+@media (max-width: 430px) {
+    .home-publication-card {
+        grid-template-columns: 112px minmax(0, 1fr);
+        min-height: 196px;
+    }
+
+    .home-publication-image,
+    .home-publication-image img {
+        min-height: 196px;
+    }
+
+    .home-publication-copy {
+        padding: 14px 13px;
+    }
+
+    .home-publication-meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .home-publication-copy h3 {
+        font-size: .9rem;
+    }
+
+    .home-publication-copy p {
+        font-size: .67rem;
+        -webkit-line-clamp: 3;
+    }
+}

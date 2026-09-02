@@ -7,6 +7,7 @@ return [
     'other_languages' => 'Inne wersje:',
     'back' => 'Wróć do artykułów',
     'reading_minutes' => ':minutes min czytania',
+    'read_more' => 'Czytaj dalej',
     'empty_title' => 'Brak opublikowanych artykułów',
     'empty_description' => 'Nowe publikacje pojawią się tutaj po opublikowaniu ich w wortalu.',
 

@@ -64,7 +64,7 @@
         </div>
     </section>
 
-    <section class="home-section" id="articles">
+    <section class="home-section home-latest-publications" id="articles">
         <div class="site-container">
             <div class="section-heading-row">
                 <div>
@@ -83,7 +83,7 @@
                 </a>
             </div>
 
-            <div class="article-grid">
+            <div class="home-publications-grid">
                 @forelse ($latestArticles as $index => $article)
                     @php
                         $translation =
@@ -112,44 +112,9 @@
                                     );
                         }
 
-                        $plainBody = trim(
-                            preg_replace(
-                                '/\s+/u',
-                                ' ',
-                                strip_tags(
-                                    (string)
-                                    $translation
-                                        ?->body_html
-                                )
-                            ) ?? ''
-                        );
-
-                        $wordCount =
-                            $plainBody === ''
-                                ? 0
-                                : count(
-                                    preg_split(
-                                        '/\s+/u',
-                                        $plainBody,
-                                        -1,
-                                        PREG_SPLIT_NO_EMPTY
-                                    )
-                                );
-
-                        $readingMinutes =
-                            max(
-                                1,
-                                (int) ceil(
-                                    $wordCount / 220
-                                )
-                            );
-                    @endphp
-
-                    @if ($translation)
-                        <article class="article-card {{ $index === 0 ? 'featured-card' : '' }}">
-                            <a
-                                class="article-image"
-                                href="{{ route(
+                        $articleUrl =
+                            $translation
+                                ? route(
                                     'articles.show',
                                     [
                                         'locale' =>
@@ -158,7 +123,36 @@
                                             $translation
                                                 ->slug,
                                     ]
-                                ) }}"
+                                )
+                                : null;
+
+                        $intro = trim(
+                            (string) (
+                                $translation
+                                    ?->excerpt
+                                ?: \Illuminate\Support\Str::limit(
+                                    trim(
+                                        preg_replace(
+                                            '/\s+/u',
+                                            ' ',
+                                            strip_tags(
+                                                (string)
+                                                $translation
+                                                    ?->body_html
+                                            )
+                                        ) ?? ''
+                                    ),
+                                    165
+                                )
+                            )
+                        );
+                    @endphp
+
+                    @if ($translation && $articleUrl)
+                        <article class="home-publication-card">
+                            <a
+                                class="home-publication-image"
+                                href="{{ $articleUrl }}"
                                 aria-label="{{ $translation->title }}"
                             >
                                 <img
@@ -166,17 +160,17 @@
                                         'images/home/article-history.svg'
                                     ) }}"
                                     alt="{{ $translation->title }}"
-                                    width="640"
+                                    width="260"
                                     height="390"
                                     loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
                                 >
                             </a>
 
-                            <div class="article-content">
-                                <div class="article-meta-top">
+                            <div class="home-publication-copy">
+                                <div class="home-publication-meta">
                                     @if ($article->category)
                                         <a
-                                            class="article-tag"
+                                            class="home-publication-category"
                                             href="{{ route(
                                                 'articles.index',
                                                 [
@@ -193,65 +187,36 @@
                                         </a>
                                     @endif
 
-                                    <span class="article-date">
+                                    <time
+                                        datetime="{{ $article
+                                            ->published_at
+                                            ?->toAtomString() }}"
+                                    >
                                         {{ $article
                                             ->published_at
-                                            ?->format(
-                                                'd.m.Y'
-                                            ) }}
-                                    </span>
+                                            ?->format('d.m.Y') }}
+                                    </time>
                                 </div>
 
                                 <h3>
-                                    <a
-                                        href="{{ route(
-                                            'articles.show',
-                                            [
-                                                'locale' =>
-                                                    app()->getLocale(),
-                                                'slug' =>
-                                                    $translation
-                                                        ->slug,
-                                            ]
-                                        ) }}"
-                                    >
+                                    <a href="{{ $articleUrl }}">
                                         {{ $translation->title }}
                                     </a>
                                 </h3>
 
-                                @if ($translation->excerpt)
+                                @if ($intro !== '')
                                     <p>
-                                        {{ $translation->excerpt }}
+                                        {{ $intro }}
                                     </p>
                                 @endif
 
-                                <div class="article-footer">
-                                    <span>
-                                        {{ __(
-                                            'articles_public.reading_minutes',
-                                            [
-                                                'minutes' =>
-                                                    $readingMinutes,
-                                            ]
-                                        ) }}
-                                    </span>
-
-                                    <a
-                                        href="{{ route(
-                                            'articles.show',
-                                            [
-                                                'locale' =>
-                                                    app()->getLocale(),
-                                                'slug' =>
-                                                    $translation
-                                                        ->slug,
-                                            ]
-                                        ) }}"
-                                        aria-label="{{ $translation->title }}"
-                                    >
-                                        →
-                                    </a>
-                                </div>
+                                <a
+                                    class="home-publication-cta"
+                                    href="{{ $articleUrl }}"
+                                >
+                                    {{ __('articles_public.read_more') }}
+                                    <span aria-hidden="true">→</span>
+                                </a>
                             </div>
                         </article>
                     @endif
