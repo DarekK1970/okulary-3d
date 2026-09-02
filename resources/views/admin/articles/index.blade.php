@@ -71,8 +71,16 @@
                     <tr>
                         <td>
                             <div class="cms-title-cell">
-                                @if ($article->hero_image_path)
-                                    <img src="{{ Storage::url($article->hero_image_path) }}" alt="">
+                                @if ($article->heroMedia)
+                                    <img
+                                        src="{{ $article->heroMedia->url() }}"
+                                        alt=""
+                                    >
+                                @elseif ($article->hero_image_path)
+                                    <img
+                                        src="{{ Storage::disk('public')->url($article->hero_image_path) }}"
+                                        alt=""
+                                    >
                                 @else
                                     <span class="cms-image-placeholder">3D</span>
                                 @endif
@@ -114,33 +122,230 @@
                         </td>
 
                         <td class="cms-actions-cell">
-                            @foreach ($article->translations as $translation)
-                                @if ($article->status->value === 'published' && $translation->isPubliclyReady())
-                                    <a
-                                        class="cms-action-button cms-action-preview"
-                                        href="{{ route('articles.show', ['locale' => $translation->locale, 'slug' => $translation->slug]) }}"
-                                        target="_blank"
+                            @php
+                                $targetLocale = collect(
+                                    array_keys(
+                                        $supportedLocales
+                                    )
+                                )->first(
+                                    fn ($locale) =>
+                                        $locale
+                                        !== $article
+                                            ->source_locale
+                                );
+
+                                $targetTranslation =
+                                    $targetLocale
+                                        ? $article
+                                            ->translation(
+                                                $targetLocale
+                                            )
+                                        : null;
+
+                                $translatorDisabled =
+                                    ! $targetLocale
+                                    || (
+                                        $targetTranslation
+                                        && $targetTranslation
+                                            ->isPubliclyReady()
+                                    );
+
+                                $translatorTitle =
+                                    ! $targetLocale
+                                        ? __(
+                                            'article_ai.tooltips.no_target_language'
+                                        )
+                                        : (
+                                            $translatorDisabled
+                                                ? __(
+                                                    'article_ai.tooltips.translation_ready'
+                                                )
+                                                : __(
+                                                    'article_ai.actions.translate'
+                                                )
+                                        );
+
+                                $hasAssociatedImage =
+                                    filled(
+                                        $article
+                                            ->hero_media_id
+                                    )
+                                    || filled(
+                                        $article
+                                            ->hero_image_path
+                                    );
+
+                                $previewTranslation =
+                                    $article
+                                        ->sourceTranslation();
+
+                                $canPreview =
+                                    $article
+                                        ->status
+                                        ->value
+                                        === 'published'
+                                    && $previewTranslation
+                                    && $previewTranslation
+                                        ->isPubliclyReady();
+                            @endphp
+
+                            <div class="article-action-icons">
+                                <a
+                                    class="article-action-icon"
+                                    href="{{ route(
+                                        'admin.articles.edit',
+                                        $article
+                                    ) }}"
+                                    title="{{ __('article_ai.actions.edit') }}"
+                                    aria-label="{{ __('article_ai.actions.edit') }}"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
                                     >
-                                        {{ strtoupper($translation->locale) }}
+                                        <path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Z"/>
+                                        <path d="m13.5 6.5 4 4"/>
+                                    </svg>
+                                </a>
+
+                                <form
+                                    method="post"
+                                    action="{{ route(
+                                        'admin.translations.translate',
+                                        [
+                                            'type' =>
+                                                \App\Services\AiTranslationService::TYPE_ARTICLE,
+                                            'id' =>
+                                                $article->id,
+                                        ]
+                                    ) }}"
+                                >
+                                    @csrf
+
+                                    <button
+                                        class="article-action-icon is-translate"
+                                        type="submit"
+                                        title="{{ $translatorTitle }}"
+                                        aria-label="{{ __('article_ai.actions.translate') }}"
+                                        @disabled($translatorDisabled)
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
+                                            <circle cx="12" cy="12" r="9"/>
+                                            <path d="M3.5 12h17"/>
+                                            <path d="M12 3c2.2 2.4 3.4 5.4 3.4 9S14.2 18.6 12 21"/>
+                                            <path d="M12 3C9.8 5.4 8.6 8.4 8.6 12S9.8 18.6 12 21"/>
+                                        </svg>
+                                    </button>
+                                </form>
+
+                                @unless ($hasAssociatedImage)
+                                    <form
+                                        method="post"
+                                        action="{{ route(
+                                            'admin.articles.generate-image',
+                                            $article
+                                        ) }}"
+                                        onsubmit="return confirm('{{ __('article_ai.actions.generate_image_confirm') }}')"
+                                    >
+                                        @csrf
+
+                                        <button
+                                            class="article-action-icon is-image-ai"
+                                            type="submit"
+                                            title="{{ __('article_ai.actions.generate_image') }}"
+                                            aria-label="{{ __('article_ai.actions.generate_image') }}"
+                                        >
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                aria-hidden="true"
+                                            >
+                                                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                                <circle cx="8.5" cy="10" r="1.5"/>
+                                                <path d="m5 17 4.2-4.2 3.1 3.1 2.2-2.2L19 17"/>
+                                                <path d="M18.2 2.5 19 4.7l2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                @endunless
+
+                                @if ($canPreview)
+                                    <a
+                                        class="article-action-icon is-preview"
+                                        href="{{ route(
+                                            'articles.show',
+                                            [
+                                                'locale' =>
+                                                    $previewTranslation
+                                                        ->locale,
+                                                'slug' =>
+                                                    $previewTranslation
+                                                        ->slug,
+                                            ]
+                                        ) }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                        title="{{ __('article_ai.actions.preview') }}"
+                                        aria-label="{{ __('article_ai.actions.preview') }}"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M2.8 12s3.2-6 9.2-6 9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6Z"/>
+                                            <circle cx="12" cy="12" r="2.7"/>
+                                        </svg>
                                     </a>
+                                @else
+                                    <button
+                                        class="article-action-icon is-preview"
+                                        type="button"
+                                        disabled
+                                        title="{{ __('article_ai.tooltips.preview_unavailable') }}"
+                                        aria-label="{{ __('article_ai.actions.preview') }}"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M2.8 12s3.2-6 9.2-6 9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6Z"/>
+                                            <circle cx="12" cy="12" r="2.7"/>
+                                        </svg>
+                                    </button>
                                 @endif
-                            @endforeach
 
-                            <a class="cms-action-button" href="{{ route('admin.articles.edit', $article) }}">
-                                {{ __('cms.articles.actions.edit') }}
-                            </a>
+                                <form
+                                    method="post"
+                                    action="{{ route(
+                                        'admin.articles.destroy',
+                                        $article
+                                    ) }}"
+                                    onsubmit="return confirm('{{ __('cms.articles.actions.delete_confirm') }}')"
+                                >
+                                    @csrf
+                                    @method('DELETE')
 
-                            <form
-                                method="post"
-                                action="{{ route('admin.articles.destroy', $article) }}"
-                                onsubmit="return confirm('{{ __('cms.articles.actions.delete_confirm') }}')"
-                            >
-                                @csrf
-                                @method('DELETE')
-                                <button class="cms-action-button cms-action-danger" type="submit">
-                                    {{ __('cms.articles.actions.delete') }}
-                                </button>
-                            </form>
+                                    <button
+                                        class="article-action-icon is-danger"
+                                        type="submit"
+                                        title="{{ __('article_ai.actions.delete') }}"
+                                        aria-label="{{ __('article_ai.actions.delete') }}"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M4 7h16"/>
+                                            <path d="M9 7V4h6v3"/>
+                                            <path d="M6.5 7 7.5 20h9l1-13"/>
+                                            <path d="M10 11v5"/>
+                                            <path d="M14 11v5"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

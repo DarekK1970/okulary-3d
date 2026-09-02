@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ArchiveController as AdminArchiveController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\Admin\ArticleAiController;
 use App\Http\Controllers\Admin\CommerceSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DiscoveryController;
@@ -269,6 +270,13 @@ Route::prefix('admin')
 
         Route::get('/content', [AdminNavigationController::class, 'content'])
             ->name('content');
+
+        Route::post(
+            '/articles/{article}/generate-image',
+            [ArticleAiController::class, 'generateImage']
+        )
+            ->whereNumber('article')
+            ->name('articles.generate-image');
 
         Route::resource('articles', AdminArticleController::class)
             ->except(['show']);

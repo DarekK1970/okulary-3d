@@ -862,3 +862,87 @@ body.advanced-editor-fullscreen-open {
         padding: 15px;
     }
 }
+
+
+/* K92 — compact icon-only actions for article list. */
+.article-action-icons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.article-action-icons form {
+    margin: 0;
+}
+
+.article-action-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 34px;
+    padding: 0;
+    border: 1px solid #d7e0ea;
+    border-radius: 9px;
+    background: #fff;
+    color: #445168;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        border-color .15s ease,
+        background .15s ease,
+        color .15s ease,
+        transform .15s ease;
+}
+
+.article-action-icon:hover:not(:disabled) {
+    border-color: #99cfe3;
+    background: #f3fbfe;
+    color: #008dbb;
+    transform: translateY(-1px);
+}
+
+.article-action-icon:disabled {
+    opacity: .34;
+    cursor: not-allowed;
+}
+
+.article-action-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.article-action-icon.is-translate {
+    color: #087aa5;
+}
+
+.article-action-icon.is-image-ai {
+    color: #7a4fc8;
+}
+
+.article-action-icon.is-image-ai:hover:not(:disabled) {
+    border-color: #c9b8ef;
+    background: #faf7ff;
+    color: #6938b6;
+}
+
+.article-action-icon.is-preview {
+    color: #3c718c;
+}
+
+.article-action-icon.is-danger {
+    color: #c33d50;
+}
+
+.article-action-icon.is-danger:hover:not(:disabled) {
+    border-color: #f0b8c0;
+    background: #fff5f6;
+    color: #a7283a;
+}

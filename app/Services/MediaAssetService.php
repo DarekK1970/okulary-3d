@@ -64,6 +64,129 @@ class MediaAssetService
         ]);
     }
 
+
+    public function storeGeneratedImage(
+        string $bytes,
+        User $user,
+        string $originalName,
+        ?string $title = null,
+        ?string $altText = null,
+        string $folder = 'ai-generated'
+    ): MediaAsset {
+        if ($bytes === '') {
+            throw new \RuntimeException(
+                'Generated image data is empty.'
+            );
+        }
+
+        $dimensions = @getimagesizefromstring(
+            $bytes
+        );
+
+        if (! is_array($dimensions)) {
+            throw new \RuntimeException(
+                'Generated data is not a valid image.'
+            );
+        }
+
+        $mimeType = strtolower(
+            (string) (
+                $dimensions['mime']
+                ?? 'image/png'
+            )
+        );
+
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+            default => 'png',
+        };
+
+        $storedName =
+            (string) Str::uuid()
+            . '.'
+            . $extension;
+
+        $path =
+            'media/'
+            . now()->format('Y/m')
+            . '/'
+            . $storedName;
+
+        $stored = Storage::disk(
+            'public'
+        )->put(
+            $path,
+            $bytes
+        );
+
+        if (! $stored) {
+            throw new \RuntimeException(
+                'Unable to store generated image.'
+            );
+        }
+
+        try {
+            return MediaAsset::create([
+                'disk' => 'public',
+                'path' => $path,
+                'original_name' =>
+                    Str::limit(
+                        $originalName,
+                        255,
+                        ''
+                    ),
+                'stored_name' =>
+                    $storedName,
+                'mime_type' =>
+                    $mimeType,
+                'extension' =>
+                    $extension,
+                'size_bytes' =>
+                    strlen($bytes),
+                'width' =>
+                    (int) (
+                        $dimensions[0]
+                        ?? 0
+                    ) ?: null,
+                'height' =>
+                    (int) (
+                        $dimensions[1]
+                        ?? 0
+                    ) ?: null,
+                'title' =>
+                    filled($title)
+                        ? Str::limit(
+                            (string) $title,
+                            180,
+                            ''
+                        )
+                        : null,
+                'alt_text' =>
+                    filled($altText)
+                        ? Str::limit(
+                            (string) $altText,
+                            255,
+                            ''
+                        )
+                        : null,
+                'caption' => null,
+                'folder' =>
+                    $this->normalizeFolder(
+                        $folder
+                    ),
+                'uploaded_by' =>
+                    $user->id,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk(
+                'public'
+            )->delete($path);
+
+            throw $exception;
+        }
+    }
+
     public function delete(MediaAsset $media): void
     {
         Storage::disk($media->disk)->delete($media->path);
