@@ -26,18 +26,19 @@ class StaticPageCmsTest extends TestCase
     public function test_migration_seeds_required_static_pages(): void
     {
         $this->assertSame(
-            7,
+            9,
             StaticPage::query()
                 ->count()
         );
-
         foreach (
             [
+                'about',
                 'faq',
                 'shipping-payments',
                 'returns-complaints',
                 'privacy-policy',
                 'portal-terms',
+                'editorial-policy',
                 'shop-terms',
                 'secure-payments',
             ]
@@ -91,7 +92,6 @@ class StaticPageCmsTest extends TestCase
                 'faq'
             )
             ->firstOrFail();
-
         $this->actingAs(
             $this->admin()
         )
@@ -127,7 +127,6 @@ class StaticPageCmsTest extends TestCase
                 'privacy-policy'
             )
             ->firstOrFail();
-
         $this->actingAs(
             $this->admin()
         )
@@ -162,7 +161,6 @@ class StaticPageCmsTest extends TestCase
                 . $page->id
                 . '/edit'
             );
-
         $translation =
             $page
                 ->fresh()
@@ -193,7 +191,6 @@ class StaticPageCmsTest extends TestCase
                 'faq'
             )
             ->firstOrFail();
-
         $page
             ->translations()
             ->where(
@@ -206,7 +203,6 @@ class StaticPageCmsTest extends TestCase
                 'seo_description' =>
                     'Najczęstsze pytania i odpowiedzi.',
             ]);
-
         $this->mock(
             AiTranslationProviderService::class,
             function (
@@ -248,7 +244,6 @@ class StaticPageCmsTest extends TestCase
                     ]);
             }
         );
-
         $this->actingAs(
             $this->admin()
         )
@@ -260,7 +255,6 @@ class StaticPageCmsTest extends TestCase
             ->assertSessionHas(
                 'status'
             );
-
         $this->assertDatabaseHas(
             'static_page_translations',
             [
@@ -272,7 +266,6 @@ class StaticPageCmsTest extends TestCase
                     'ready',
             ]
         );
-
         $this->assertDatabaseHas(
             'ai_translation_runs',
             [
@@ -301,6 +294,17 @@ class StaticPageCmsTest extends TestCase
             ->assertSee('FAQ');
     }
 
+    public function test_about_page_is_public_and_main_navigation_uses_it(): void
+    {
+        $this->get('/pl/info/about')
+            ->assertOk()
+            ->assertSee('O nas')
+            ->assertSee(
+                '/pl/info/about',
+                false
+            );
+    }
+
     public function test_footer_links_to_static_pages_instead_of_hashes(): void
     {
         $this->get(
@@ -325,6 +329,10 @@ class StaticPageCmsTest extends TestCase
             )
             ->assertSee(
                 '/pl/info/portal-terms',
+                false
+            )
+            ->assertSee(
+                '/pl/info/editorial-policy',
                 false
             )
             ->assertSee(

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\EnforceMaintenanceMode;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\TrackPortalAnalytics;
@@ -19,10 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(
             append: [
                 AddSecurityHeaders::class,
+                EnforceMaintenanceMode::class,
                 TrackPortalAnalytics::class,
             ]
         );
-
         $middleware->alias([
             'admin.access' => EnsureAdminAccess::class,
             'role' => RequireRole::class,
@@ -33,7 +34,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 'locale' => $request->route('locale') ?? config('locales.default', 'pl'),
             ]);
         });
-
         $middleware->redirectUsersTo(function (Request $request): string {
             return route('account', [
                 'locale' => $request->route('locale') ?? config('locales.default', 'pl'),

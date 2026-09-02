@@ -10,7 +10,6 @@ return [
     'open' => 'Otwórz moduł',
     'no_permission' => 'Brak uprawnień',
     'validation_error' => 'Nie udało się zapisać formularza.',
-
     'menu' => [
         'dashboard' => 'Dashboard',
         'content' => 'Treści',
@@ -22,8 +21,8 @@ return [
         'orchestrator' => 'Orchestrator',
         'analytics' => 'Analityka',
         'settings' => 'Ustawienia',
+        'maintenance' => 'Konserwacja',
     ],
-
     'dashboard' => [
         'title' => 'Dashboard',
         'eyebrow' => 'Wortal Okulary 3D',
@@ -39,7 +38,6 @@ return [
         'modules_kicker' => 'Moduły',
         'modules' => 'Zarządzanie aplikacją',
     ],
-
     'modules' => [
         'content' => [
             'title' => 'Treści i artykuły',
@@ -74,7 +72,6 @@ return [
             'description' => 'Konfiguracja krytyczna dostępna wyłącznie dla Super Administratora.',
         ],
     ],
-
     'sections' => [
         'shop' => [
             'kicker' => 'E-commerce',
@@ -107,7 +104,6 @@ return [
             'description' => 'Sekcja przeznaczona wyłącznie dla najwyższego poziomu uprawnień.',
         ],
     ],
-
     'placeholder' => [
         'title' => 'Moduł przygotowany do dalszego wdrożenia',
         'description' => 'Routing, dostęp RBAC i miejsce w panelu są już gotowe. Funkcjonalność modułu zostanie wdrożona w przewidzianym kroku projektu.',

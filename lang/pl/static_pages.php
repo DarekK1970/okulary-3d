@@ -9,7 +9,6 @@ return [
         'edit_title' => 'Edycja strony statycznej',
         'edit_description' => 'Treść jest edytowana osobno dla każdego języka. Pole treści działa jako edytor WYSIWYG.',
     ],
-
     'groups' => [
         'content' => 'Strony statyczne',
         'shop' => 'Sklep',
@@ -30,7 +29,6 @@ return [
         'cancel' => 'Anuluj',
         'back' => 'Strony statyczne',
     ],
-
     'editor' => [
         'languages' => 'Wersje językowe',
         'content' => 'Treść strony',
@@ -45,19 +43,16 @@ return [
         'group' => 'Sekcja',
         'public_url' => 'Adres publiczny',
     ],
-
     'messages' => [
         'saved' => 'Strona statyczna została zapisana.',
         'translated' => 'Dodano brakujące wersje językowe: :locales.',
         'no_missing_translations' => 'Ta strona ma już kompletne wersje we wszystkich skonfigurowanych językach.',
     ],
-
     'errors' => [
         'source_missing' => 'Brakuje źródłowej wersji językowej tej strony.',
         'source_title_required' => 'Tytuł źródłowej wersji strony jest wymagany.',
         'translation_title_required' => 'Jeżeli tworzysz wersję językową, podaj również jej tytuł.',
     ],
-
     'public' => [
         'breadcrumbs' => 'Nawigacja okruszkowa',
         'home' => 'Strona główna',
@@ -68,6 +63,7 @@ return [
 
     'footer' => [
         'portal_terms' => 'Regulamin portalu',
+        'editorial_policy' => 'Redakcja portalu',
         'shop_terms' => 'Regulamin sklepu',
         'secure_payments' => 'Bezpieczne płatności',
     ],

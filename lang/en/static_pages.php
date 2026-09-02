@@ -9,7 +9,6 @@ return [
         'edit_title' => 'Edit static page',
         'edit_description' => 'Content is edited separately for each language. The main content field uses a WYSIWYG editor.',
     ],
-
     'groups' => [
         'content' => 'Static pages',
         'shop' => 'Shop',
@@ -30,7 +29,6 @@ return [
         'cancel' => 'Cancel',
         'back' => 'Static pages',
     ],
-
     'editor' => [
         'languages' => 'Language versions',
         'content' => 'Page content',
@@ -45,19 +43,16 @@ return [
         'group' => 'Section',
         'public_url' => 'Public URL',
     ],
-
     'messages' => [
         'saved' => 'Static page saved.',
         'translated' => 'Missing language versions added: :locales.',
         'no_missing_translations' => 'This page already has complete versions in all configured languages.',
     ],
-
     'errors' => [
         'source_missing' => 'The source-language version of this page is missing.',
         'source_title_required' => 'The source-language page title is required.',
         'translation_title_required' => 'When creating a language version, its title is required.',
     ],
-
     'public' => [
         'breadcrumbs' => 'Breadcrumb navigation',
         'home' => 'Home',
@@ -68,6 +63,7 @@ return [
 
     'footer' => [
         'portal_terms' => 'Portal terms',
+        'editorial_policy' => 'Editorial team',
         'shop_terms' => 'Shop terms and conditions',
         'secure_payments' => 'Secure payments',
     ],
