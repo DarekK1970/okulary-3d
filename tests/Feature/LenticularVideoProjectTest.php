@@ -43,7 +43,11 @@ class LenticularVideoProjectTest extends TestCase
     {
         Storage::fake('local');
         $user = User::factory()->create();
-        $video = UploadedFile::fake()->create('too-large.mp4', 102401, 'video/mp4');
+        $path = tempnam(sys_get_temp_dir(), 'large-video-');
+        $handle = fopen($path, 'wb');
+        ftruncate($handle, (102400 * 1024) + 1);
+        fclose($handle);
+        $video = new UploadedFile($path, 'too-large.mp4', 'video/mp4', null, true);
 
         $this->actingAs($user)->post('/pl/lab/lenticular/projects', [
             'name' => 'Za duży projekt',
