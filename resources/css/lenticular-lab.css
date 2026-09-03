@@ -547,12 +547,11 @@
 }
 
 .lenticular-alignment-stage {
-    --z-center: 50%;
+    --z-left: 47.5%;
     --z-width: 5%;
     --alignment-y: 50%;
     position: relative;
-    max-width: 900px;
-    margin: 18px auto 10px;
+    width: 100%;
     overflow: hidden;
     aspect-ratio: 3 / 2;
     border: 1px solid #d8e1ec;
@@ -583,12 +582,20 @@
     z-index: 2;
     top: 0;
     bottom: 0;
-    left: calc(var(--z-center) - var(--z-width) / 2);
+    left: var(--z-left);
     width: var(--z-width);
     min-width: 8px;
+    padding: 0;
     background: rgba(70, 78, 90, .32);
     border-inline: 1px solid rgba(255, 255, 255, .8);
-    pointer-events: none;
+    border-block: 0;
+    cursor: ew-resize;
+    touch-action: none;
+}
+
+.lenticular-z-zone:focus-visible {
+    outline: 3px solid #00a8df;
+    outline-offset: -3px;
 }
 
 .lenticular-z-zone span {
@@ -603,9 +610,9 @@
 
 .lenticular-overlay-switches {
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    gap: 20px;
-    margin-bottom: 18px;
+    gap: 14px;
     color: #46546b;
     font-size: .7rem;
     font-weight: 700;
@@ -619,4 +626,70 @@
 
 .lab-control output {
     color: #008fbd;
+}
+
+.lenticular-alignment-editor {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 900px) minmax(145px, 1fr);
+    gap: 16px;
+    align-items: stretch;
+    margin: 18px 0 24px;
+}
+
+.lenticular-alignment-preview {
+    min-width: 0;
+}
+
+.lenticular-vertical-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 45px;
+}
+
+.lenticular-vertical-control output,
+.lenticular-width-control output {
+    color: #008fbd;
+    font-weight: 800;
+}
+
+.lenticular-vertical-control input[type="range"] {
+    width: 24px;
+    height: 100%;
+    min-height: 240px;
+    writing-mode: vertical-lr;
+    direction: rtl;
+}
+
+.lenticular-width-control {
+    display: grid;
+    gap: 5px;
+    padding-top: 9px;
+}
+
+.lenticular-width-control label {
+    display: flex;
+    justify-content: space-between;
+    color: #46546b;
+    font-size: .58rem;
+    font-weight: 800;
+}
+
+.lenticular-width-control input[type="range"] {
+    width: 100%;
+}
+
+@media (max-width: 850px) {
+    .lenticular-alignment-editor {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .lenticular-overlay-switches {
+        grid-column: 2;
+        flex-direction: row;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
 }
