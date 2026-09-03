@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -25,7 +25,7 @@ class JobState:
         return sqlite3.connect(self.database, timeout=30)
 
     def set(self, job_id: str, state: str, detail: str | None = None) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with closing(self._connect()) as connection:
             connection.execute(
                 """INSERT INTO jobs(job_id, state, detail, updated_at) VALUES (?, ?, ?, ?)

@@ -100,8 +100,11 @@ class Worker:
                 self.state.set(job.job_id, "uploading")
                 self.gateway.progress(job, 90, "uploading")
                 self.gateway.upload(job, archive)
+                archive_hash = hashlib.sha256()
                 with archive.open("rb") as stream:
-                    digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                    while chunk := stream.read(1024 * 1024):
+                        archive_hash.update(chunk)
+                digest = archive_hash.hexdigest()
                 result = None
                 if job.operation == "analyze_video":
                     result = {

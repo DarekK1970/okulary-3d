@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "lenticular-machine"
 version = "0.1.0"
 description = "External processing worker for Okulary 3D"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "fastapi>=0.116,<1",
     "uvicorn[standard]>=0.35,<1",
@@ -29,4 +29,3 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-
