@@ -1,13 +1,9 @@
 <?php
 
-use App\Providers\AppServiceProvider;
-use App\Providers\PartnerServiceProvider;
-use App\Providers\ShippingServiceProvider;
-use App\Providers\StaticPageServiceProvider;
-
 return [
-    AppServiceProvider::class,
-    ShippingServiceProvider::class,
-    StaticPageServiceProvider::class,
-    PartnerServiceProvider::class,
+    App\Providers\AppServiceProvider::class,
+    App\Providers\LenticularMachineServiceProvider::class,
+    App\Providers\PartnerServiceProvider::class,
+    App\Providers\ShippingServiceProvider::class,
+    App\Providers\StaticPageServiceProvider::class,
 ];

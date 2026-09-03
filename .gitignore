@@ -21,6 +21,11 @@
 /storage/*.key
 /storage/pail
 /vendor
+/LENTICREA_REBUILD/
+/python_leticular_machine/.venv/
+/python_leticular_machine/.env
+/python_leticular_machine/runtime/
+/python_leticular_machine/dist/
 _ide_helper.php
 Homestead.json
 Homestead.yaml

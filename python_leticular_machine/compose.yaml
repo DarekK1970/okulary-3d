@@ -1,0 +1,22 @@
+services:
+  worker:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - lenticular-runtime:/app/runtime
+    stop_grace_period: 2m
+
+  health-api:
+    build: .
+    command: ["lenticular-api"]
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - lenticular-runtime:/app/runtime
+    ports:
+      - "127.0.0.1:8081:8081"
+
+volumes:
+  lenticular-runtime:
+

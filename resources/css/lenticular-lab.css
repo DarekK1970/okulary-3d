@@ -530,3 +530,18 @@
     margin-right: 4px;
     color: #2e7658;
 }
+
+.lenticular-analysis-previews {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.lenticular-analysis-previews img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border: 1px solid #d8e1ec;
+    border-radius: 12px;
+}

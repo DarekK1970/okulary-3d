@@ -1,34 +1,32 @@
 <?php
+
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
-use App\Http\Controllers\AnalyticsEventController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ReadinessController;
-use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\Admin\AdminNavigationController;
 use App\Http\Controllers\Admin\AiTranslationController;
 use App\Http\Controllers\Admin\AiTranslationSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ArchiveController as AdminArchiveController;
+use App\Http\Controllers\Admin\ArticleAiController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
-use App\Http\Controllers\Admin\ArticleAiController;
 use App\Http\Controllers\Admin\CommerceSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DiscoveryController;
 use App\Http\Controllers\Admin\DiscoverySettingsController;
-use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MaintenanceSettingsController;
-use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
 use App\Http\Controllers\Admin\OrchestratorController;
 use App\Http\Controllers\Admin\OrchestratorSettingsController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StaticPageController as AdminStaticPageController;
 use App\Http\Controllers\Admin\StereoGalleryController as AdminStereoGalleryController;
+use App\Http\Controllers\AnalyticsEventController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -38,9 +36,13 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LabController;
+use App\Http\Controllers\LenticularProjectController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
+use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\SalesDocumentController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShopController;
@@ -48,8 +50,8 @@ use App\Http\Controllers\StaticPageController;
 use App\Http\Controllers\StereoGalleryController;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Support\Facades\Route;
 
 $defaultLocale = config('locales.default', 'pl');
 $supportedLocales = array_keys(config('locales.supported', ['pl' => []]));
@@ -71,7 +73,7 @@ Route::post('/analytics/event', [AnalyticsEventController::class, 'store'])
     ->middleware('throttle:180,1')
     ->name('analytics.event');
 
-Route::redirect('/', '/' . $defaultLocale);
+Route::redirect('/', '/'.$defaultLocale);
 
 foreach (config('locales.supported', []) as $categoryLocale => $language) {
     $categorySegment = trim(
@@ -87,7 +89,7 @@ foreach (config('locales.supported', []) as $categoryLocale => $language) {
      * /pl/... path is not reliable enough for this middleware.
      */
     Route::get(
-        '/{locale}/' . $categorySegment . '/{path}',
+        '/{locale}/'.$categorySegment.'/{path}',
         [ShopController::class, 'category']
     )
         ->where([
@@ -95,7 +97,7 @@ foreach (config('locales.supported', []) as $categoryLocale => $language) {
             'path' => '.*',
         ])
         ->middleware(SetLocale::class)
-        ->name('shop.category.' . $categoryLocale);
+        ->name('shop.category.'.$categoryLocale);
 }
 Route::prefix('{locale}')
     ->where(['locale' => $localePattern])
@@ -138,13 +140,17 @@ Route::prefix('{locale}')
 
         Route::get('/lab/lenticular', [LabController::class, 'lenticular'])
             ->name('lab.lenticular');
+        Route::middleware('auth')->prefix('/lab/lenticular/projects')->name('lab.projects.')->group(function (): void {
+            Route::get('/create', [LenticularProjectController::class, 'create'])->name('create');
+            Route::post('/', [LenticularProjectController::class, 'store'])->name('store');
+            Route::get('/{project}', [LenticularProjectController::class, 'show'])->name('show');
+            Route::post('/{project}/frames', [LenticularProjectController::class, 'selectFrames'])->name('frames.store');
+        });
         Route::get('/lab/mpo-viewer', [LabController::class, 'mpo'])
             ->name('lab.mpo');
 
         Route::get('/lab/wigglegram-maker', [LabController::class, 'wigglegram'])
             ->name('lab.wigglegram');
-
-
 
         Route::get('/archive', [ArchiveController::class, 'index'])
             ->name('archive.index');
@@ -286,11 +292,9 @@ Route::prefix('admin')
             ->only(['index', 'store', 'edit', 'update', 'destroy'])
             ->parameters(['media' => 'media']);
 
-
         Route::resource('archive', AdminArchiveController::class)
             ->except(['show'])
             ->parameters(['archive' => 'archiveItem']);
-
 
         Route::get('/gallery', [AdminStereoGalleryController::class, 'index'])
             ->name('gallery.index');
@@ -308,7 +312,7 @@ Route::prefix('admin')
 
         Route::get('/analytics', [AnalyticsController::class, 'index'])
             ->name('analytics');
-        Route::middleware('role:' . User::ROLE_ADMIN . ',' . User::ROLE_SUPER_ADMIN)
+        Route::middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN)
             ->group(function () {
                 Route::get('/shop', [AdminNavigationController::class, 'shop'])
                     ->name('shop');
@@ -404,7 +408,7 @@ Route::prefix('admin')
                     ->whereNumber('item')
                     ->name('orchestrator.items.draft');
             });
-        Route::middleware('role:' . User::ROLE_SUPER_ADMIN)
+        Route::middleware('role:'.User::ROLE_SUPER_ADMIN)
             ->group(function () {
                 Route::get('/settings', [CommerceSettingsController::class, 'index'])
                     ->name('settings');

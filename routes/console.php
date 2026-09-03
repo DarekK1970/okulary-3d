@@ -2,6 +2,7 @@
 
 use App\Enums\PartnerLinkStatus;
 use App\Models\PartnerLink;
+use App\Models\ProcessingMachineNonce;
 use App\Models\User;
 use App\Services\PartnerBacklinkMonitor;
 use Illuminate\Foundation\Inspiring;
@@ -20,7 +21,7 @@ Artisan::command('user:set-role {email} {role}', function (string $email, string
         User::ROLE_SUPER_ADMIN,
     ];
     if (! in_array($role, $roles, true)) {
-        $this->error('Nieprawidłowa rola. Dostępne: ' . implode(', ', $roles));
+        $this->error('Nieprawidłowa rola. Dostępne: '.implode(', ', $roles));
 
         return 1;
     }
@@ -40,6 +41,7 @@ Artisan::command('user:set-role {email} {role}', function (string $email, string
     $user->save();
 
     $this->info("Zmieniono rolę {$email}: {$previousRole} -> {$role}");
+
     return 0;
 })->purpose('Nadaj użytkownikowi rolę RBAC');
 
@@ -59,6 +61,7 @@ Artisan::command('partners:check-backlinks {--partner=}', function () {
     if ($partnerId !== '') {
         if (! ctype_digit($partnerId)) {
             $this->error('Opcja --partner musi zawierać numeryczne ID partnera.');
+
             return 1;
         }
 
@@ -69,6 +72,7 @@ Artisan::command('partners:check-backlinks {--partner=}', function () {
 
     if ($total === 0) {
         $this->info('Brak partnerów wymagających kontroli.');
+
         return 0;
     }
 
@@ -97,6 +101,7 @@ Artisan::command('partners:check-backlinks {--partner=}', function () {
     });
 
     $this->info("Sprawdzono: {$checked}; wpisy wymagające uwagi: {$problems}.");
+
     return 0;
 })->purpose('Sprawdza linki zwrotne aktywnych i zawieszonych partnerów');
 
@@ -110,6 +115,11 @@ Schedule::command('newsletter:send-due --limit=100')
 
 Schedule::command('portal:analytics-prune --days=180')
     ->dailyAt('03:30')
+    ->withoutOverlapping();
+
+Schedule::call(fn () => ProcessingMachineNonce::query()->where('expires_at', '<', now())->delete())
+    ->hourly()
+    ->name('lenticular-machine-nonces-prune')
     ->withoutOverlapping();
 
 Schedule::command('partners:check-backlinks')
