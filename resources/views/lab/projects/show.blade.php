@@ -41,8 +41,19 @@
         <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.step_3') }}</h2><p>{{ __('lenticular_projects.alignment_help') }}</p><form method="post" action="{{ route('lab.projects.alignment.store', ['locale' => app()->getLocale(), 'project' => $project]) }}" class="lenticular-controls">@csrf<input id="z-center" name="z_center" type="hidden" value="0.5">
             <div class="lenticular-alignment-editor"><div class="lenticular-vertical-control"><output data-range-output="alignment-y">50%</output><input id="alignment-y" name="alignment_y" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="{{ __('lenticular_projects.alignment_y') }}"></div><div class="lenticular-alignment-preview"><div class="lenticular-alignment-stage" data-alignment-stage data-source-width="{{ $source->metadata['width'] }}" data-source-height="{{ $source->metadata['height'] }}">@foreach($stagePreviews as $preview)<img class="lenticular-alignment-frame frame-{{ $loop->index }}" src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.preview_frame', ['number' => $loop->iteration]) }}">@endforeach<button class="lenticular-z-zone" type="button" data-z-zone aria-label="{{ __('lenticular_projects.move_z') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span></span></button></div><div class="lenticular-width-control"><label for="z-width">{{ __('lenticular_projects.z_width') }} <output data-range-output="z-width">5%</output></label><input id="z-width" name="z_width" type="range" min="0.01" max="0.5" step="0.01" value="0.05"></div></div><div class="lenticular-overlay-switches"><label><input type="checkbox" data-overlay-toggle="1"> {{ __('lenticular_projects.middle_frame') }}</label><label><input type="checkbox" data-overlay-toggle="2"> {{ __('lenticular_projects.last_frame') }}</label></div></div>
             <button class="lab-primary-button" type="submit">{{ __('lenticular_projects.auto_alignment') }}</button></form>
-            @if($alignment)<p class="lenticular-export-note">{{ __('lenticular_projects.alignment_status') }}: <strong>{{ $alignment->stage ?? $alignment->status->value }}</strong> · {{ $alignment->progress }}%</p>@if(!$alignment->status->isTerminal())<meta http-equiv="refresh" content="5">@endif@endif
-            @if($alignmentPreviews->isNotEmpty())<div class="lenticular-analysis-previews">@foreach($alignmentPreviews as $preview)<img src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.alignment_preview', ['number' => $loop->iteration]) }}">@endforeach</div>@endif
+            @if($alignment)
+                <p class="lenticular-export-note">{{ __('lenticular_projects.alignment_status') }}: <strong>{{ $alignment->stage ?? $alignment->status->value }}</strong> · {{ $alignment->progress }}%</p>
+                @if(!$alignment->status->isTerminal())
+                    <meta http-equiv="refresh" content="5">
+                @endif
+            @endif
+            @if($alignmentPreviews->isNotEmpty())
+                <div class="lenticular-analysis-previews">
+                    @foreach($alignmentPreviews as $preview)
+                        <img src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.alignment_preview', ['number' => $loop->iteration]) }}">
+                    @endforeach
+                </div>
+            @endif
         </section>
     @endif
 </div></div></section>

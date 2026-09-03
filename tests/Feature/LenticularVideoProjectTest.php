@@ -78,6 +78,39 @@ class LenticularVideoProjectTest extends TestCase
         $this->actingAs($otherUser)->get("/pl/lab/lenticular/projects/{$project->id}")->assertNotFound();
     }
 
+    public function test_step_two_upload_view_renders(): void
+    {
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20]]);
+
+        $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")
+            ->assertOk()
+            ->assertSee(__('lenticular_projects.upload_video'));
+    }
+
+    public function test_step_two_timeline_view_renders(): void
+    {
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20]]);
+        LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.04]]);
+
+        $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")
+            ->assertOk()
+            ->assertSee(__('lenticular_projects.select_range'));
+    }
+
+    public function test_step_three_alignment_view_renders(): void
+    {
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20, 'selection' => ['start' => 0, 'end' => 19, 'step' => 1, 'jpeg_quality' => 95]]]);
+        $source = LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.04]]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed]);
+
+        $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")
+            ->assertOk()
+            ->assertSee(__('lenticular_projects.alignment_help'));
+    }
+
     public function test_analyzed_project_accepts_valid_frame_range(): void
     {
         $user = User::factory()->create();
