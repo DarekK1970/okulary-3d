@@ -28,7 +28,7 @@ class RegisterProcessingMachine extends Command
         $secret = Str::random(64);
         ProcessingMachine::query()->updateOrCreate(
             ['machine_id' => $machineId],
-            ['api_key_id' => $keyId, 'api_secret' => $secret, 'capabilities' => ['analyze_video:v1', 'extract_video_frames:v1'], 'is_active' => true]
+            ['api_key_id' => $keyId, 'api_secret' => $secret, 'capabilities' => ['analyze_video:v1', 'extract_video_frames:v1', 'align_sequence:v1'], 'is_active' => true]
         );
 
         $this->info('Processing machine credentials:');

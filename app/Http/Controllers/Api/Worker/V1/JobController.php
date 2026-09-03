@@ -81,6 +81,7 @@ class JobController extends Controller
             ],
             'upload_url' => $this->absoluteUrl(URL::temporarySignedRoute('worker.transfers.result', now()->addMinutes(config('lenticular_machine.transfer_url_minutes')), ['job' => $job->id, 'lease_token' => $job->lease_token], absolute: false)),
             'selection' => $job->parameters['selection'] ?? null,
+            'alignment' => $job->parameters['alignment'] ?? null,
         ]);
     }
 
@@ -106,7 +107,31 @@ class JobController extends Controller
     public function complete(Request $request, LenticularJob $job): JsonResponse
     {
         $analysisPresence = $job->operation === 'analyze_video' ? 'required' : 'nullable';
-        $validated = $request->validate(['lease_token' => ['required', 'string', 'size:64'], 'artifact.sha256' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'], 'artifact.size_bytes' => ['required', 'integer', 'min:1'], 'artifact.media_type' => ['required', 'in:application/zip'], 'result.video' => [$analysisPresence, 'array'], 'result.video.width' => [$analysisPresence, 'integer', 'min:1'], 'result.video.height' => [$analysisPresence, 'integer', 'min:1'], 'result.video.frame_count' => [$analysisPresence, 'integer', 'min:1'], 'result.video.fps' => [$analysisPresence, 'numeric', 'gt:0'], 'result.video.duration_seconds' => [$analysisPresence, 'numeric', 'gt:0'], 'result.thumbnails' => [$analysisPresence, 'array', 'size:3'], 'result.thumbnails.*' => ['string', 'max:1400000']]);
+        $alignmentPresence = $job->operation === 'align_sequence' ? 'required' : 'nullable';
+        $validated = $request->validate([
+            'lease_token' => ['required', 'string', 'size:64'],
+            'artifact.sha256' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
+            'artifact.size_bytes' => ['required', 'integer', 'min:1'],
+            'artifact.media_type' => ['required', 'in:application/zip'],
+            'result.video' => [$analysisPresence, 'array'],
+            'result.video.width' => [$analysisPresence, 'integer', 'min:1'],
+            'result.video.height' => [$analysisPresence, 'integer', 'min:1'],
+            'result.video.frame_count' => [$analysisPresence, 'integer', 'min:1'],
+            'result.video.fps' => [$analysisPresence, 'numeric', 'gt:0'],
+            'result.video.duration_seconds' => [$analysisPresence, 'numeric', 'gt:0'],
+            'result.thumbnails' => [$analysisPresence, 'array', 'size:3'],
+            'result.thumbnails.*' => ['string', 'max:1400000'],
+            'result.alignment' => [$alignmentPresence, 'array'],
+            'result.alignment.crop' => [$alignmentPresence, 'array', 'size:4'],
+            'result.alignment.crop.*' => ['integer', 'min:0'],
+            'result.alignment.transforms' => [$alignmentPresence, 'array', 'min:2'],
+            'result.alignment.transforms.*.filename' => ['required_with:result.alignment', 'string', 'max:255'],
+            'result.alignment.transforms.*.x' => ['required_with:result.alignment', 'numeric'],
+            'result.alignment.transforms.*.y' => ['required_with:result.alignment', 'numeric'],
+            'result.alignment.transforms.*.score' => ['required_with:result.alignment', 'numeric'],
+            'result.previews' => [$alignmentPresence, 'array', 'between:1,2'],
+            'result.previews.*' => ['string', 'max:1400000'],
+        ]);
         if ($job->status === LenticularJobStatus::Completed) {
             /** @var ProcessingMachine $machine */
             $machine = $request->attributes->get('processingMachine');
@@ -119,6 +144,8 @@ class JobController extends Controller
         abort_if($artifact === null || ! hash_equals($artifact->sha256, $validated['artifact']['sha256']) || $artifact->size_bytes !== $validated['artifact']['size_bytes'], 422, 'Uploaded artifact does not match completion metadata.');
         if ($job->operation === 'analyze_video') {
             $this->storeAnalysisResult($job, $validated['result']);
+        } elseif ($job->operation === 'align_sequence') {
+            $this->storeAlignmentResult($job, $validated['result']);
         }
         $job->update(['status' => LenticularJobStatus::Completed, 'progress' => 100, 'stage' => 'completed', 'completed_at' => now(), 'lease_expires_at' => null]);
         LenticularJobEvent::query()->create(['lenticular_job_id' => $job->id, 'type' => 'completed', 'payload' => ['artifact_id' => $artifact->id]]);
@@ -164,7 +191,9 @@ class JobController extends Controller
 
     private function artifactKind(LenticularJob $job): string
     {
-        return $job->operation === 'analyze_video' ? 'analysis' : 'frames';
+        return match ($job->operation) {
+            'analyze_video' => 'analysis', 'align_sequence' => 'aligned', default => 'frames'
+        };
     }
 
     private function storeAnalysisResult(LenticularJob $job, array $result): void
@@ -179,6 +208,22 @@ class JobController extends Controller
             LenticularProjectFile::query()->updateOrCreate(
                 ['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "analysis_thumbnail_{$index}"],
                 ['disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "thumbnail_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => []]
+            );
+        }
+    }
+
+    private function storeAlignmentResult(LenticularJob $job, array $result): void
+    {
+        $project = $job->lenticularProject;
+        $project->update(['settings' => array_merge($project->settings ?? [], ['alignment' => $result['alignment']])]);
+        foreach ($result['previews'] as $index => $encoded) {
+            $contents = base64_decode($encoded, true);
+            abort_unless(is_string($contents) && strlen($contents) <= 1048576 && str_starts_with($contents, "\xFF\xD8\xFF"), 422, 'Invalid alignment preview.');
+            $path = "lenticular/previews/{$job->lenticular_project_id}/alignment_{$index}.jpg";
+            Storage::disk(config('lenticular_machine.disk'))->put($path, $contents);
+            LenticularProjectFile::query()->updateOrCreate(
+                ['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "alignment_preview_{$index}"],
+                ['disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "alignment_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => []]
             );
         }
     }

@@ -8,4 +8,9 @@ set -a
 . "$PROJECT_DIR/.env"
 set +a
 
-exec env PYTHONPATH="$PROJECT_DIR/src" python3 -c 'from lenticular_machine.cli import worker_main; worker_main()'
+PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
+if [ ! -x "$PYTHON_BIN" ]; then
+    PYTHON_BIN=python3
+fi
+
+exec env PYTHONPATH="$PROJECT_DIR/src" "$PYTHON_BIN" -c 'from lenticular_machine.cli import worker_main; worker_main()'

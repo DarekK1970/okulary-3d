@@ -170,6 +170,43 @@ class LenticularWorkerApiTest extends TestCase
         $this->assertSame(3, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'analysis_thumbnail_%')->count());
     }
 
+    public function test_alignment_completion_stores_transforms_and_previews(): void
+    {
+        Storage::fake('local');
+        [$machine, $job] = $this->queuedJob('video-content');
+        $job->update([
+            'operation' => 'align_sequence',
+            'parameters' => [
+                'selection' => ['start' => 0, 'end' => 12, 'step' => 2, 'jpeg_quality' => 95],
+                'alignment' => ['z_center' => 0.5, 'z_width' => 0.05, 'alignment_y' => 0.5],
+            ],
+        ]);
+        $claim = $this->signedJson('POST', '/api/worker/v1/jobs/claim', ['lease_seconds' => 120, 'capabilities' => ['align_sequence:v1']], $machine);
+        $claim->assertOk()->assertJsonPath('alignment.z_width', 0.05);
+        $artifact = 'aligned-zip';
+        $this->call('PUT', $this->localUrl($claim->json('upload_url')), [], [], [], ['CONTENT_TYPE' => 'application/zip'], $artifact)->assertCreated();
+        $preview = base64_encode("\xFF\xD8\xFFpreview");
+        $payload = [
+            'lease_token' => $claim->json('lease_token'),
+            'artifact' => ['sha256' => hash('sha256', $artifact), 'size_bytes' => strlen($artifact), 'media_type' => 'application/zip'],
+            'result' => [
+                'alignment' => [
+                    'crop' => [2, 3, 1170, 780],
+                    'transforms' => [
+                        ['filename' => 'frame_000001.jpg', 'x' => 0, 'y' => 0, 'score' => 1],
+                        ['filename' => 'frame_000002.jpg', 'x' => -2.5, 'y' => 1.25, 'score' => 0.9],
+                    ],
+                ],
+                'previews' => [$preview, $preview],
+            ],
+        ];
+
+        $this->signedJson('POST', "/api/worker/v1/jobs/{$job->id}/complete", $payload, $machine)->assertOk();
+
+        $this->assertSame(1170, $job->lenticularProject->fresh()->settings['alignment']['crop'][2]);
+        $this->assertSame(2, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'alignment_preview_%')->count());
+    }
+
     /** @return array{ProcessingMachine, LenticularJob} */
     private function queuedJob(string $contents): array
     {

@@ -545,3 +545,78 @@
     border: 1px solid #d8e1ec;
     border-radius: 12px;
 }
+
+.lenticular-alignment-stage {
+    --z-center: 50%;
+    --z-width: 5%;
+    --alignment-y: 50%;
+    position: relative;
+    max-width: 900px;
+    margin: 18px auto 10px;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    border: 1px solid #d8e1ec;
+    border-radius: 14px;
+    background: #e9edf2;
+}
+
+.lenticular-alignment-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.lenticular-alignment-frame.frame-0 {
+    opacity: 1;
+}
+
+.lenticular-alignment-frame.is-visible {
+    opacity: .5;
+}
+
+.lenticular-z-zone {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--z-center) - var(--z-width) / 2);
+    width: var(--z-width);
+    min-width: 8px;
+    background: rgba(70, 78, 90, .32);
+    border-inline: 1px solid rgba(255, 255, 255, .8);
+    pointer-events: none;
+}
+
+.lenticular-z-zone span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--alignment-y);
+    height: 2px;
+    background: #e21f3d;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .45);
+}
+
+.lenticular-overlay-switches {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 18px;
+    color: #46546b;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+.lenticular-overlay-switches label {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.lab-control output {
+    color: #008fbd;
+}

@@ -50,6 +50,16 @@ class ContractTest(unittest.TestCase):
 
         self.assertIsNone(job.selection)
 
+    def test_parses_alignment_job_options(self) -> None:
+        data = manifest()
+        data["operation"] = "align_sequence"
+        data["artifact_kind"] = "aligned"
+        data["alignment"] = {"z_center": 0.4, "z_width": 0.05, "alignment_y": 0.6}
+
+        job = JobManifest.from_dict(data)
+
+        self.assertEqual(job.alignment["z_center"], 0.4)
+
     def test_rejects_untrusted_download_host(self) -> None:
         with self.assertRaises(ValueError):
             validate_remote_url("https://attacker.example/file", frozenset({"okulary-3d.pl"}))

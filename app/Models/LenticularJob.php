@@ -31,4 +31,9 @@ class LenticularJob extends Model
     {
         return $this->belongsTo(LenticularProjectFile::class, 'source_file_id');
     }
+
+    public function lenticularProject(): BelongsTo
+    {
+        return $this->belongsTo(LenticularProject::class);
+    }
 }

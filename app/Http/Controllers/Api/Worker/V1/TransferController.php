@@ -29,7 +29,9 @@ class TransferController extends Controller
     {
         $this->assertSignedLease($request, $job);
         abort_unless(in_array($job->status, [LenticularJobStatus::Leased, LenticularJobStatus::Downloading, LenticularJobStatus::Processing, LenticularJobStatus::Uploading], true), 409);
-        $kind = $job->operation === 'analyze_video' ? 'analysis' : 'frames';
+        $kind = match ($job->operation) {
+            'analyze_video' => 'analysis', 'align_sequence' => 'aligned', default => 'frames'
+        };
         $path = "lenticular/results/{$job->id}/{$kind}.zip";
         $stream = $request->getContent(true);
         abort_unless(is_resource($stream), 422, 'Artifact body is required.');

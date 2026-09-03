@@ -40,6 +40,7 @@ export default defineConfig({
                 'resources/js/cart.js',
                 'resources/js/stereo-lab.js',
                 'resources/js/lenticular-lab.js',
+                'resources/js/lenticular-project.js',
                 'resources/js/mpo-viewer.js',
                 'resources/js/wigglegram.js',
                 'resources/js/community-gallery.js',

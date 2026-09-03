@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from lenticular_machine.alignment import AlignmentConfig, SequenceAligner
 from lenticular_machine.models import JobManifest
 from lenticular_machine.processor import VideoFrameProcessor
 
@@ -94,6 +95,25 @@ class VideoIntegrationTest(unittest.TestCase):
 
             self.assertEqual((video.width, video.height, video.frame_count), (1178, 786, 97))
             self.assertEqual(len(list(output_dir.glob("thumbnail_*.jpg"))), 3)
+
+    def test_aligns_frames_extracted_from_test_video(self) -> None:
+        data = {
+            "job_id": "integration-alignment", "lease_token": "local-test", "operation": "align_sequence",
+            "source": {"url": "https://okulary-3d.pl/test/lenticular_test.mp4", "sha256": "0" * 64, "size_bytes": FIXTURE.stat().st_size, "filename": FIXTURE.name},
+            "upload_url": "https://okulary-3d.pl/test/result.zip", "artifact_kind": "aligned",
+            "selection": {"start": 0, "end": 12, "step": 3, "jpeg_quality": 95},
+            "alignment": {"z_center": 0.5, "z_width": 0.05, "alignment_y": 0.5},
+        }
+        processor = VideoFrameProcessor(ffmpeg=FFMPEG, ffprobe=FFPROBE)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            processor.extract(JobManifest.from_dict(data), FIXTURE, root / "raw")
+            result = SequenceAligner().align(sorted((root / "raw").glob("*.jpg")), root / "aligned", AlignmentConfig())
+
+            self.assertEqual(len(result.transforms), 5)
+            self.assertEqual(len(result.previews), 2)
+            self.assertTrue(all(path.is_file() for path in result.previews))
 
 
 if __name__ == "__main__":

@@ -80,10 +80,13 @@ class LenticularVideoProjectTest extends TestCase
             'end' => 40,
             'step' => 2,
             'jpeg_quality' => 95,
+            'z_center' => 0.4,
+            'z_width' => 0.05,
+            'alignment_y' => 0.6,
         ])->assertSessionHas('status');
 
-        $this->assertDatabaseHas('lenticular_jobs', ['lenticular_project_id' => $project->id, 'operation' => 'extract_video_frames']);
-        $job = $project->jobs()->where('operation', 'extract_video_frames')->sole();
-        $this->assertSame(['selection' => ['start' => 4, 'end' => 40, 'step' => 2, 'jpeg_quality' => 95]], $job->parameters);
+        $this->assertDatabaseHas('lenticular_jobs', ['lenticular_project_id' => $project->id, 'operation' => 'align_sequence']);
+        $job = $project->jobs()->where('operation', 'align_sequence')->sole();
+        $this->assertSame(['selection' => ['start' => 4, 'end' => 40, 'step' => 2, 'jpeg_quality' => 95], 'alignment' => ['z_center' => 0.4, 'z_width' => 0.05, 'alignment_y' => 0.6]], $job->parameters);
     }
 }

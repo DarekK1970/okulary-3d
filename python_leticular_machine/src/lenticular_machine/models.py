@@ -71,14 +71,15 @@ class JobManifest:
     upload_url: str
     selection: FrameSelection | None
     artifact_kind: str
+    alignment: dict[str, Any] | None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "JobManifest":
         operation = _required(data, "operation", str)
-        if operation not in {"analyze_video", "extract_video_frames"}:
+        if operation not in {"analyze_video", "extract_video_frames", "align_sequence"}:
             raise ContractError(f"unsupported operation: {operation}")
         selection_data = data.get("selection")
-        if operation == "extract_video_frames" and not isinstance(selection_data, dict):
+        if operation in {"extract_video_frames", "align_sequence"} and not isinstance(selection_data, dict):
             raise ContractError("selection is required for frame extraction")
         return cls(
             job_id=_required(data, "job_id", str),
@@ -88,4 +89,5 @@ class JobManifest:
             upload_url=_required(data, "upload_url", str),
             selection=FrameSelection.from_dict(selection_data) if isinstance(selection_data, dict) else None,
             artifact_kind=_required(data, "artifact_kind", str),
+            alignment=data.get("alignment") if isinstance(data.get("alignment"), dict) else None,
         )

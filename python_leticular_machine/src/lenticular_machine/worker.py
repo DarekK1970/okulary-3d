@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 import base64
+import hashlib
 import json
 import logging
 import shutil
@@ -10,6 +10,7 @@ import threading
 import time
 from pathlib import Path
 
+from .alignment import AlignmentConfig, SequenceAligner
 from .config import Settings
 from .gateway import PortalGateway
 from .models import JobManifest
@@ -82,16 +83,24 @@ class Worker:
                 self.gateway.download(job, source)
 
                 self.state.set(job.job_id, "processing")
-                stage = "analyzing_video" if job.operation == "analyze_video" else "extracting_frames"
+                stage = "analyzing_video" if job.operation == "analyze_video" else ("aligning_sequence" if job.operation == "align_sequence" else "extracting_frames")
                 self.gateway.progress(job, 20, stage)
                 frames = work_dir / job.artifact_kind
-                info = self.processor.analyze(source, frames) if job.operation == "analyze_video" else self.processor.extract(job, source, frames)
+                alignment_result = None
+                if job.operation == "analyze_video":
+                    info = self.processor.analyze(source, frames)
+                elif job.operation == "align_sequence":
+                    raw_frames = work_dir / "raw_frames"
+                    info = self.processor.extract(job, source, raw_frames)
+                    alignment_result = SequenceAligner().align(sorted(raw_frames.glob("*.jpg")), frames, AlignmentConfig(**(job.alignment or {})))
+                else:
+                    info = self.processor.extract(job, source, frames)
                 metadata = {
                     "schema": 1,
                     "job_id": job.job_id,
                     "source": {"width": info.width, "height": info.height, "frame_count": info.frame_count, "fps": info.fps, "duration_seconds": info.duration_seconds},
                     "selection": ({"start": job.selection.start, "end": job.selection.end, "step": job.selection.step} if job.selection else None),
-                    "frames": [path.name for path in sorted(frames.glob("*.jpg"))],
+                    "frames": ([item.filename for item in alignment_result.transforms] if alignment_result else [path.name for path in sorted(frames.glob("*.jpg"))]),
                 }
                 (frames / "manifest.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
                 archive_base = work_dir / "frames"
@@ -110,6 +119,11 @@ class Worker:
                     result = {
                         "video": metadata["source"],
                         "thumbnails": [base64.b64encode(path.read_bytes()).decode("ascii") for path in sorted(frames.glob("thumbnail_*.jpg"))],
+                    }
+                elif alignment_result is not None:
+                    result = {
+                        "alignment": {"crop": alignment_result.crop, "transforms": [{"filename": item.filename, "x": item.x, "y": item.y, "score": item.score} for item in alignment_result.transforms]},
+                        "previews": [base64.b64encode(path.read_bytes()).decode("ascii") for path in alignment_result.previews],
                     }
                 self.gateway.complete(job, digest, archive.stat().st_size, result)
                 self.state.set(job.job_id, "completed")

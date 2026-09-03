@@ -44,8 +44,10 @@ class LenticularProjectController extends Controller
         abort_unless($project->user_id === $request->user()->id, 404);
         $source = $project->files()->where('kind', 'source_video')->firstOrFail();
         $last = max(0, ((int) ($source->metadata['frame_count'] ?? 1)) - 1);
-        $validated = $request->validate(['start' => ['required', 'integer', 'min:0', "max:{$last}"], 'end' => ['required', 'integer', 'gte:start', "max:{$last}"], 'step' => ['required', 'integer', 'min:1'], 'jpeg_quality' => ['required', 'integer', 'between:1,100']]);
-        LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $validated]]);
+        $validated = $request->validate(['start' => ['required', 'integer', 'min:0', "max:{$last}"], 'end' => ['required', 'integer', 'gte:start', "max:{$last}"], 'step' => ['required', 'integer', 'min:1'], 'jpeg_quality' => ['required', 'integer', 'between:1,100'], 'z_center' => ['required', 'numeric', 'between:0,1'], 'z_width' => ['required', 'numeric', 'between:0.01,0.5'], 'alignment_y' => ['required', 'numeric', 'between:0,1']]);
+        $selection = collect($validated)->only(['start', 'end', 'step', 'jpeg_quality'])->all();
+        $alignment = collect($validated)->only(['z_center', 'z_width', 'alignment_y'])->all();
+        LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'align_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignment]]);
 
         return back()->with('status', 'Sekwencja została dodana do kolejki.');
     }
