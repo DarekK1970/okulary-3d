@@ -36,6 +36,13 @@ class HomeController extends Controller
         }
 
         return $this->articleQueryForLocale($locale)
+            ->whereDoesntHave(
+                'category',
+                fn ($query) => $query->where(
+                    'portal_section',
+                    ArticlePortalSection::HistoryCuriosities->value
+                )
+            )
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->limit(3)

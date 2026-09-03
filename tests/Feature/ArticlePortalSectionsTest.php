@@ -176,6 +176,47 @@ class ArticlePortalSectionsTest extends TestCase
             ->assertDontSee('Paryż — widok z Sekwany');
     }
 
+    public function test_existing_stereoscopy_category_is_moved_to_history_and_excluded_from_general_lists(): void
+    {
+        $this->freezeTime();
+        $history = ArticleCategory::create([
+            'name' => 'Stereoskopia – historia i archiwum',
+            'slug' => 'stereoskopia-archiwum',
+            'portal_section' => ArticlePortalSection::Articles,
+            'is_active' => true,
+        ]);
+        $general = ArticleCategory::create([
+            'name' => 'Aktualności',
+            'slug' => 'aktualnosci',
+            'portal_section' => ArticlePortalSection::Articles,
+            'is_active' => true,
+        ]);
+        $article = $this->publishedArticle($history, 'Historia obrazu stereo', 'historia-obrazu-stereo');
+        $article->update(['hero_image_path' => 'articles/history.jpg']);
+        $this->publishedArticle($general, 'Nowa publikacja ogólna', 'nowa-publikacja-ogolna');
+
+        $migration = require database_path('migrations/2026_09_03_073249_assign_stereoscopy_history_category_to_history_section.php');
+        $migration->up();
+
+        $this->get('/pl/articles?section=history-curiosities')
+            ->assertOk()
+            ->assertSee('Historia obrazu stereo')
+            ->assertSee('Krótki wstęp do publikacji.')
+            ->assertSee('articles/history.jpg')
+            ->assertSee('/pl/articles/historia-obrazu-stereo')
+            ->assertDontSee('Nowa publikacja ogólna');
+
+        $this->get('/pl/articles')
+            ->assertOk()
+            ->assertSee('Nowa publikacja ogólna')
+            ->assertDontSee('Historia obrazu stereo');
+
+        $this->get('/pl')
+            ->assertOk()
+            ->assertSee('Nowa publikacja ogólna')
+            ->assertDontSee('Historia obrazu stereo');
+    }
+
     private function publishedArticle(
         ArticleCategory $category,
         string $title,
@@ -185,7 +226,7 @@ class ArticlePortalSectionsTest extends TestCase
             'category_id' => $category->id,
             'source_locale' => 'pl',
             'title' => $title,
-            'slug' => 'legacy-' . $slug,
+            'slug' => 'legacy-'.$slug,
             'excerpt' => 'Krótki wstęp do publikacji.',
             'body_html' => '<p>Treść publikacji.</p>',
             'status' => ArticleStatus::Published,

@@ -24,10 +24,7 @@
             @if ($article->category)
                 <span>›</span>
 
-                <a href="{{ route('articles.index', [
-                    'locale' => app()->getLocale(),
-                    'category' => $article->category->slug
-                ]) }}">
+                <a href="{{ $article->category->publicIndexUrl(app()->getLocale()) }}">
                     {{ $article->category->name }}
                 </a>
             @endif
