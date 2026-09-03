@@ -144,7 +144,9 @@ Route::prefix('{locale}')
             Route::get('/create', [LenticularProjectController::class, 'create'])->name('create');
             Route::post('/', [LenticularProjectController::class, 'store'])->name('store');
             Route::get('/{project}', [LenticularProjectController::class, 'show'])->name('show');
+            Route::post('/{project}/video', [LenticularProjectController::class, 'uploadVideo'])->name('video.store');
             Route::post('/{project}/frames', [LenticularProjectController::class, 'selectFrames'])->name('frames.store');
+            Route::post('/{project}/alignment', [LenticularProjectController::class, 'alignFrames'])->name('alignment.store');
         });
         Route::get('/lab/mpo-viewer', [LabController::class, 'mpo'])
             ->name('lab.mpo');

@@ -161,6 +161,7 @@ class LenticularWorkerApiTest extends TestCase
             'result' => [
                 'video' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.041667],
                 'thumbnails' => [$preview, $preview, $preview],
+                'timeline' => [['frame_index' => 0, 'image' => $preview], ['frame_index' => 96, 'image' => $preview]],
             ],
         ];
 
@@ -168,6 +169,7 @@ class LenticularWorkerApiTest extends TestCase
 
         $this->assertSame(97, $job->sourceFile->fresh()->metadata['frame_count']);
         $this->assertSame(3, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'analysis_thumbnail_%')->count());
+        $this->assertSame(2, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'timeline_thumbnail_%')->count());
     }
 
     public function test_alignment_completion_stores_transforms_and_previews(): void

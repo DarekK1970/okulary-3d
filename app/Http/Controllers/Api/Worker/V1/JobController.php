@@ -121,6 +121,9 @@ class JobController extends Controller
             'result.video.duration_seconds' => [$analysisPresence, 'numeric', 'gt:0'],
             'result.thumbnails' => [$analysisPresence, 'array', 'size:3'],
             'result.thumbnails.*' => ['string', 'max:1400000'],
+            'result.timeline' => [$analysisPresence, 'array', 'between:1,20'],
+            'result.timeline.*.frame_index' => ['required_with:result.timeline', 'integer', 'min:0'],
+            'result.timeline.*.image' => ['required_with:result.timeline', 'string', 'max:500000'],
             'result.alignment' => [$alignmentPresence, 'array'],
             'result.alignment.crop' => [$alignmentPresence, 'array', 'size:4'],
             'result.alignment.crop.*' => ['integer', 'min:0'],
@@ -208,6 +211,16 @@ class JobController extends Controller
             LenticularProjectFile::query()->updateOrCreate(
                 ['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "analysis_thumbnail_{$index}"],
                 ['disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "thumbnail_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => []]
+            );
+        }
+        foreach ($result['timeline'] ?? [] as $index => $timeline) {
+            $contents = base64_decode($timeline['image'], true);
+            abort_unless(is_string($contents) && strlen($contents) <= 350000 && str_starts_with($contents, "\xFF\xD8\xFF"), 422, 'Invalid timeline thumbnail.');
+            $path = "lenticular/previews/{$job->lenticular_project_id}/timeline_{$index}.jpg";
+            Storage::disk(config('lenticular_machine.disk'))->put($path, $contents);
+            LenticularProjectFile::query()->updateOrCreate(
+                ['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "timeline_thumbnail_{$index}"],
+                ['disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "timeline_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => ['frame_index' => $timeline['frame_index']]]
             );
         }
     }

@@ -95,6 +95,7 @@ class VideoIntegrationTest(unittest.TestCase):
 
             self.assertEqual((video.width, video.height, video.frame_count), (1178, 786, 97))
             self.assertEqual(len(list(output_dir.glob("thumbnail_*.jpg"))), 3)
+            self.assertEqual(len(list(output_dir.glob("timeline_*.jpg"))), 20)
 
     def test_aligns_frames_extracted_from_test_video(self) -> None:
         data = {

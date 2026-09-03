@@ -1,3 +1,64 @@
+const setup = document.querySelector('[data-project-setup]');
+
+if (setup) {
+    const dpi = setup.querySelector('[name="printer_dpi"]');
+    const service = setup.querySelector('[name="print_service"]');
+    const output = setup.querySelector('[data-max-frames]');
+    const calculate = () => {
+        dpi.disabled = service.checked;
+        const effectiveDpi = service.checked ? 1440 : Number(dpi.value);
+        const lpi = Number(setup.querySelector('[name="lpi"]:checked')?.value || 60);
+        output.textContent = String(Math.floor(effectiveDpi / lpi));
+    };
+    setup.addEventListener('input', calculate);
+    calculate();
+}
+
+const timelineForm = document.querySelector('[data-frame-timeline]');
+
+if (timelineForm) {
+    const frameCount = Number(timelineForm.dataset.frameCount);
+    const maximumFrames = Number(timelineForm.dataset.maxFrames);
+    const step = timelineForm.querySelector('[data-frame-step]');
+    const slider = timelineForm.querySelector('[data-timeline-slider]');
+    const selection = timelineForm.querySelector('[data-timeline-selection]');
+    const startInput = timelineForm.querySelector('[data-frame-start]');
+    const endInput = timelineForm.querySelector('[data-frame-end]');
+    let dragOffset = 0;
+
+    const render = (requestedStart = Number(slider.value)) => {
+        const interval = Number(step.value);
+        const selectedCount = Math.min(maximumFrames, Math.floor((frameCount - 1) / interval) + 1);
+        const span = Math.max(0, (selectedCount - 1) * interval);
+        const start = Math.min(Math.max(0, Math.round(requestedStart)), frameCount - 1 - span);
+        const end = start + span;
+        slider.max = String(Math.max(0, frameCount - 1 - span));
+        slider.value = String(start);
+        startInput.value = String(start);
+        endInput.value = String(end);
+        timelineForm.querySelector('[data-range-start]').textContent = String(start);
+        timelineForm.querySelector('[data-range-end]').textContent = String(end);
+        timelineForm.querySelector('[data-selected-count]').textContent = String(selectedCount);
+        selection.style.left = `${start / Math.max(1, frameCount - 1) * 100}%`;
+        selection.style.width = `${span / Math.max(1, frameCount - 1) * 100}%`;
+        timelineForm.querySelectorAll('[data-frame-index]').forEach((item) => item.classList.toggle('is-selected', Number(item.dataset.frameIndex) >= start && Number(item.dataset.frameIndex) <= end));
+    };
+
+    slider.addEventListener('input', () => render());
+    step.addEventListener('change', () => render());
+    selection.addEventListener('pointerdown', (event) => {
+        const bounds = selection.parentElement.getBoundingClientRect();
+        dragOffset = event.clientX - bounds.left - selection.offsetLeft;
+        selection.setPointerCapture(event.pointerId);
+    });
+    selection.addEventListener('pointermove', (event) => {
+        if (!selection.hasPointerCapture(event.pointerId)) return;
+        const bounds = selection.parentElement.getBoundingClientRect();
+        render(((event.clientX - bounds.left - dragOffset) / bounds.width) * (frameCount - 1));
+    });
+    render(0);
+}
+
 const stage = document.querySelector('[data-alignment-stage]');
 
 if (stage) {

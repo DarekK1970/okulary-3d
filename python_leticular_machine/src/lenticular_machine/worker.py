@@ -119,6 +119,7 @@ class Worker:
                     result = {
                         "video": metadata["source"],
                         "thumbnails": [base64.b64encode(path.read_bytes()).decode("ascii") for path in sorted(frames.glob("thumbnail_*.jpg"))],
+                        "timeline": [{"frame_index": frame_index, "image": base64.b64encode(path.read_bytes()).decode("ascii")} for frame_index, path in zip(self.processor.timeline_indices(info.frame_count), sorted(frames.glob("timeline_*.jpg")))],
                     }
                 elif alignment_result is not None:
                     result = {

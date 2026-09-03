@@ -474,6 +474,78 @@
     }
 }
 
+.lenticular-stepper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 18px 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.lenticular-stepper li {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #dce3ec;
+    border-radius: 11px;
+    color: #7c8798;
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+.lenticular-stepper span {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: #e8edf3;
+}
+
+.lenticular-stepper .is-active { border-color: #00a8df; color: #14223a; background: #f1fbff; }
+.lenticular-stepper .is-active span { background: #00a8df; color: #fff; }
+.lenticular-stepper .is-complete { color: #267052; background: #f2faf5; }
+.lenticular-stepper .is-complete span { background: #35a878; color: #fff; }
+.lenticular-stepper .is-locked { opacity: .55; }
+
+.lenticular-wizard-step h2 { margin: 0 0 6px; color: #14223a; }
+.lenticular-wizard-step > p { color: #68758a; }
+.lenticular-setup-form fieldset { margin: 0; padding: 0; border: 0; }
+.lenticular-setup-form legend { margin-bottom: 8px; color: #2f3e56; font-size: .62rem; font-weight: 800; }
+.lenticular-choice-row { display: flex; flex-wrap: wrap; gap: 9px; }
+.lenticular-choice-row label, .lenticular-company-print { padding: 11px 15px; border: 1px solid #d8e1ec; border-radius: 10px; color: #34435b; font-size: .65rem; font-weight: 750; cursor: pointer; }
+.lenticular-frame-calculation { padding: 14px; border-radius: 10px; background: #edfaff; color: #3c4c62; }
+.lenticular-frame-calculation strong { color: #008fbd; font-size: 1.2rem; }
+
+.lenticular-timeline {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    margin-top: 20px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #d9dee5;
+}
+
+.lenticular-timeline figure { position: relative; flex: 1; min-width: 0; margin: 0; opacity: .32; transition: opacity .15s; }
+.lenticular-timeline figure.is-selected { opacity: 1; }
+.lenticular-timeline img { width: 100%; height: 92px; display: block; object-fit: cover; }
+.lenticular-timeline figcaption { position: absolute; right: 3px; bottom: 2px; padding: 2px 4px; border-radius: 4px; background: rgba(0,0,0,.62); color: #fff; font-size: .45rem; }
+.lenticular-timeline-selection { position: absolute; z-index: 3; top: 0; bottom: 0; border: 2px solid #00a8df; border-radius: 8px; background: rgba(190, 240, 255, .2); cursor: grab; touch-action: none; }
+.lenticular-timeline-selection:active { cursor: grabbing; }
+.lenticular-timeline-slider { width: 100%; margin-top: 10px; }
+.lenticular-timeline-options { display: flex; justify-content: space-between; gap: 20px; align-items: center; color: #46546b; font-size: .65rem; font-weight: 700; }
+.lenticular-timeline-options select { margin-left: 7px; padding: 7px 30px 7px 9px; border: 1px solid #d8e1ec; border-radius: 8px; }
+
+@media (max-width: 620px) {
+    .lenticular-stepper { grid-template-columns: 1fr; }
+    .lenticular-timeline img { height: 64px; }
+    .lenticular-timeline-options { align-items: flex-start; flex-direction: column; }
+}
+
 @media (max-width: 620px) {
     .lab-tool-grid .lab-tool-card {
         grid-template-columns: 1fr;

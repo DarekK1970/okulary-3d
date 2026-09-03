@@ -105,4 +105,21 @@ class VideoFrameProcessor:
             raise ProcessingError(f"thumbnail extraction failed: {result.stderr.strip()}")
         if len(list(output_dir.glob("thumbnail_*.jpg"))) != len(indices):
             raise ProcessingError("thumbnail extraction returned an unexpected file count")
+        timeline_indices = self.timeline_indices(info.frame_count)
+        timeline_expression = "+".join(f"eq(n\\,{index})" for index in timeline_indices)
+        timeline_result = self.run_ffmpeg(
+            [self.ffmpeg, "-nostdin", "-v", "error", "-i", str(source),
+             "-vf", f"select='{timeline_expression}',scale=320:-2", "-fps_mode", "vfr",
+             "-q:v", "5", str(output_dir / "timeline_%02d.jpg")],
+            timeout=600,
+        )
+        if timeline_result.returncode != 0 or len(list(output_dir.glob("timeline_*.jpg"))) != len(timeline_indices):
+            raise ProcessingError("timeline thumbnail extraction failed")
         return info
+
+    @staticmethod
+    def timeline_indices(frame_count: int, maximum: int = 20) -> list[int]:
+        count = min(maximum, frame_count)
+        if count <= 1:
+            return [0]
+        return [round(index * (frame_count - 1) / (count - 1)) for index in range(count)]

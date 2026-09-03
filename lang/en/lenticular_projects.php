@@ -6,4 +6,7 @@ return [
     'z_position' => 'Z region position', 'z_width' => 'Z region width', 'alignment_y' => 'Vertical alignment line',
     'move_z' => 'Drag to position the Z region',
     'auto_alignment' => 'Automatically align frames', 'alignment_status' => 'Alignment status', 'alignment_preview' => 'Alignment preview :number',
+    'step_1' => 'Step 1: Print settings', 'step_2' => 'Step 2: Video and frame selection', 'step_3' => 'Step 3: Z point and alignment',
+    'print_intro' => 'Choose the format, resolution and lens sheet so we can calculate the required frame count.', 'print_size' => 'Print size', 'printer_dpi' => 'Your printer resolution', 'company_print' => 'Print it with your company — 1440 DPI', 'lens_lpi' => 'Lenticular sheet', 'available_frames' => 'Required frame count:', 'next_step' => 'Next step',
+    'upload_video' => 'Upload video', 'upload_help' => 'Maximum file size is 100 MB. A timeline will appear after analysis.', 'analysis_in_progress' => 'Analyzing video', 'select_range' => 'Select frame range', 'resolution' => 'Resolution', 'frames' => 'Frames', 'duration' => 'Duration', 'extracting' => 'Extracting selected frames:', 'range_position' => 'Selected range position', 'frame_step' => 'Take every nth frame', 'selected_range' => 'Selected range:', 'extract_frames' => 'Extract frames as images', 'alignment_help' => 'Set the Z point, compare frames and start automatic alignment.',
 ];

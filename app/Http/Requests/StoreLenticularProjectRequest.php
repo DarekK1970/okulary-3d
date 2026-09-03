@@ -24,7 +24,10 @@ class StoreLenticularProjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
+            'print_size' => ['required', 'in:A3,A4,A5,15x10'],
+            'print_service' => ['nullable', 'boolean'],
+            'printer_dpi' => ['required_unless:print_service,1', 'nullable', 'integer', 'between:300,4800'],
+            'lpi' => ['required', 'integer', 'in:50,60,75'],
         ];
     }
 }
