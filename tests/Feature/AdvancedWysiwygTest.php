@@ -34,8 +34,7 @@ class AdvancedWysiwygTest extends TestCase
                 'data-media-picker-modal',
                 'Słowa:',
                 'Znaki:',
-            ]
-            as $needle
+            ] as $needle
         ) {
             $this->assertStringContainsString(
                 $needle,
@@ -86,6 +85,26 @@ HTML;
             '<img src="/storage/media/test.webp" alt="3D">',
             $result
         );
+    }
+
+    public function test_image_size_and_alignment_survive_sanitizing_without_allowing_arbitrary_layout(): void
+    {
+        $sanitizer = app(ArticleHtmlSanitizer::class);
+        foreach (['0px' => 'auto', 'auto' => '0px'] as $left => $right) {
+            $result = $sanitizer->sanitize(
+                '<img src="/storage/photo.jpg" width="320" alt="Photo" style="display:block;margin-left:'.$left.';margin-right:'.$right.';position:fixed;transform:scale(8)">'
+            );
+            $this->assertStringContainsString('width="320"', $result);
+            $this->assertStringContainsString('display: block', $result);
+            $this->assertStringContainsString('margin-left: '.$left, $result);
+            $this->assertStringContainsString('margin-right: '.$right, $result);
+            $this->assertStringNotContainsString('position', $result);
+            $this->assertStringNotContainsString('transform', $result);
+            $this->assertSame($result, $sanitizer->sanitize($result));
+        }
+
+        $result = $sanitizer->sanitize('<img src="/photo.jpg" style="display:none;margin-left:-9999px;margin-right:expression(alert(1))"><p style="display:block;margin-left:auto">Text</p>');
+        $this->assertStringNotContainsString('style=', $result);
     }
 
     public function test_sanitizer_removes_scriptable_content_and_unsafe_styles(): void

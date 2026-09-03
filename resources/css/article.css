@@ -142,6 +142,13 @@
     letter-spacing: -.03em;
 }
 
+.public-article .article-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 14px auto;
+}
+
 .article-content h3 {
     margin: 1.8em 0 .55em;
     color: #172033;

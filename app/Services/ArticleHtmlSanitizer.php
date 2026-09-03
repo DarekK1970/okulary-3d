@@ -109,9 +109,9 @@ class ArticleHtmlSanitizer
 
         $document->loadHTML(
             '<?xml encoding="UTF-8">'
-            . '<div data-sanitize-root>'
-            . $html
-            . '</div>',
+            .'<div data-sanitize-root>'
+            .$html
+            .'</div>',
             LIBXML_HTML_NOIMPLIED
             | LIBXML_HTML_NODEFDTD
         );
@@ -140,8 +140,7 @@ class ArticleHtmlSanitizer
         foreach (
             iterator_to_array(
                 $root->childNodes
-            )
-            as $child
+            ) as $child
         ) {
             $result .= $document
                 ->saveHTML($child);
@@ -156,8 +155,7 @@ class ArticleHtmlSanitizer
         foreach (
             iterator_to_array(
                 $parent->childNodes
-            )
-            as $child
+            ) as $child
         ) {
             if (
                 $child->nodeType
@@ -221,8 +219,7 @@ class ArticleHtmlSanitizer
         foreach (
             iterator_to_array(
                 $element->attributes
-            )
-            as $attribute
+            ) as $attribute
         ) {
             $name = strtolower(
                 $attribute->name
@@ -250,7 +247,8 @@ class ArticleHtmlSanitizer
             if ($name === 'style') {
                 $style =
                     $this->sanitizeStyle(
-                        $attribute->value
+                        $attribute->value,
+                        strtolower($element->tagName) === 'img'
                     );
 
                 if ($style === '') {
@@ -374,8 +372,7 @@ class ArticleHtmlSanitizer
         }
 
         foreach (
-            ['width', 'height']
-            as $dimension
+            ['width', 'height'] as $dimension
         ) {
             $value = $element
                 ->getAttribute(
@@ -447,13 +444,13 @@ class ArticleHtmlSanitizer
     }
 
     private function sanitizeStyle(
-        string $style
+        string $style,
+        bool $isImage = false
     ): string {
         $safe = [];
 
         foreach (
-            explode(';', $style)
-            as $declaration
+            explode(';', $style) as $declaration
         ) {
             if (
                 ! str_contains(
@@ -479,6 +476,16 @@ class ArticleHtmlSanitizer
             $property = strtolower(
                 $property
             );
+
+            if ($isImage && (
+                ($property === 'display' && $value === 'block')
+                || (in_array($property, ['margin-left', 'margin-right'], true)
+                    && preg_match('/^(auto|0(?:px)?)$/', $value))
+            )) {
+                $safe[] = $property.': '.$value;
+
+                continue;
+            }
 
             if (
                 ! in_array(
@@ -511,8 +518,8 @@ class ArticleHtmlSanitizer
 
             $safe[] =
                 $property
-                . ': '
-                . $value;
+                .': '
+                .$value;
         }
 
         return implode(
@@ -526,42 +533,37 @@ class ArticleHtmlSanitizer
         string $value
     ): bool {
         return match ($property) {
-            'text-align' =>
-                in_array(
-                    strtolower($value),
-                    [
-                        'left',
-                        'center',
-                        'right',
-                        'justify',
-                    ],
-                    true
-                ),
+            'text-align' => in_array(
+                strtolower($value),
+                [
+                    'left',
+                    'center',
+                    'right',
+                    'justify',
+                ],
+                true
+            ),
 
-            'text-decoration' =>
-                preg_match(
-                    '/^(?:none|underline|line-through|underline line-through|line-through underline)$/i',
-                    $value
-                ) === 1,
+            'text-decoration' => preg_match(
+                '/^(?:none|underline|line-through|underline line-through|line-through underline)$/i',
+                $value
+            ) === 1,
 
-            'font-size' =>
-                preg_match(
-                    '/^(?:[8-9]|[1-6]\d|72)(?:px|pt)$|^(?:0\.[5-9]|1(?:\.[0-9])?|2)em$|^(?:50|60|70|80|90|100|110|120|130|140|150|175|200)%$/i',
-                    $value
-                ) === 1,
+            'font-size' => preg_match(
+                '/^(?:[8-9]|[1-6]\d|72)(?:px|pt)$|^(?:0\.[5-9]|1(?:\.[0-9])?|2)em$|^(?:50|60|70|80|90|100|110|120|130|140|150|175|200)%$/i',
+                $value
+            ) === 1,
 
-            'font-family' =>
-                preg_match(
-                    '/^[a-z0-9 ,"\'-]{1,120}$/i',
-                    $value
-                ) === 1,
+            'font-family' => preg_match(
+                '/^[a-z0-9 ,"\'-]{1,120}$/i',
+                $value
+            ) === 1,
 
             'color',
-            'background-color' =>
-                preg_match(
-                    '/^(?:#[0-9a-f]{3,8}|rgba?\([0-9., %]+\)|hsla?\([0-9., %deg]+\)|[a-z]{3,24})$/i',
-                    $value
-                ) === 1,
+            'background-color' => preg_match(
+                '/^(?:#[0-9a-f]{3,8}|rgba?\([0-9., %]+\)|hsla?\([0-9., %deg]+\)|[a-z]{3,24})$/i',
+                $value
+            ) === 1,
 
             default => false,
         };

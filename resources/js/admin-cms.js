@@ -1,3 +1,5 @@
+import { initEditorImages } from './editor-images';
+
 const slugify = (value) => value
     .toString()
     .normalize('NFD')
@@ -91,6 +93,11 @@ const sanitizePastedHtml = (html) => {
                             /url\s*\(|expression\s*\(|behavior\s*:|-moz-binding/i.test(value)
                         ) {
                             return false;
+                        }
+
+                        if (element.tagName === 'IMG') {
+                            if (key === 'display') return value === 'block';
+                            if (['margin-left', 'margin-right'].includes(key)) return /^(auto|0(?:px)?)$/.test(value);
                         }
 
                         return [
@@ -477,6 +484,7 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
     };
 
     toolbar.addEventListener('mousedown', (event) => {
+        state.rememberSelection();
         if (
             event.target.closest('button')
             || event.target.closest('select')
@@ -504,7 +512,8 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
                 return;
             }
 
-            editor.focus();
+            if (state.alignImage(command)) return;
+            state.restoreSelection();
             document.execCommand(command, false, value);
             sync();
             return;
@@ -579,6 +588,7 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
                 return;
             }
 
+            state.rememberSelection();
             const src = normaliseUrl(
                 window.prompt(
                     'Adres obrazu URL:',
@@ -595,13 +605,9 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
                     'Tekst alternatywny (ALT):',
                     '',
                 ) || ''
-            ).replace(/"/g, '&quot;');
-
-            editor.focus();
-            insertHtml(
-                `<img src="${src.replace(/"/g, '&quot;')}" alt="${alt}">`,
             );
-            sync();
+
+            state.insertImage(src, alt);
             return;
         }
 
@@ -616,6 +622,7 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
                 return;
             }
 
+            state.rememberSelection();
             state.mediaInsertMode = true;
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
@@ -643,6 +650,7 @@ const createAdvancedToolbar = (wrapper, editor, output, source, state) => {
         }
 
         if (action === 'source') {
+            state.clearImageSelection();
             state.sourceMode = !state.sourceMode;
 
             if (state.sourceMode) {
@@ -741,6 +749,14 @@ const initEditorMediaIntegration = (states) => {
         return;
     }
 
+    const reset = () => states.forEach((state) => { state.mediaInsertMode = false; });
+    modal.addEventListener('media-picker-closed', () => {
+        const state = [...states].find((candidate) => candidate.mediaInsertMode);
+        reset();
+        state?.restoreSelection();
+    });
+    document.querySelector('[data-media-picker-open]')?.addEventListener('click', reset, true);
+
     modal.addEventListener(
         'click',
         (event) => {
@@ -765,13 +781,7 @@ const initEditorMediaIntegration = (states) => {
             const name = item.dataset.mediaName || '';
 
             if (url) {
-                state.editor.focus();
-
-                insertHtml(
-                    `<img src="${url.replace(/"/g, '&quot;')}" alt="${name.replace(/"/g, '&quot;')}">`,
-                );
-
-                state.sync();
+                state.insertImage(url, name);
             }
 
             state.mediaInsertMode = false;
@@ -851,6 +861,7 @@ const initEditor = () => {
         );
 
         state.sync = sync;
+        initEditorImages(state);
         states.add(state);
 
         legacyToolbar?.insertAdjacentElement('afterend', toolbar);

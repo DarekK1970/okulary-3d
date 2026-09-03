@@ -19,6 +19,7 @@ const initMediaPicker = () => {
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('media-picker-open');
+        modal.dispatchEvent(new Event('media-picker-closed'));
     };
 
     const open = () => {
