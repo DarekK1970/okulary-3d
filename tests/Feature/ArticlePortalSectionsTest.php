@@ -217,6 +217,40 @@ class ArticlePortalSectionsTest extends TestCase
             ->assertDontSee('Historia obrazu stereo');
     }
 
+    public function test_techniques_and_technologies_category_shows_publication_cards_in_techniques(): void
+    {
+        $this->freezeTime();
+        $category = ArticleCategory::create([
+            'name' => 'Techniki i technologie 3D',
+            'slug' => 'technologie',
+            'portal_section' => ArticlePortalSection::Articles,
+            'is_active' => true,
+        ]);
+        $article = $this->publishedArticle($category, 'Kino 3D bez okularów', 'kino-3d-bez-okularow');
+        $article->update(['hero_image_path' => 'articles/cinema.jpg']);
+        $draft = $this->publishedArticle($category, 'Nieopublikowana technika', 'nieopublikowana-technika');
+        $draft->update(['status' => ArticleStatus::Draft]);
+
+        $migration = require database_path('migrations/2026_09_03_101501_assign_techniques_and_technologies_category_to_techniques_section.php');
+        $migration->up();
+
+        $this->get('/pl/articles?section=techniques')
+            ->assertOk()
+            ->assertSee('Kino 3D bez okularów')
+            ->assertSee('Krótki wstęp do publikacji.')
+            ->assertSee('articles/cinema.jpg')
+            ->assertSee('/pl/articles/kino-3d-bez-okularow')
+            ->assertSee('home-publication-card', false)
+            ->assertDontSee('Nieopublikowana technika');
+
+        $this->get('/pl/articles?section=history-curiosities')
+            ->assertOk()
+            ->assertDontSee('Kino 3D bez okularów');
+
+        $this->assertSame(ArticlePortalSection::Techniques, $category->fresh()->portal_section);
+        $this->assertSame(ArticlePortalSection::HistoryCuriosities, ArticleCategory::where('slug', 'ciekawostki-historyczne')->firstOrFail()->portal_section);
+    }
+
     private function publishedArticle(
         ArticleCategory $category,
         string $title,
