@@ -295,7 +295,12 @@
 
 .cms-editor-sidebar {
     display: grid;
+    min-width: 0;
     gap: 14px;
+}
+
+.cms-editor-sidebar > .cms-panel {
+    min-width: 0;
 }
 
 .cms-panel {
