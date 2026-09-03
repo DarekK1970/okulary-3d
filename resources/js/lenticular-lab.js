@@ -75,6 +75,9 @@ class LenticularLab {
 
             control.addEventListener('change', () => {
                 this.updateAllCalculations();
+                if (control.dataset.lenticularControl === 'orientation' && this.images.length >= 2) {
+                    this.renderInterlacedPreview();
+                }
             });
         });
     }
@@ -361,6 +364,8 @@ class LenticularLab {
             lpi,
             dpi,
             phase,
+            orientation: this.root.querySelector('[data-lenticular-control="orientation"]')?.value === 'horizontal'
+                ? 'horizontal' : 'vertical',
             widthMm,
             heightMm,
             views,
@@ -426,9 +431,15 @@ class LenticularLab {
         image,
         targetWidth,
         targetHeight,
-        destX,
-        destWidth
+        position,
+        thickness,
+        orientation = 'vertical'
     ) {
+        const horizontal = orientation === 'horizontal';
+        const destX = horizontal ? 0 : position;
+        const destY = horizontal ? position : 0;
+        const destWidth = horizontal ? targetWidth : thickness;
+        const destHeight = horizontal ? thickness : targetHeight;
         const sourceWidth = image.width;
         const sourceHeight = image.height;
         const sourceRatio = sourceWidth / sourceHeight;
@@ -452,9 +463,9 @@ class LenticularLab {
         }
 
         const sx = (destX - dx) * (sourceWidth / drawWidth);
-        const sy = (0 - dy) * (sourceHeight / drawHeight);
+        const sy = (destY - dy) * (sourceHeight / drawHeight);
         const sw = destWidth * (sourceWidth / drawWidth);
-        const sh = targetHeight * (sourceHeight / drawHeight);
+        const sh = destHeight * (sourceHeight / drawHeight);
 
         ctx.drawImage(
             image,
@@ -463,9 +474,9 @@ class LenticularLab {
             sw,
             sh,
             destX,
-            0,
+            destY,
             destWidth,
-            targetHeight
+            destHeight
         );
     }
 
@@ -526,7 +537,7 @@ class LenticularLab {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        const viewForColumn = (x) => {
+        const viewForPosition = (x) => {
             const wrapped = (
                 (
                     (
@@ -550,16 +561,17 @@ class LenticularLab {
         };
 
         let x = 0;
+        const axisLength = settings.orientation === 'horizontal' ? height : width;
 
-        while (x < width) {
+        while (x < axisLength) {
             const viewIndex =
-                viewForColumn(x);
+                viewForPosition(x);
 
             let end = x + 1;
 
             while (
-                end < width
-                && viewForColumn(end)
+                end < axisLength
+                && viewForPosition(end)
                     === viewIndex
             ) {
                 end += 1;
@@ -575,7 +587,8 @@ class LenticularLab {
                 width,
                 height,
                 x,
-                end - x
+                end - x,
+                settings.orientation
             );
 
             x = end;

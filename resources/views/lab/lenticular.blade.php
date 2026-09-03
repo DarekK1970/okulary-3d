@@ -153,6 +153,13 @@
                                 data-lenticular-control="phase"
                             >
                         </div>
+                        <div class="lab-control">
+                            <label for="lenticular-orientation">{{ __('lab.lenticular.interlacer.orientation') }}</label>
+                            <select id="lenticular-orientation" data-lenticular-control="orientation">
+                                <option value="vertical" selected>{{ __('lab.lenticular.interlacer.vertical') }}</option>
+                                <option value="horizontal">{{ __('lab.lenticular.interlacer.horizontal') }}</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="lenticular-metrics">

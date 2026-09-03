@@ -71,7 +71,6 @@ return [
             'feature_3' => 'Side-by-side or anaglyph export',
         ],
 
-
         'lenticular' => [
             'title' => 'Lenticular LAB',
             'description' => 'Prepare images for lenticular printing: multi-view interlacing, pitch testing and parameter calculation.',
@@ -178,6 +177,9 @@ return [
             'lpi' => 'Lens LPI',
             'dpi' => 'Raster DPI',
             'phase' => 'Pattern phase (px)',
+            'orientation' => 'Lens orientation',
+            'vertical' => 'Vertical',
+            'horizontal' => 'Horizontal',
             'width_mm' => 'Print width (mm)',
             'height_mm' => 'Print height (mm)',
             'views' => 'Number of views',

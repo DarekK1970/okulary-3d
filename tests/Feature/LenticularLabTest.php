@@ -14,7 +14,10 @@ class LenticularLabTest extends TestCase
             ->assertSee('Lenticular Interlacer')
             ->assertSee('Pitch Test Generator')
             ->assertSee('Lenticular Calculator')
-            ->assertSee('A4 Lenticular Wizard');
+            ->assertSee('A4 Lenticular Wizard')
+            ->assertSee('Kierunek soczewek')
+            ->assertSee('value="vertical" selected', false)
+            ->assertSee('Poziome');
     }
 
     public function test_english_lenticular_lab_is_localized(): void
@@ -24,7 +27,9 @@ class LenticularLabTest extends TestCase
             ->assertSee('Source files stay on your device')
             ->assertSee('Download print-ready PDF')
             ->assertSee('Download PNG')
-            ->assertSee('Apply to Interlacer');
+            ->assertSee('Apply to Interlacer')
+            ->assertSee('Lens orientation')
+            ->assertSee('Horizontal');
     }
 
     public function test_lab_landing_contains_lenticular_tool(): void

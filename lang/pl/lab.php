@@ -71,7 +71,6 @@ return [
             'feature_3' => 'Eksport pary side-by-side lub anaglifu',
         ],
 
-
         'lenticular' => [
             'title' => 'Lenticular LAB',
             'description' => 'Przygotuj obraz do druku soczewkowego: przeplot wielu widoków, test pitch oraz kalkulator parametrów.',
@@ -178,6 +177,9 @@ return [
             'lpi' => 'LPI soczewki',
             'dpi' => 'DPI rastra',
             'phase' => 'Faza wzoru (px)',
+            'orientation' => 'Kierunek soczewek',
+            'vertical' => 'Pionowe',
+            'horizontal' => 'Poziome',
             'width_mm' => 'Szerokość wydruku (mm)',
             'height_mm' => 'Wysokość wydruku (mm)',
             'views' => 'Liczba widoków',
