@@ -88,10 +88,10 @@ class LenticularVideoProjectTest extends TestCase
         ]);
 
         $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/frames", [
-            'start' => 4,
-            'end' => 40,
-            'step' => 2,
-            'jpeg_quality' => 95,
+            'start' => '4',
+            'end' => '40',
+            'step' => '2',
+            'jpeg_quality' => '95',
         ])->assertSessionHas('status');
 
         $this->assertDatabaseHas('lenticular_jobs', ['lenticular_project_id' => $project->id, 'operation' => 'extract_video_frames']);
@@ -107,7 +107,7 @@ class LenticularVideoProjectTest extends TestCase
         $source = LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id]);
         LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed]);
 
-        $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/alignment", ['z_center' => 0.4, 'z_width' => 0.05, 'alignment_y' => 0.6])->assertSessionHas('status');
+        $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/alignment", ['z_center' => '0.4', 'z_width' => '0.05', 'alignment_y' => '0.6'])->assertSessionHas('status');
 
         $job = $project->jobs()->where('operation', 'align_sequence')->sole();
         $this->assertSame(['selection' => $selection, 'alignment' => ['z_center' => 0.4, 'z_width' => 0.05, 'alignment_y' => 0.6]], $job->parameters);

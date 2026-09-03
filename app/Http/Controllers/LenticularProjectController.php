@@ -60,7 +60,7 @@ class LenticularProjectController extends Controller
         $source = $project->files()->where('kind', 'source_video')->firstOrFail();
         $last = max(0, ((int) ($source->metadata['frame_count'] ?? 1)) - 1);
         $validated = $request->validate(['start' => ['required', 'integer', 'min:0', "max:{$last}"], 'end' => ['required', 'integer', 'gte:start', "max:{$last}"], 'step' => ['required', 'integer', 'between:1,10'], 'jpeg_quality' => ['required', 'integer', 'between:1,100']]);
-        $selection = collect($validated)->only(['start', 'end', 'step', 'jpeg_quality'])->all();
+        $selection = collect($validated)->only(['start', 'end', 'step', 'jpeg_quality'])->map(fn ($value): int => (int) $value)->all();
         abort_if(((int) floor(($selection['end'] - $selection['start']) / $selection['step'])) + 1 > (int) ($project->settings['max_frames'] ?? 1), 422, 'Selected range contains too many frames.');
         LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection]]);
         $project->update(['settings' => array_merge($project->settings ?? [], ['selection' => $selection])]);
@@ -75,7 +75,7 @@ class LenticularProjectController extends Controller
         $extraction = $project->jobs()->where('operation', 'extract_video_frames')->where('status', LenticularJobStatus::Completed)->latest()->first();
         $selection = $project->settings['selection'] ?? $extraction?->parameters['selection'] ?? null;
         abort_unless(is_array($selection) && $extraction !== null, 409, 'Frames must be extracted first.');
-        $alignment = $request->validate(['z_center' => ['required', 'numeric', 'between:0,1'], 'z_width' => ['required', 'numeric', 'between:0.01,0.5'], 'alignment_y' => ['required', 'numeric', 'between:0,1']]);
+        $alignment = collect($request->validate(['z_center' => ['required', 'numeric', 'between:0,1'], 'z_width' => ['required', 'numeric', 'between:0.01,0.5'], 'alignment_y' => ['required', 'numeric', 'between:0,1']]))->map(fn ($value): float => (float) $value)->all();
         LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'align_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignment]]);
 
         return back()->with('status', 'Automatyczne wyrównanie zostało uruchomione.');
