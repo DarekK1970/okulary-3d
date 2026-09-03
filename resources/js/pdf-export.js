@@ -21,13 +21,7 @@ const dataUrlToBytes = (dataUrl) => {
     return bytes;
 };
 
-const estimateCenteredTextX = (text, pageWidthPt, fontSizePt) => {
-    const estimatedWidth = text.length * fontSizePt * 0.46;
-
-    return Math.max(18, (pageWidthPt - estimatedWidth) / 2);
-};
-
-const createPdfBlob = ({
+export const createPdfBlob = ({
     canvas,
     pageWidthMm,
     pageHeightMm,
@@ -36,34 +30,16 @@ const createPdfBlob = ({
     keywords,
     creator = 'Wortal Okulary 3D',
     producer = 'Wortal Okulary 3D PDF Engine',
-    headerText = 'www.okulary-3d.pl',
-    headerFontSizePt = 10,
-    headerTopMarginMm = 4,
-    headerReservedAreaMm = 8,
 }) => {
     const pageWidthPt = mmToPt(pageWidthMm);
     const pageHeightPt = mmToPt(pageHeightMm);
-    const headerTopMarginPt = mmToPt(headerTopMarginMm);
-    const headerReservedAreaPt = mmToPt(headerReservedAreaMm);
-    const imageHeightPt = Math.max(1, pageHeightPt - headerReservedAreaPt);
-    const headerXPt = estimateCenteredTextX(
-        headerText,
-        pageWidthPt,
-        headerFontSizePt
-    ).toFixed(2);
-    const headerYPt = (
-        pageHeightPt - headerTopMarginPt - headerFontSizePt
-    ).toFixed(2);
     const jpegBytes = dataUrlToBytes(canvas.toDataURL('image/jpeg', 0.96));
 
     const contentStream = [
-        'BT',
-        '/F1 ' + headerFontSizePt + ' Tf',
-        headerXPt + ' ' + headerYPt + ' Td',
-        '(' + escapePdfString(headerText) + ') Tj',
-        'ET',
         'q',
-        pageWidthPt.toFixed(2) + ' 0 0 ' + imageHeightPt.toFixed(2) + ' 0 0 cm',
+        // The raster already includes its layout. Reserving extra header space
+        // here changes physical pitch along Y and breaks horizontal lenses.
+        pageWidthPt.toFixed(2) + ' 0 0 ' + pageHeightPt.toFixed(2) + ' 0 0 cm',
         '/Im0 Do',
         'Q',
         '',

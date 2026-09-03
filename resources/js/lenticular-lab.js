@@ -78,6 +78,9 @@ class LenticularLab {
                 if (control.dataset.lenticularControl === 'orientation' && this.images.length >= 2) {
                     this.renderInterlacedPreview();
                 }
+                if (control.dataset.pitchControl === 'orientation') {
+                    this.generatePitchTestPreview();
+                }
             });
         });
     }
@@ -1052,6 +1055,8 @@ class LenticularLab {
             start,
             end,
             step,
+            orientation: this.root.querySelector('[data-pitch-control="orientation"]')?.value === 'horizontal'
+                ? 'horizontal' : 'vertical',
         };
     }
 
@@ -1085,14 +1090,14 @@ class LenticularLab {
             : previewScale;
 
         const width = Math.max(
-            500,
+            1,
             Math.round(
                 naturalWidth * scale
             )
         );
 
         const height = Math.max(
-            650,
+            1,
             Math.round(
                 naturalHeight * scale
             )
@@ -1150,8 +1155,10 @@ class LenticularLab {
             - margin * 2
             - footerHeight;
 
+        const horizontal = settings.orientation === 'horizontal';
+        const contentWidth = width - margin * 2;
         const bandSlot =
-            available
+            (horizontal ? contentWidth : available)
             / Math.max(
                 1,
                 values.length
@@ -1159,7 +1166,7 @@ class LenticularLab {
 
         const bandHeight =
             Math.max(
-                28,
+                1,
                 Math.floor(
                     bandSlot * 0.75
                 )
@@ -1185,11 +1192,14 @@ class LenticularLab {
 
         values.forEach(
             (lpi, index) => {
-                const y = (
-                    titleHeight
-                    + margin
-                    + index * bandSlot
-                );
+                ctx.save();
+                if (horizontal) {
+                    ctx.translate(margin + index * bandSlot, titleHeight + margin + available);
+                    ctx.rotate(-Math.PI / 2);
+                } else {
+                    ctx.translate(margin, titleHeight + margin + index * bandSlot);
+                }
+                const y = 0;
 
                 const pitch =
                     (
@@ -1203,28 +1213,28 @@ class LenticularLab {
                     );
 
                 const bandWidth =
-                    width - margin * 2;
+                    horizontal ? available : contentWidth;
 
                 ctx.save();
 
                 ctx.beginPath();
                 ctx.rect(
-                    margin,
+                    0,
                     y,
                     bandWidth,
                     bandHeight
                 );
                 ctx.clip();
 
-                let x = margin;
+                let x = 0;
                 let black = true;
 
                 while (
                     x
-                    < margin + bandWidth
+                    < bandWidth
                 ) {
                     const next = Math.min(
-                        margin + bandWidth,
+                        bandWidth,
                         x + halfPitch
                     );
 
@@ -1294,7 +1304,7 @@ class LenticularLab {
                     );
 
                 const labelX =
-                    margin + 8;
+                    8;
 
                 const labelY =
                     y
@@ -1350,6 +1360,7 @@ class LenticularLab {
 
                 ctx.textBaseline =
                     'alphabetic';
+                ctx.restore();
             }
         );
 

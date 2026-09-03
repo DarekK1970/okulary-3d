@@ -17,6 +17,7 @@ class LenticularLabTest extends TestCase
             ->assertSee('A4 Lenticular Wizard')
             ->assertSee('Kierunek soczewek')
             ->assertSee('value="vertical" selected', false)
+            ->assertSee('id="pitch-orientation" data-pitch-control="orientation"', false)
             ->assertSee('Poziome');
     }
 
