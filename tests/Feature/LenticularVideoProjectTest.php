@@ -39,6 +39,20 @@ class LenticularVideoProjectTest extends TestCase
         Storage::disk('local')->assertExists($source->path);
     }
 
+    public function test_video_larger_than_one_hundred_megabytes_is_rejected(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $video = UploadedFile::fake()->create('too-large.mp4', 102401, 'video/mp4');
+
+        $this->actingAs($user)->post('/pl/lab/lenticular/projects', [
+            'name' => 'Za duży projekt',
+            'video' => $video,
+        ])->assertSessionHasErrors('video');
+
+        $this->assertSame(0, LenticularProject::query()->count());
+    }
+
     public function test_user_cannot_view_another_users_project(): void
     {
         $owner = User::factory()->create();

@@ -24,7 +24,7 @@ class StoreLenticularProjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:512000'],
+            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
         ];
     }
 }

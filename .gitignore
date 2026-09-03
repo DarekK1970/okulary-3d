@@ -26,6 +26,7 @@
 /python_leticular_machine/.env
 /python_leticular_machine/runtime/
 /python_leticular_machine/dist/
+/python_leticular_machine/**/__pycache__/
 _ide_helper.php
 Homestead.json
 Homestead.yaml
