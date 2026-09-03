@@ -50,6 +50,15 @@ class VideoFrameProcessor:
         except (KeyError, IndexError, TypeError, ValueError) as exc:
             raise ProcessingError("video metadata is incomplete") from exc
 
+    def run_ffmpeg(self, command: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout)
+        if result.returncode != 0 and "Unrecognized option 'fps_mode'" in result.stderr:
+            fallback = command.copy()
+            index = fallback.index("-fps_mode")
+            fallback[index:index + 2] = ["-vsync", "vfr"]
+            result = subprocess.run(fallback, capture_output=True, text=True, check=False, timeout=timeout)
+        return result
+
     def extract(self, manifest: JobManifest, source: Path, output_dir: Path) -> VideoInfo:
         self.ensure_available()
         info = self.probe(source)
@@ -66,11 +75,11 @@ class VideoFrameProcessor:
             f"not(mod(n-{selection.start}\\,{selection.step}))"
         )
         qscale = round(31 - ((selection.jpeg_quality - 1) * 29 / 99))
-        result = subprocess.run(
+        result = self.run_ffmpeg(
             [self.ffmpeg, "-nostdin", "-v", "error", "-i", str(source),
              "-vf", f"select='{expression}'", "-fps_mode", "vfr", "-q:v",
              str(qscale), str(output_dir / "frame_%06d.jpg")],
-            capture_output=True, text=True, check=False, timeout=3600,
+            timeout=3600,
         )
         if result.returncode != 0:
             raise ProcessingError(f"frame extraction failed: {result.stderr.strip()}")
@@ -86,11 +95,11 @@ class VideoFrameProcessor:
         indices = sorted({0, (info.frame_count - 1) // 2, info.frame_count - 1})
         output_dir.mkdir(parents=True, exist_ok=True)
         expression = "+".join(f"eq(n\\,{index})" for index in indices)
-        result = subprocess.run(
+        result = self.run_ffmpeg(
             [self.ffmpeg, "-nostdin", "-v", "error", "-i", str(source),
              "-vf", f"select='{expression}',scale='min(1280,iw)':-2", "-fps_mode", "vfr",
              "-q:v", "3", str(output_dir / "thumbnail_%02d.jpg")],
-            capture_output=True, text=True, check=False, timeout=600,
+            timeout=600,
         )
         if result.returncode != 0:
             raise ProcessingError(f"thumbnail extraction failed: {result.stderr.strip()}")
