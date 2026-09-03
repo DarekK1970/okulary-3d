@@ -7,6 +7,19 @@ if (stage) {
         alignmentY: document.querySelector('#alignment-y'),
     };
     const zone = stage.querySelector('[data-z-zone]');
+    const preview = stage.closest('.lenticular-alignment-preview');
+
+    const fitStageToViewport = () => {
+        const sourceWidth = Number(stage.dataset.sourceWidth) || 3;
+        const sourceHeight = Number(stage.dataset.sourceHeight) || 2;
+        const ratio = sourceWidth / sourceHeight;
+        const widthControlHeight = preview?.querySelector('.lenticular-width-control')?.offsetHeight || 48;
+        const availableHeight = Math.max(80, window.innerHeight - stage.getBoundingClientRect().top - widthControlHeight - 24);
+        const fittedWidth = Math.min(window.innerWidth * 0.6, 900, availableHeight * ratio);
+        stage.style.width = `${Math.max(1, fittedWidth)}px`;
+        stage.style.setProperty('--source-ratio', String(ratio));
+        stage.closest('.lenticular-alignment-editor')?.style.setProperty('--stage-height', `${stage.offsetHeight}px`);
+    };
 
     const updateGuide = () => {
         const width = Number(controls.width.value);
@@ -52,5 +65,7 @@ if (stage) {
         controls.center.value = String(Math.min(1 - halfWidth, Math.max(halfWidth, Number(controls.center.value) + direction * 0.01)));
         updateGuide();
     });
+    window.addEventListener('resize', fitStageToViewport);
+    fitStageToViewport();
     updateGuide();
 }

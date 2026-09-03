@@ -33,7 +33,7 @@
                             <input id="alignment-y" name="alignment_y" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="{{ __('lenticular_projects.alignment_y') }}">
                         </div>
                         <div class="lenticular-alignment-preview">
-                            <div class="lenticular-alignment-stage" data-alignment-stage>
+                            <div class="lenticular-alignment-stage" data-alignment-stage data-source-width="{{ $source->metadata['width'] }}" data-source-height="{{ $source->metadata['height'] }}">
                                 @foreach($analysisPreviews as $preview)
                                     <img class="lenticular-alignment-frame frame-{{ $loop->index }}" src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.preview_frame', ['number' => $loop->iteration]) }}">
                                 @endforeach

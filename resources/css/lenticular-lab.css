@@ -551,9 +551,9 @@
     --z-width: 5%;
     --alignment-y: 50%;
     position: relative;
-    width: 100%;
+    width: min(60vw, 900px);
     overflow: hidden;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: var(--source-ratio, 3 / 2);
     border: 1px solid #d8e1ec;
     border-radius: 14px;
     background: #e9edf2;
@@ -630,7 +630,7 @@
 
 .lenticular-alignment-editor {
     display: grid;
-    grid-template-columns: 42px minmax(0, 900px) minmax(145px, 1fr);
+    grid-template-columns: minmax(70px, 1fr) auto minmax(145px, 1fr);
     gap: 16px;
     align-items: stretch;
     margin: 18px 0 24px;
@@ -638,14 +638,20 @@
 
 .lenticular-alignment-preview {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .lenticular-vertical-control {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-self: end;
     gap: 8px;
-    padding-bottom: 45px;
+    width: 42px;
+    height: calc(var(--stage-height, 500px) * .9);
+    margin-top: calc(var(--stage-height, 500px) * .05);
 }
 
 .lenticular-vertical-control output,
@@ -656,8 +662,8 @@
 
 .lenticular-vertical-control input[type="range"] {
     width: 24px;
-    height: 100%;
-    min-height: 240px;
+    height: calc(100% - 28px);
+    min-height: 140px;
     writing-mode: vertical-lr;
     direction: rtl;
 }
@@ -666,6 +672,7 @@
     display: grid;
     gap: 5px;
     padding-top: 9px;
+    width: 40%;
 }
 
 .lenticular-width-control label {
@@ -691,5 +698,13 @@
         flex-direction: row;
         justify-content: flex-start;
         flex-wrap: wrap;
+    }
+
+    .lenticular-alignment-stage {
+        max-width: 100%;
+    }
+
+    .lenticular-width-control {
+        width: 60%;
     }
 }
