@@ -160,7 +160,18 @@
                                 <option value="horizontal">{{ __('lab.lenticular.interlacer.horizontal') }}</option>
                             </select>
                         </div>
+                        <div class="lab-control">
+                            <label for="lenticular-alignment-lines">{{ __('lab.lenticular.interlacer.alignment_lines') }}</label>
+                            <select id="lenticular-alignment-lines" data-lenticular-control="alignmentLines">
+                                <option value="0" selected>0</option>
+                                <option value="4">4</option>
+                                <option value="6">6</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
                     </div>
+
+                    <p class="lenticular-note">{{ __('lab.lenticular.interlacer.alignment_help') }}</p>
 
                     <div class="lenticular-metrics">
                         <div>

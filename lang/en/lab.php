@@ -178,6 +178,8 @@ return [
             'dpi' => 'Raster DPI',
             'phase' => 'Pattern phase (px)',
             'orientation' => 'Lens orientation',
+            'alignment_lines' => 'Alignment lines',
+            'alignment_help' => 'Black-and-white lines are added outside the image: on the left for vertical lenses, at the bottom for horizontal lenses. Each line and gap equals one lens pitch. They enlarge the print dimensions; print at 100% and trim the strip after aligning the film.',
             'vertical' => 'Vertical',
             'horizontal' => 'Horizontal',
             'width_mm' => 'Print width (mm)',

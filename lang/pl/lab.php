@@ -178,6 +178,8 @@ return [
             'dpi' => 'DPI rastra',
             'phase' => 'Faza wzoru (px)',
             'orientation' => 'Kierunek soczewek',
+            'alignment_lines' => 'Linie pozycjonujące',
+            'alignment_help' => 'Linie czarno-białe są dodawane poza obrazem: z lewej dla soczewek pionowych, u dołu dla poziomych. Każda linia z odstępem odpowiada jednemu krokowi soczewki. Powiększają wymiar wydruku; drukuj w skali 100%, a po ustawieniu folii odetnij pasek.',
             'vertical' => 'Pionowe',
             'horizontal' => 'Poziome',
             'width_mm' => 'Szerokość wydruku (mm)',

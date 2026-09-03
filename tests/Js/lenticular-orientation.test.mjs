@@ -18,7 +18,7 @@ function fixture(settings, context = null) {
     });
     const lab = Object.create(Lab.prototype);
     lab.images = [0, 1].map((id) => ({ bitmap: { id, width: 8, height: 8 } }));
-    lab.getInterlaceSettings = () => ({ naturalWidth: 8, naturalHeight: 6, pitch: 4, phase: 0, ...settings });
+    lab.getInterlaceSettings = () => ({ naturalWidth: 8, naturalHeight: 6, widthMm: 8, heightMm: 6, pitch: 4, phase: 0, ...settings });
     return { lab, draws };
 }
 
@@ -157,4 +157,42 @@ test('small pitch test exports retain requested DPI rather than stretching to a 
     const result = lab.createPitchTestCanvas(true);
     assert.equal(result.canvas.width, 142);
     assert.equal(result.canvas.height, 142);
+});
+
+for (const orientation of ['vertical', 'horizontal']) {
+    for (const alignmentLines of [4, 6, 8]) {
+        test(`${alignmentLines} alignment lines: ${orientation} placement, phase and unchanged image scale`, async () => {
+            const fills = [];
+            const copies = [];
+            const context = {
+                fillRect(...rect) { fills.push({ color: this.fillStyle, rect }); },
+                drawImage(...args) { copies.push(args); },
+            };
+            const { lab } = fixture({ orientation, alignmentLines, phase: 1 }, context);
+            const result = await lab.buildInterlacedCanvas(true);
+            const horizontal = orientation === 'horizontal';
+            assert.equal(result.canvas.width, horizontal ? 8 : 8 + alignmentLines * 4);
+            assert.equal(result.canvas.height, horizontal ? 6 + alignmentLines * 4 : 6);
+            const [original, x, y] = copies.at(-1);
+            assert.equal(original.width, 8);
+            assert.equal(original.height, 6);
+            assert.equal(x, horizontal ? 0 : alignmentLines * 4);
+            assert.equal(y, 0);
+            assert.equal(copies.at(-1).length, 3); // No resampling of the source image.
+            assert.equal(result.pageWidthMm / result.canvas.width, 1);
+            assert.equal(result.pageHeightMm / result.canvas.height, 1);
+            const black = fills.filter(({ color }) => color === '#000000').map(({ rect }) => horizontal ? rect[1] : rect[0]);
+            assert.equal(black.length, alignmentLines * 2);
+            assert.deepEqual(black.slice(0, 4), horizontal ? [7, 8, 11, 12] : [0, 3, 4, 7]);
+        });
+    }
+}
+
+test('zero alignment lines keeps the original canvas and dimensions', async () => {
+    const { lab } = fixture({ alignmentLines: 0 });
+    const result = await lab.buildInterlacedCanvas(true);
+    assert.equal(result.canvas.width, 8);
+    assert.equal(result.canvas.height, 6);
+    assert.equal(result.pageWidthMm, 8);
+    assert.equal(result.pageHeightMm, 6);
 });

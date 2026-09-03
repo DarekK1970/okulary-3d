@@ -75,7 +75,7 @@ class LenticularLab {
 
             control.addEventListener('change', () => {
                 this.updateAllCalculations();
-                if (control.dataset.lenticularControl === 'orientation' && this.images.length >= 2) {
+                if (['orientation', 'alignmentLines'].includes(control.dataset.lenticularControl) && this.images.length >= 2) {
                     this.renderInterlacedPreview();
                 }
                 if (control.dataset.pitchControl === 'orientation') {
@@ -354,6 +354,8 @@ class LenticularLab {
 
         const pitch = dpi / lpi;
         const strip = pitch / views;
+        const requestedLines = this.getNumber('[data-lenticular-control="alignmentLines"]', 0);
+        const alignmentLines = [4, 6, 8].includes(requestedLines) ? requestedLines : 0;
         const naturalWidth = this.mmToPx(
             widthMm,
             dpi
@@ -367,6 +369,7 @@ class LenticularLab {
             lpi,
             dpi,
             phase,
+            alignmentLines,
             orientation: this.root.querySelector('[data-lenticular-control="orientation"]')?.value === 'horizontal'
                 ? 'horizontal' : 'vertical',
             widthMm,
@@ -597,12 +600,44 @@ class LenticularLab {
             x = end;
         }
 
+        const output = this.addAlignmentLines(canvas, settings, scale);
         return {
-            canvas,
+            canvas: output,
             settings,
-            previewWidth: width,
-            previewHeight: height,
+            pageWidthMm: settings.widthMm * output.width / width,
+            pageHeightMm: settings.heightMm * output.height / height,
+            previewWidth: output.width,
+            previewHeight: output.height,
         };
+    }
+
+    addAlignmentLines(canvas, settings, scale) {
+        if (!settings.alignmentLines) return canvas;
+
+        const horizontal = settings.orientation === 'horizontal';
+        const pitch = settings.pitch * scale;
+        const phase = settings.phase * scale;
+        const margin = Math.ceil(settings.alignmentLines * pitch);
+        const output = document.createElement('canvas');
+        output.width = canvas.width + (horizontal ? 0 : margin);
+        output.height = canvas.height + (horizontal ? margin : 0);
+        const ctx = output.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, output.width, output.height);
+        ctx.drawImage(canvas, horizontal ? 0 : margin, 0);
+
+        // Continue the lens-period pattern in image coordinates, including phase.
+        // Each selected line is one black/white lens period, not one view strip.
+        ctx.fillStyle = '#000000';
+        for (let offset = 0; offset < margin; offset++) {
+            const coordinate = horizontal ? canvas.height + offset : offset - margin;
+            const position = ((coordinate + phase) % pitch + pitch) % pitch;
+            if (position < pitch / 2) {
+                if (horizontal) ctx.fillRect(0, canvas.height + offset, canvas.width, 1);
+                else ctx.fillRect(offset, 0, 1, canvas.height);
+            }
+        }
+        return output;
     }
 
     async renderInterlacedPreview() {
@@ -705,8 +740,8 @@ class LenticularLab {
 
         downloadCanvasAsPdf({
             canvas: result.canvas,
-            pageWidthMm: result.settings.widthMm,
-            pageHeightMm: result.settings.heightMm,
+            pageWidthMm: result.pageWidthMm,
+            pageHeightMm: result.pageHeightMm,
             filename:
                 `lenticular-print-ready-`
                 + `${new Date().toISOString().slice(0, 10)}.pdf`,
