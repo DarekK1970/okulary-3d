@@ -145,6 +145,7 @@
                     {{ __('admin.menu.analytics') }}
                 </a>
                 @if (auth()->user()->role === \App\Models\User::ROLE_SUPER_ADMIN)
+                    <a class="admin-nav-link {{ request()->routeIs('admin.settings.plans*') ? 'is-active' : '' }}" href="{{ route('admin.settings.plans') }}"><span>◈</span>{{ __('plans.admin.title') }}</a>
                     <a class="admin-nav-link {{ request()->routeIs('admin.settings') ? 'is-active' : '' }}" href="{{ route('admin.settings') }}">
                         <span>⚙</span>
                         {{ __('admin.menu.settings') }}

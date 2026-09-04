@@ -72,6 +72,11 @@ return [
     'wallet' => [
         'title' => 'Your TOKEN_LENS wallet',
         'description' => 'Use tokens for AI generation and marketplace services.',
+        'help_label' => 'What are TOKEN_LENS?',
+        'help' => 'TOKEN_LENS are valuable points that you can exchange for artificial intelligence operations which help turn a regular 2D photo or a pair of photos into a lenticular print. You can also use TOKEN_LENS to order a lenticular print from our shop.',
+        'zero_balance' => 'You have no TOKEN_LENS. Upgrade your plan or buy more tokens.',
+        'change_plan' => 'Upgrade your plan',
+        'buy_tokens' => 'Buy TOKEN_LENS',
         'empty' => 'There are no wallet transactions yet.',
         'insufficient' => 'You do not have enough TOKEN_LENS.',
         'types' => ['grant' => 'Token grant', 'admin_adjustment' => 'Balance adjustment', 'ai_video' => 'AI video generation', 'marketplace_order' => 'Marketplace order'],

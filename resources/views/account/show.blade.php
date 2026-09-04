@@ -13,6 +13,7 @@
             </div>
 
             <div class="account-heading-actions">
+                <a class="admin-panel-button" href="{{ route('plans.index', ['locale' => app()->getLocale()]) }}">{{ __('plans.title') }}</a>
                 @if ($user->canAccessAdminPanel())
                     <a class="admin-panel-button" href="{{ route('admin.dashboard') }}">
                         {{ __('portal_auth.account.admin_panel') }}
@@ -32,8 +33,26 @@
 
         <div class="account-grid">
             <section class="account-card account-token-card">
-                <div class="account-card-heading"><h2>{{ __('portal_auth.wallet.title') }}</h2><span>{{ __('portal_auth.wallet.description') }}</span></div>
+                <div class="account-card-heading">
+                    <div class="account-token-title-row">
+                        <h2>{{ __('portal_auth.wallet.title') }}</h2>
+                        <button class="account-token-help" type="button" aria-label="{{ __('portal_auth.wallet.help_label') }}">
+                            ?
+                            <span class="account-token-tooltip" role="tooltip">{{ __('portal_auth.wallet.help') }}</span>
+                        </button>
+                    </div>
+                    <span>{{ __('portal_auth.wallet.description') }}</span>
+                </div>
                 <strong class="account-token-balance">{{ $tokenLensBalance }} <small>TOKEN_LENS</small></strong>
+                @if ($tokenLensBalance === 0)
+                    <div class="account-token-empty-balance">
+                        <p>{{ __('portal_auth.wallet.zero_balance') }}</p>
+                        <div class="account-token-actions">
+                            <a href="{{ route('plans.index', ['locale' => app()->getLocale()]) }}">{{ __('portal_auth.wallet.change_plan') }}</a>
+                            <a href="{{ route('account', ['locale' => app()->getLocale(), 'purchase' => 'tokens']) }}">{{ __('portal_auth.wallet.buy_tokens') }}</a>
+                        </div>
+                    </div>
+                @endif
                 <div class="account-token-history">
                     @forelse($tokenLensTransactions as $transaction)
                         <div><span>{{ $transaction->description ?: __('portal_auth.wallet.types.'.$transaction->type) }}</span><strong class="{{ $transaction->amount > 0 ? 'is-credit' : 'is-debit' }}">{{ $transaction->amount > 0 ? '+' : '' }}{{ $transaction->amount }} TL</strong></div>

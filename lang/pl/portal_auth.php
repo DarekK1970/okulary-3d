@@ -72,6 +72,11 @@ return [
     'wallet' => [
         'title' => 'Twój portfel TOKEN_LENS',
         'description' => 'Tokeny wykorzystasz do generowania AI oraz usług w marketplace.',
+        'help_label' => 'Czym są TOKEN_LENS?',
+        'help' => 'TOKEN_LENS to Twoje wartościowe punkty, które możesz wymieniać na działania sztucznej inteligencji pomagające zamienić zwykłe zdjęcie 2D lub parę zdjęć w wydruk lentikularny. Możesz też wykorzystać TOKEN_LENS do wydrukowania obrazu lentikularnego w naszym sklepie.',
+        'zero_balance' => 'Nie masz TOKEN_LENS. Przejdź na wyższy plan lub dokup tokeny.',
+        'change_plan' => 'Przejdź na wyższy plan',
+        'buy_tokens' => 'Dokup TOKEN_LENS',
         'empty' => 'Nie masz jeszcze operacji w portfelu.',
         'insufficient' => 'Nie masz wystarczającej liczby TOKEN_LENS.',
         'types' => ['grant' => 'Przyznane tokeny', 'admin_adjustment' => 'Korekta salda', 'ai_video' => 'Generowanie filmu AI', 'marketplace_order' => 'Zamówienie w marketplace'],

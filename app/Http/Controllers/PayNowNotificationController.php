@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\PlanPurchase;
 use App\Services\PayNowService;
 use App\Services\TransactionalMailService;
 use Illuminate\Http\Request;
@@ -46,6 +47,11 @@ class PayNowNotificationController extends Controller
             ->first();
 
         if (! $order) {
+            $purchase = PlanPurchase::query()->where('payment_merchant_external_id', $payload['externalId'])->first();
+            if ($purchase) {
+                $payNow->applyPlanPurchaseStatus($purchase, (string) $payload['status'], isset($payload['paymentId']) ? (string) $payload['paymentId'] : null);
+            }
+
             return response('', 202);
         }
 

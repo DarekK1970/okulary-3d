@@ -85,4 +85,17 @@ class TokenLensWalletTest extends TestCase
         $this->assertSame(35, app(TokenLensWalletService::class)->balance($user));
         $this->assertSame('admin_adjustment', TokenLensTransaction::query()->sole()->type);
     }
+
+    public function test_empty_wallet_explains_tokens_and_offers_purchase_paths(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/pl/account')
+            ->assertOk()
+            ->assertSee('Czym są TOKEN_LENS?')
+            ->assertSee('TOKEN_LENS to Twoje wartościowe punkty')
+            ->assertSee('Nie masz TOKEN_LENS')
+            ->assertSee(route('plans.index', ['locale' => 'pl']), false)
+            ->assertSee(route('account', ['locale' => 'pl', 'purchase' => 'tokens']), false);
+    }
 }

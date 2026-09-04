@@ -117,8 +117,6 @@
         box-shadow: 0 16px 38px rgba(16, 24, 44, .14);
         transform: translateX(-50%);
     }
-    .nav-dropdown:hover .nav-dropdown-menu,
-    .nav-dropdown:focus-within .nav-dropdown-menu,
     .nav-dropdown[open] .nav-dropdown-menu {
         display: grid;
     }
@@ -232,7 +230,7 @@
                 {{ __('site.nav.articles') }}
             </a>
 
-            <details class="nav-dropdown" @if ($isHistorySection) open @endif>
+            <details class="nav-dropdown">
                 <summary class="nav-link {{ $isHistorySection ? 'is-active' : '' }}">
                     {{ __('site.nav.history') }}
                     <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
@@ -266,7 +264,7 @@
                 {{ __('site.nav.techniques') }}
             </a>
 
-            <details class="nav-dropdown" @if ($isLabSection || $isMarketplace) open @endif>
+            <details class="nav-dropdown">
                 <summary class="nav-link {{ $isLabSection || $isMarketplace ? 'is-active' : '' }}">
                     {{ __('site.nav.lab') }}
                     <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
@@ -307,7 +305,7 @@
                 {{ __('partners.nav') }}
             </a>
 
-            <details class="nav-dropdown" @if(request()->routeIs('shop.*') || $isMarketplace) open @endif>
+            <details class="nav-dropdown">
                 <summary class="nav-link {{ request()->routeIs('shop.*') || $isMarketplace ? 'is-active' : '' }}">{{ __('site.nav.shop') }}<span class="nav-dropdown-caret" aria-hidden="true">▾</span></summary>
                 <div class="nav-dropdown-menu">
                     <a class="nav-dropdown-item {{ request()->routeIs('shop.*') ? 'is-active' : '' }}" href="{{ route('shop.index', ['locale' => $locale]) }}">{{ __('site.nav.shop_accessories') }}</a>

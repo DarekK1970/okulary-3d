@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\MaintenanceSettingsController;
 use App\Http\Controllers\Admin\MarketplaceCategoryController;
 use App\Http\Controllers\Admin\MarketplaceProductController;
 use App\Http\Controllers\Admin\MarketplaceShippingProviderController;
+use App\Http\Controllers\Admin\PlanSettingsController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\LenticularProjectController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PayNowNotificationController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\SalesDocumentController;
@@ -176,6 +178,7 @@ Route::prefix('{locale}')
             Route::post('/', [LenticularProjectController::class, 'store'])->name('store');
             Route::get('/{project}', [LenticularProjectController::class, 'show'])->name('show');
             Route::post('/{project}/video', [LenticularProjectController::class, 'uploadVideo'])->name('video.store');
+            Route::post('/{project}/images', [LenticularProjectController::class, 'uploadImages'])->name('images.store');
             Route::post('/{project}/frames', [LenticularProjectController::class, 'selectFrames'])->name('frames.store');
             Route::post('/{project}/alignment', [LenticularProjectController::class, 'alignFrames'])->name('alignment.store');
             Route::post('/{project}/finalize', [LenticularProjectController::class, 'finalize'])->name('finalize.store');
@@ -272,6 +275,9 @@ Route::prefix('{locale}')
         Route::middleware('auth')->group(function () {
             Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
             Route::get('/account', [AccountController::class, 'show'])->name('account');
+            Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+            Route::post('/plans/purchase', [PlanController::class, 'purchase'])->middleware('throttle:10,1')->name('plans.purchase');
+            Route::get('/plans/payment/{purchase}', [PlanController::class, 'paymentReturn'])->name('plans.payment.return');
             Route::put('/account/profile', [AccountController::class, 'updateProfile'])
                 ->name('account.profile.update');
             Route::put('/account/password', [AccountController::class, 'updatePassword'])
@@ -394,6 +400,8 @@ Route::prefix('admin')
                 Route::post('/users/{user}/token-lens', [AdminUserController::class, 'adjustTokens'])->name('users.tokens.adjust');
                 Route::patch('/users/{user}/suspend', [AdminUserController::class, 'suspend'])->name('users.suspend');
                 Route::patch('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore');
+                Route::get('/settings/plans', [PlanSettingsController::class, 'edit'])->name('settings.plans');
+                Route::put('/settings/plans', [PlanSettingsController::class, 'update'])->name('settings.plans.update');
 
                 Route::get('/newsletter', [AdminNewsletterController::class, 'index'])
                     ->name('newsletter.index');

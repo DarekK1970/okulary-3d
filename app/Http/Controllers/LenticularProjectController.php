@@ -8,9 +8,11 @@ use App\Models\LenticularArtifact;
 use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
+use App\Services\LenticularSequenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -28,7 +30,7 @@ class LenticularProjectController extends Controller
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['print_size' => $validated['print_size'], 'print_service' => $request->boolean('print_service'), 'dpi' => $dpi, 'lpi' => (int) $validated['lpi'], 'max_frames' => intdiv($dpi, (int) $validated['lpi'])],
+            'settings' => ['workflow' => 'flip', 'print_size' => $validated['print_size'], 'print_service' => $request->boolean('print_service'), 'dpi' => $dpi, 'lpi' => (int) $validated['lpi'], 'max_frames' => 6, 'lens_orientation' => 'horizontal'],
         ]);
 
         return redirect()->route('lab.projects.show', ['locale' => $locale, 'project' => $project]);
@@ -44,6 +46,24 @@ class LenticularProjectController extends Controller
         $absolute = Storage::disk(config('lenticular_machine.disk'))->path($path);
         $file = LenticularProjectFile::query()->create(['lenticular_project_id' => $project->id, 'kind' => 'source_video', 'disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => $upload->getClientOriginalName(), 'media_type' => $upload->getMimeType(), 'size_bytes' => $upload->getSize(), 'sha256' => hash_file('sha256', $absolute)]);
         LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $file->id, 'operation' => 'analyze_video', 'status' => LenticularJobStatus::Queued, 'parameters' => []]);
+
+        return redirect()->route('lab.projects.show', ['locale' => $locale, 'project' => $project]);
+    }
+
+    public function uploadImages(Request $request, string $locale, LenticularProject $project, LenticularSequenceService $sequences): RedirectResponse
+    {
+        $this->authorizeOwner($request, $project);
+        abort_if($project->files()->whereIn('kind', ['source_video', 'source_sequence'])->exists(), 409, 'Source has already been uploaded.');
+        $validated = $request->validate([
+            'images' => ['required', 'array', 'between:2,6'],
+            'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
+        ]);
+        abort_if(array_sum(array_map(fn ($file): int => $file->getSize(), $validated['images'])) > 104_857_600, 422, 'The complete sequence may not exceed 100 MB.');
+        try {
+            $sequences->store($project, $validated['images']);
+        } catch (\RuntimeException $exception) {
+            throw ValidationException::withMessages(['images' => $exception->getMessage()]);
+        }
 
         return redirect()->route('lab.projects.show', ['locale' => $locale, 'project' => $project]);
     }
@@ -64,6 +84,7 @@ class LenticularProjectController extends Controller
         $validated = $request->validate(['start' => ['required', 'integer', 'min:0', "max:{$last}"], 'end' => ['required', 'integer', 'gte:start', "max:{$last}"], 'step' => ['required', 'integer', 'between:1,10'], 'jpeg_quality' => ['required', 'integer', 'between:1,100']]);
         $selection = collect($validated)->only(['start', 'end', 'step', 'jpeg_quality'])->map(fn ($value): int => (int) $value)->all();
         abort_if(((int) floor(($selection['end'] - $selection['start']) / $selection['step'])) + 1 > (int) ($project->settings['max_frames'] ?? 1), 422, 'Selected range contains too many frames.');
+        abort_if(((int) floor(($selection['end'] - $selection['start']) / $selection['step'])) + 1 < 2, 422, 'Select at least two frames.');
         LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection]]);
         $project->update(['settings' => array_merge($project->settings ?? [], ['selection' => $selection])]);
 
@@ -93,7 +114,7 @@ class LenticularProjectController extends Controller
         $validated = $request->validate(['crop_x' => ['required', 'numeric', 'between:0,1'], 'crop_y' => ['required', 'numeric', 'between:0,1'], 'crop_width' => ['required', 'numeric', 'between:0.01,1'], 'crop_height' => ['required', 'numeric', 'between:0.01,1'], 'reverse' => ['nullable', 'boolean']]);
         $crop = ['x' => (float) $validated['crop_x'], 'y' => (float) $validated['crop_y'], 'width' => (float) $validated['crop_width'], 'height' => (float) $validated['crop_height']];
         abort_if($crop['x'] + $crop['width'] > 1.00001 || $crop['y'] + $crop['height'] > 1.00001, 422, 'Crop exceeds image bounds.');
-        LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'finalize_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignmentJob->parameters['alignment'], 'finalization' => ['crop' => $crop, 'reverse' => $request->boolean('reverse'), 'basename' => $project->name]]]);
+        LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'finalize_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignmentJob->parameters['alignment'], 'finalization' => ['crop' => $crop, 'reverse' => $request->boolean('reverse'), 'basename' => $project->name, 'lens_orientation' => 'horizontal']]]);
 
         return back()->with('status', 'Kadrowanie i zapis sekwencji zostały uruchomione.');
     }

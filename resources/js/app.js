@@ -31,7 +31,20 @@ const initNavigation = () => {
     backdrop?.addEventListener('click', closeMenu);
 
     navigation.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', closeMenu);
+        link.addEventListener('click', () => {
+            navigation.querySelectorAll('details[open]').forEach((dropdown) => {
+                dropdown.removeAttribute('open');
+            });
+            closeMenu();
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!navigation.contains(event.target)) {
+            navigation.querySelectorAll('details[open]').forEach((dropdown) => {
+                dropdown.removeAttribute('open');
+            });
+        }
     });
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {

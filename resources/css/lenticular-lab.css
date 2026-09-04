@@ -838,3 +838,4 @@
         width: 60%;
     }
 }
+.lenticular-project-name{max-width:520px}.lenticular-source-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.lenticular-source-options>form{align-content:start;padding:20px;border:1px solid #dce7ef;border-radius:14px;background:#f8fbfd}@media(max-width:760px){.lenticular-source-options{grid-template-columns:1fr}}

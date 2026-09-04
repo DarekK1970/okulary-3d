@@ -33,7 +33,9 @@ class LenticularVideoProjectTest extends TestCase
         $project = LenticularProject::query()->sole();
         $response->assertRedirect(route('lab.projects.show', ['locale' => 'pl', 'project' => $project]));
         $this->assertSame($user->id, $project->user_id);
-        $this->assertSame(20, $project->settings['max_frames']);
+        $this->assertSame(6, $project->settings['max_frames']);
+        $this->assertSame('flip', $project->settings['workflow']);
+        $this->assertSame('horizontal', $project->settings['lens_orientation']);
         $this->assertSame(0, LenticularJob::query()->count());
     }
 
@@ -49,6 +51,33 @@ class LenticularVideoProjectTest extends TestCase
         $this->assertDatabaseHas('lenticular_jobs', ['lenticular_project_id' => $project->id, 'operation' => 'analyze_video', 'status' => LenticularJobStatus::Queued->value]);
         $source = LenticularProjectFile::query()->where('kind', 'source_video')->sole();
         Storage::disk('local')->assertExists($source->path);
+    }
+
+    public function test_user_can_upload_two_to_six_images_for_flip_project(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['workflow' => 'flip', 'max_frames' => 6, 'lens_orientation' => 'horizontal']]);
+
+        $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/images", [
+            'images' => [UploadedFile::fake()->image('first.jpg', 900, 600), UploadedFile::fake()->image('last.jpg', 900, 600)],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('lenticular_project_files', ['lenticular_project_id' => $project->id, 'kind' => 'source_sequence']);
+        $this->assertDatabaseHas('lenticular_jobs', ['lenticular_project_id' => $project->id, 'operation' => 'import_sequence', 'status' => LenticularJobStatus::Completed->value]);
+    }
+
+    public function test_flip_project_rejects_more_than_six_images_and_long_name(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create();
+
+        $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/images", [
+            'images' => collect(range(1, 7))->map(fn (int $number) => UploadedFile::fake()->image("{$number}.jpg", 900, 600))->all(),
+        ])->assertSessionHasErrors('images');
+
+        $this->actingAs($user)->post('/pl/lab/lenticular/projects', ['name' => str_repeat('a', 51), 'print_size' => 'A4', 'printer_dpi' => 1200, 'lpi' => 60])->assertSessionHasErrors('name');
     }
 
     public function test_video_larger_than_one_hundred_megabytes_is_rejected(): void

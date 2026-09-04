@@ -14,7 +14,7 @@ return [
     'ai_ready' => 'Silnik AI gotowy', 'ai_unavailable' => 'Silnik AI chwilowo niedostępny', 'available_now' => 'DOSTĘPNE', 'start' => 'Rozpocznij', 'in_preparation' => 'W przygotowaniu', 'requires_pro' => 'Wymaga PRO',
     'available_with_limit' => 'DOSTĘPNE · :limit', 'unavailable_in_plan' => 'NIEDOSTĘPNE W TYM PLANIE', 'upgrade_to' => 'Przejdź na',
     'paths' => [
-        'flip' => ['title' => 'Efekt FLIP z filmu', 'description' => 'Wczytaj własny film, wybierz najlepszy zakres i przygotuj przejście między klatkami.', 'feature_1' => 'Obecny sprawdzony workflow', 'feature_2' => 'Do 100 MB'],
+        'flip' => ['title' => 'Efekt FLIP / MORFING / ZOOM', 'description' => 'Uzyskasz płynną zmianę obrazów, przechylając wydruk. Wczytaj film lub od 2 do 6 zdjęć.', 'feature_1' => 'Najlepszy efekt przy 2–4 klatkach', 'feature_2' => 'Maksymalnie 6 klatek'],
         'sequence' => ['title' => '3D z własnych zdjęć', 'description' => 'Dodaj gotową sekwencję zdjęć wykonanych z kolejnych punktów widzenia.', 'feature_1' => 'FREE: do 12 zdjęć', 'feature_2' => 'Maksymalnie A5'],
         'pair' => ['title' => '3D z dwóch zdjęć', 'description' => 'Pierwsze i ostatnie zdjęcie wyznaczą granice ruchu kamery generowanego przez AI.', 'feature_1' => 'Agent AI: klatka startowa i końcowa', 'feature_2' => 'PRO: maksymalnie A4'],
         'single' => ['title' => '3D z jednego zdjęcia', 'description' => 'AI przeanalizuje scenę i utworzy kontrolowany ruch kamery dla efektu głębi.', 'feature_1' => 'Prompt dopasowany do zdjęcia', 'feature_2' => 'PRO: maksymalnie A4'],

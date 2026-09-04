@@ -11,7 +11,7 @@ return [
     'ai_ready' => 'AI engine ready', 'ai_unavailable' => 'AI engine temporarily unavailable', 'available_now' => 'AVAILABLE', 'start' => 'Start', 'in_preparation' => 'Coming soon', 'requires_pro' => 'Requires PRO',
     'available_with_limit' => 'AVAILABLE · :limit', 'unavailable_in_plan' => 'NOT AVAILABLE ON THIS PLAN', 'upgrade_to' => 'Upgrade to',
     'paths' => [
-        'flip' => ['title' => 'FLIP effect from video', 'description' => 'Upload your video, select the best range and prepare a transition between frames.', 'feature_1' => 'Current proven workflow', 'feature_2' => 'Up to 100 MB'],
+        'flip' => ['title' => 'FLIP / MORPHING / ZOOM effect', 'description' => 'Tilt the print to create a smooth image transition. Upload a video or 2 to 6 photos.', 'feature_1' => 'Best results with 2–4 frames', 'feature_2' => 'Up to 6 frames'],
         'sequence' => ['title' => '3D from your photos', 'description' => 'Add a ready sequence captured from consecutive viewpoints.', 'feature_1' => 'FREE: up to 12 photos', 'feature_2' => 'Up to A5'],
         'pair' => ['title' => '3D from two photos', 'description' => 'Start and end photos define the AI-generated camera movement.', 'feature_1' => 'AI agent: start and end frames', 'feature_2' => 'PRO: up to A4'],
         'single' => ['title' => '3D from one photo', 'description' => 'AI analyses the scene and creates controlled camera motion for a depth effect.', 'feature_1' => 'Prompt adapted to the image', 'feature_2' => 'PRO: up to A4'],

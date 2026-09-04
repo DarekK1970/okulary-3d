@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\PlanPurchase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -12,12 +14,72 @@ class PayNowService
 {
     public function __construct(
         private readonly CommerceSettingsService $settings
-    ) {
-    }
+    ) {}
 
     public function enabled(): bool
     {
         return $this->settings->payNowEnabled();
+    }
+
+    public function startPlanPurchase(PlanPurchase $purchase, string $locale): array
+    {
+        if (! $this->enabled()) {
+            throw new RuntimeException(__('checkout71.paynow.not_configured'));
+        }
+        if ($purchase->status === 'pending' && $purchase->payment_redirect_url) {
+            return ['paymentId' => $purchase->payment_external_id, 'redirectUrl' => $purchase->payment_redirect_url, 'status' => 'PENDING'];
+        }
+
+        $externalId = $purchase->payment_merchant_external_id ?: 'plan-'.$purchase->id.'-'.Str::lower(Str::random(10));
+        $idempotencyKey = $purchase->payment_idempotency_key ?: (string) Str::uuid();
+        $purchase->update(['status' => 'pending', 'payment_merchant_external_id' => $externalId, 'payment_idempotency_key' => $idempotencyKey]);
+        $body = ['amount' => $this->moneyToCents((string) $purchase->price), 'currency' => 'PLN', 'externalId' => $externalId, 'description' => strtoupper($purchase->plan).' — 3 months', 'continueUrl' => route('plans.payment.return', ['locale' => $locale, 'purchase' => $purchase->public_token]), 'buyer' => ['email' => Str::limit($purchase->user->email, 50, ''), 'firstName' => Str::limit($purchase->user->name, 50, ''), 'locale' => $locale === 'en' ? 'en-US' : 'pl-PL']];
+        $json = json_encode($body, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $response = Http::timeout($this->settings->payNowTimeout())->acceptJson()->withHeaders($this->headers($idempotencyKey, $json))->withBody($json, 'application/json')->post($this->baseUrl().'/v3/payments');
+        if (! $response->successful() || ! $response->json('paymentId') || ! $response->json('redirectUrl')) {
+            $purchase->update(['status' => 'failed', 'payment_error' => Str::limit($response->body(), 2000)]);
+            throw new RuntimeException('PayNow API error');
+        }
+        $purchase->update(['payment_external_id' => $response->json('paymentId'), 'payment_redirect_url' => $response->json('redirectUrl')]);
+
+        return ['paymentId' => $response->json('paymentId'), 'redirectUrl' => $response->json('redirectUrl'), 'status' => $response->json('status', 'NEW')];
+    }
+
+    public function refreshPlanPurchase(PlanPurchase $purchase): bool
+    {
+        if (! $this->enabled() || ! $purchase->payment_external_id) {
+            return false;
+        }
+        $key = (string) Str::uuid();
+        $response = Http::timeout($this->settings->payNowTimeout())->acceptJson()->withHeaders($this->headers($key, ''))->get($this->baseUrl().'/v3/payments/'.urlencode($purchase->payment_external_id).'/status');
+
+        return $response->successful() && $this->applyPlanPurchaseStatus($purchase, (string) $response->json('status'), (string) $response->json('paymentId'));
+    }
+
+    public function applyPlanPurchaseStatus(PlanPurchase $purchase, string $status, ?string $paymentId = null): bool
+    {
+        if ($paymentId && $purchase->payment_external_id && $paymentId !== $purchase->payment_external_id) {
+            return false;
+        }
+        if (strtoupper($status) !== 'CONFIRMED' || $purchase->status === 'paid') {
+            return false;
+        }
+        DB::transaction(function () use ($purchase): void {
+            $locked = PlanPurchase::query()->lockForUpdate()->findOrFail($purchase->id);
+            if ($locked->status === 'paid') {
+                return;
+            }
+            $user = $locked->user;
+            $startsAt = $user->plan_expires_at?->isFuture() ? $user->plan_expires_at->copy() : now();
+            $expiresAt = $startsAt->addMonths($locked->duration_months);
+            $user->update(['lenticular_plan' => $locked->plan, 'plan_expires_at' => $expiresAt]);
+            if ($locked->token_lens > 0) {
+                app(TokenLensWalletService::class)->grant($user, $locked->token_lens, 'subscription', 'plan-purchase:'.$locked->id, $expiresAt, strtoupper($locked->plan).' plan');
+            }
+            $locked->update(['status' => 'paid', 'paid_at' => now()]);
+        });
+
+        return true;
     }
 
     /**
@@ -89,7 +151,7 @@ class PayNowService
             ),
             'currency' => $order->currency,
             'externalId' => $merchantExternalId,
-            'description' => 'Order ' . $order->number,
+            'description' => 'Order '.$order->number,
             'continueUrl' => route('payment.paynow.return', [
                 'locale' => $order->locale,
                 'order' => $order->public_token,
@@ -132,7 +194,7 @@ class PayNowService
                 )
             )
             ->withBody($bodyJson, 'application/json')
-            ->post($this->baseUrl() . '/v3/payments');
+            ->post($this->baseUrl().'/v3/payments');
 
         if (! $response->successful()) {
             $message = $response->json('errors.0.message')
@@ -200,9 +262,9 @@ class PayNowService
             )
             ->get(
                 $this->baseUrl()
-                . '/v3/payments/'
-                . urlencode($order->payment_external_id)
-                . '/status'
+                .'/v3/payments/'
+                .urlencode($order->payment_external_id)
+                .'/status'
             );
 
         if (! $response->successful()) {

@@ -20,6 +20,7 @@ export default defineConfig({
                 'resources/css/cart.css',
                 'resources/css/shop.css',
                 'resources/css/marketplace.css',
+                'resources/css/plans.css',
                 'resources/css/lab.css',
                 'resources/css/lenticular-lab.css',
                 'resources/css/lenticular-studio.css',

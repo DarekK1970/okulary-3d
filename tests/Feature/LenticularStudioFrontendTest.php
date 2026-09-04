@@ -32,7 +32,9 @@ class LenticularStudioFrontendTest extends TestCase
         $this->actingAs($user)->get('/pl/lab/lenticular/studio')
             ->assertOk()
             ->assertSee('Jak chcesz stworzyć swój obraz?')
-            ->assertSee('Efekt FLIP z filmu')
+            ->assertSee('Efekt FLIP / MORFING / ZOOM')
+            ->assertSee('Wczytaj film lub od 2 do 6 zdjęć')
+            ->assertDontSee('Efekt FLIP z filmu')
             ->assertSee('3D z własnych zdjęć')
             ->assertSee('3D z dwóch zdjęć')
             ->assertSee('Agent AI: klatka startowa i końcowa')
@@ -42,7 +44,8 @@ class LenticularStudioFrontendTest extends TestCase
             ->assertSee('NIEDOSTĘPNE W TYM PLANIE')
             ->assertSee('Przejdź na')
             ->assertSee(route('lab.projects.create', ['locale' => 'pl']))
-            ->assertSee(route('lab.lenticular.ai.sequence.create', ['locale' => 'pl']));
+            ->assertSee(route('lab.lenticular.ai.sequence.create', ['locale' => 'pl']))
+            ->assertDontSee('<details class="nav-dropdown" open', false);
     }
 
     public function test_frontend_reports_when_fal_ai_is_ready_without_exposing_secrets(): void
