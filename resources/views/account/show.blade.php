@@ -140,6 +140,8 @@
                                     ?? $project->files->sortByDesc('created_at')->first(fn ($file) => str_starts_with($file->kind, 'timeline_thumbnail_') || str_starts_with($file->kind, 'analysis_thumbnail_'));
                                 $finalArtifact = $project->jobs->flatMap->artifacts->firstWhere('kind', 'final');
                                 $hasFinal = $finalArtifact && Storage::disk($finalArtifact->disk)->exists($finalArtifact->path);
+                                $hasDownloadableFiles = $project->files->contains(fn ($file) => Storage::disk($file->disk)->exists($file->path))
+                                    || $project->jobs->flatMap->artifacts->contains(fn ($artifact) => Storage::disk($artifact->disk)->exists($artifact->path));
                             @endphp
                             <tr>
                                 <td>{{ $projects->firstItem() + $loop->index }}</td>
@@ -154,6 +156,14 @@
                                 </td>
                                 <td>
                                     <div class="account-project-actions">
+                                        <a href="{{ route('lab.projects.files', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.open_files') }}" aria-label="{{ __('portal_auth.projects.open_files') }}">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h9v10.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.5Z"/><path d="M3 9h18"/></svg>
+                                        </a>
+                                        @if ($hasDownloadableFiles)
+                                            <a class="is-zip" href="{{ route('lab.projects.archive', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.download_zip') }}" aria-label="{{ __('portal_auth.projects.download_zip') }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h8l4 4v16H6Z"/><path d="M14 2v5h5M10 7h3m-3 3h3m-3 3h3m-3 3h3m-3 3h3"/></svg>
+                                            </a>
+                                        @endif
                                         @if ($hasFinal)
                                             <a href="{{ route('lab.projects.download', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.download') }}" aria-label="{{ __('portal_auth.projects.download') }}">
                                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 19h14"/></svg>

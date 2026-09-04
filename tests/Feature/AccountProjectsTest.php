@@ -8,6 +8,7 @@ use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
 use App\Models\User;
+use App\Services\LenticularProjectArchiveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -45,6 +46,11 @@ class AccountProjectsTest extends TestCase
             ->assertSee('Edytuj projekt')
             ->assertSee('Zamów wydruk UV')
             ->assertSee('Usuń projekt');
+        $this->actingAs($user)->get('/pl/account')
+            ->assertSee(route('lab.projects.files', ['locale' => 'pl', 'project' => $project]), false)
+            ->assertSee(route('lab.projects.archive', ['locale' => 'pl', 'project' => $project]), false)
+            ->assertSee('Otwórz pliki projektu')
+            ->assertSee('Pobierz cały projekt jako ZIP');
     }
 
     public function test_english_account_uses_english_project_labels(): void
@@ -99,5 +105,65 @@ class AccountProjectsTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseHas('lenticular_projects', ['id' => $project->id]);
+    }
+
+    public function test_owner_can_browse_and_download_project_files_but_other_user_cannot(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $project = LenticularProject::factory()->for($owner)->create(['name' => 'Moje pliki']);
+        Storage::disk('local')->put('lenticular/source.jpg', 'source');
+        $file = LenticularProjectFile::factory()->for($project)->create([
+            'disk' => 'local',
+            'path' => 'lenticular/source.jpg',
+            'original_name' => 'source.jpg',
+            'media_type' => 'image/jpeg',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('lab.projects.files', ['locale' => 'pl', 'project' => $project]))
+            ->assertOk()
+            ->assertSee('Pliki projektu')
+            ->assertSee('source.jpg');
+
+        $this->actingAs($owner)
+            ->get(route('lab.projects.files.show', ['locale' => 'pl', 'project' => $project, 'file' => $file, 'download' => 1]))
+            ->assertOk()
+            ->assertDownload('source.jpg');
+
+        $this->actingAs($other)
+            ->get(route('lab.projects.files', ['locale' => 'pl', 'project' => $project]))
+            ->assertNotFound();
+    }
+
+    public function test_project_archive_contains_source_files_and_artifacts(): void
+    {
+        Storage::fake('local');
+        $project = LenticularProject::factory()->create(['name' => 'Projekt ZIP']);
+        Storage::disk('local')->put('lenticular/source.jpg', 'source');
+        LenticularProjectFile::factory()->for($project)->create([
+            'kind' => 'source_image',
+            'disk' => 'local',
+            'path' => 'lenticular/source.jpg',
+            'original_name' => 'source.jpg',
+        ]);
+        $job = LenticularJob::factory()->for($project)->create(['source_file_id' => null]);
+        Storage::disk('local')->put('lenticular/final.pdf', 'pdf');
+        LenticularArtifact::factory()->for($job, 'lenticularJob')->create([
+            'kind' => 'final',
+            'disk' => 'local',
+            'path' => 'lenticular/final.pdf',
+        ]);
+
+        $result = app(LenticularProjectArchiveService::class)->create($project);
+        $archive = new \PharData($result['path']);
+
+        $this->assertSame('projekt-zip-files.zip', $result['name']);
+        $this->assertTrue(isset($archive['project-files/source-image/source.jpg']));
+        $this->assertTrue(isset($archive['artifacts/final/final.pdf']));
+
+        unset($archive);
+        @unlink($result['path']);
     }
 }

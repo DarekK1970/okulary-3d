@@ -8,6 +8,7 @@ use App\Models\LenticularArtifact;
 use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
+use App\Services\LenticularProjectArchiveService;
 use App\Services\LenticularSequenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -126,6 +127,50 @@ class LenticularProjectController extends Controller
         $artifact = LenticularArtifact::query()->where('lenticular_job_id', $job->id)->where('kind', 'final')->firstOrFail();
 
         return response()->download(Storage::disk($artifact->disk)->path($artifact->path), $project->name.'_JPG.zip', ['Content-Type' => 'application/zip']);
+    }
+
+    public function files(Request $request, string $locale, LenticularProject $project): View
+    {
+        $this->authorizeOwner($request, $project);
+        $project->load(['files', 'jobs.artifacts']);
+
+        return view('account.project-files', compact('project'));
+    }
+
+    public function file(Request $request, string $locale, LenticularProject $project, LenticularProjectFile $file): BinaryFileResponse
+    {
+        $this->authorizeOwner($request, $project);
+        abort_unless($file->lenticular_project_id === $project->id, 404);
+        abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
+
+        $path = Storage::disk($file->disk)->path($file->path);
+
+        return $request->boolean('download')
+            ? response()->download($path, $file->original_name)
+            : response()->file($path, ['Content-Type' => $file->media_type ?: 'application/octet-stream']);
+    }
+
+    public function archive(Request $request, string $locale, LenticularProject $project, LenticularProjectArchiveService $archives): BinaryFileResponse
+    {
+        $this->authorizeOwner($request, $project);
+
+        try {
+            $archive = $archives->create($project);
+        } catch (\RuntimeException) {
+            abort(404);
+        }
+
+        return response()->download($archive['path'], $archive['name'], ['Content-Type' => 'application/zip'])
+            ->deleteFileAfterSend(true);
+    }
+
+    public function artifact(Request $request, string $locale, LenticularProject $project, LenticularArtifact $artifact): BinaryFileResponse
+    {
+        $this->authorizeOwner($request, $project);
+        abort_unless($artifact->lenticularJob?->lenticular_project_id === $project->id, 404);
+        abort_unless(Storage::disk($artifact->disk)->exists($artifact->path), 404);
+
+        return response()->download(Storage::disk($artifact->disk)->path($artifact->path));
     }
 
     public function destroy(Request $request, string $locale, LenticularProject $project): RedirectResponse

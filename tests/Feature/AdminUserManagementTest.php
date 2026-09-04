@@ -156,6 +156,11 @@ class AdminUserManagementTest extends TestCase
             ->assertSee('Otwórz pliki projektu');
 
         $this->actingAs($admin)
+            ->get(route('admin.users.projects.archive', [$user, $project]))
+            ->assertOk()
+            ->assertDownload('projekt-klienta-files.zip');
+
+        $this->actingAs($admin)
             ->get(route('admin.users.projects.files', [$user, $project]))
             ->assertOk()
             ->assertSee('source.jpg')

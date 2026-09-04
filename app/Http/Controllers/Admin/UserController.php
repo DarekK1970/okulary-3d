@@ -8,6 +8,7 @@ use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
 use App\Models\User;
 use App\Services\LenticularAccessService;
+use App\Services\LenticularProjectArchiveService;
 use App\Services\TokenLensWalletService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -84,6 +85,20 @@ class UserController extends Controller
         abort_unless(Storage::disk($artifact->disk)->exists($artifact->path), 404);
 
         return response()->download(Storage::disk($artifact->disk)->path($artifact->path));
+    }
+
+    public function projectArchive(User $user, LenticularProject $project, LenticularProjectArchiveService $archives): BinaryFileResponse
+    {
+        $this->ensureProjectOwner($user, $project);
+
+        try {
+            $archive = $archives->create($project);
+        } catch (\RuntimeException) {
+            abort(404);
+        }
+
+        return response()->download($archive['path'], $archive['name'], ['Content-Type' => 'application/zip'])
+            ->deleteFileAfterSend(true);
     }
 
     public function edit(User $user, TokenLensWalletService $wallet): View

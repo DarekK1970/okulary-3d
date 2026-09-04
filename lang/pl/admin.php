@@ -159,6 +159,7 @@ return [
             'actions' => 'Akcje',
             'open_files' => 'Otwórz pliki projektu',
             'download_final' => 'Pobierz finalny plik',
+            'download_zip' => 'Pobierz cały projekt jako ZIP',
             'empty' => 'Ten użytkownik nie ma jeszcze projektów.',
             'statuses' => ['draft' => 'Wersja robocza', 'processing' => 'Przetwarzanie', 'ready' => 'Gotowy', 'failed' => 'Błąd'],
         ],
