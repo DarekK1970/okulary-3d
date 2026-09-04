@@ -71,4 +71,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(FalAiJob::class);
     }
+
+    public function tokenLensTransactions(): HasMany
+    {
+        return $this->hasMany(TokenLensTransaction::class);
+    }
 }

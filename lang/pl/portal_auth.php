@@ -69,6 +69,17 @@ return [
         'super_admin' => 'Super Administrator',
     ],
 
+    'wallet' => [
+        'title' => 'Twój portfel TOKEN_LENS',
+        'description' => 'Tokeny wykorzystasz do generowania AI oraz usług w marketplace.',
+        'empty' => 'Nie masz jeszcze operacji w portfelu.',
+        'insufficient' => 'Nie masz wystarczającej liczby TOKEN_LENS.',
+        'types' => ['grant' => 'Przyznane tokeny', 'admin_adjustment' => 'Korekta salda', 'ai_video' => 'Generowanie filmu AI', 'marketplace_order' => 'Zamówienie w marketplace'],
+        'header_balance' => 'Twoje TOKEN_LENS: :count',
+        'valid_until' => 'ważne do :date',
+        'no_expiry' => 'bez terminu ważności',
+    ],
+
     'messages' => [
         'registered' => 'Konto zostało utworzone.',
         'logged_out' => 'Zostałeś wylogowany.',

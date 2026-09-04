@@ -16,7 +16,6 @@ return [
         'pair' => ['title' => '3D from two photos', 'description' => 'Start and end photos define the AI-generated camera movement.', 'feature_1' => 'AI agent: start and end frames', 'feature_2' => 'PRO: up to A4'],
         'single' => ['title' => '3D from one photo', 'description' => 'AI analyses the scene and creates controlled camera motion for a depth effect.', 'feature_1' => 'Prompt adapted to the image', 'feature_2' => 'PRO: up to A4'],
     ],
-    'cost_title' => 'No paid AI job starts automatically.', 'cost_help' => 'Before generation, we show the parameters and maximum cost and ask for explicit confirmation.',
     'pair_form' => [
         'kicker' => '3D FROM TWO PHOTOS', 'title' => 'Create camera movement between photos',
         'description' => 'Add a start and end frame. The AI agent will create a smooth transition that you can turn into a lenticular image.',
@@ -24,16 +23,14 @@ return [
         'images_title' => 'Add two photos', 'images_help' => 'The photos should show the same static scene from two viewpoints.',
         'start_image' => 'Start frame', 'end_image' => 'End frame', 'image_limit' => 'JPG, PNG or WEBP, up to 30 MB',
         'print_title' => 'Set print parameters', 'print_help' => 'These settings will be saved and used in the following stages.',
-        'confirm_kicker' => 'CONFIRMATION', 'confirm_title' => 'Start paid generation',
-        'confirm_help' => 'The maximum cost of this job is USD :cost. The actual cost is recorded after completion.',
-        'confirm_checkbox' => 'I accept starting a job costing up to USD :cost.', 'generate' => 'Generate camera movement',
+        'ready_kicker' => 'READY TO GENERATE', 'ready_title' => 'Create material for your project',
+        'generate' => 'Generate camera movement',
     ],
     'single_form' => [
         'kicker' => '3D FROM ONE PHOTO', 'title' => 'Turn a photo into a spatial sequence',
         'description' => 'The AI agent analyses the scene, selects a stable pivot and creates controlled camera movement for a lenticular effect.',
         'image_title' => 'Add a source photo', 'image_help' => 'A sharp photo with a clear main subject, foreground and background gives the best result.',
-        'source_image' => 'Source photo', 'confirm_title' => 'Analyse the scene and create camera movement',
-        'confirm_help' => 'The agent first describes scene geometry and selects a pivot, then starts generation. The maximum job cost is USD :cost.',
+        'source_image' => 'Source photo', 'ready_title' => 'Analyse the photo and create the material',
         'generate' => 'Analyse and generate',
     ],
     'sequence_form' => [
@@ -48,6 +45,7 @@ return [
         'title' => 'The AI agent is preparing your material',
         'statuses' => ['queued' => 'Job is waiting', 'submitted' => 'Job submitted', 'processing' => 'Generation in progress', 'succeeded' => 'Your material is ready', 'failed' => 'Generation failed', 'cancelled' => 'Job cancelled'],
         'finished_help' => 'The job has finished.', 'waiting_help' => 'This page refreshes automatically. You can also return later.',
+        'upscaling_help' => 'The material is being prepared at the resolution required for the selected print size.',
         'continue' => 'Continue to frame selection', 'failed_help' => 'No additional retry charge was made. Contact support if the error persists.',
     ],
 ];

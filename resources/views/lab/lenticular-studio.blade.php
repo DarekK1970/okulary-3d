@@ -74,7 +74,6 @@
             </article>
         </div>
 
-        <aside class="studio-cost-note"><span>✓</span><div><strong>{{ __('lenticular_studio.cost_title') }}</strong><p>{{ __('lenticular_studio.cost_help') }}</p></div></aside>
     </div>
 </section>
 @endsection

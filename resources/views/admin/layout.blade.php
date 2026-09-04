@@ -25,6 +25,7 @@
         'resources/css/admin-analytics.css',
         'resources/css/admin-newsletter.css',
         'resources/css/admin-users.css',
+        'resources/css/admin-marketplace.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -62,6 +63,12 @@
                     {{ __('media.menu') }}
                 </a>
                 @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_SUPER_ADMIN], true))
+                    <div class="admin-nav-group">
+                        <span class="admin-nav-group-title">{{ __('marketplace.admin.menu') }}</span>
+                        <a class="admin-nav-link {{ request()->routeIs('admin.marketplace.products.*') ? 'is-active' : '' }}" href="{{ route('admin.marketplace.products.index') }}"><span>▦</span>{{ __('marketplace.admin.products.title') }}</a>
+                        <a class="admin-nav-link {{ request()->routeIs('admin.marketplace.categories.*') ? 'is-active' : '' }}" href="{{ route('admin.marketplace.categories.index') }}"><span>≡</span>{{ __('marketplace.admin.categories.title') }}</a>
+                        <a class="admin-nav-link {{ request()->routeIs('admin.marketplace.providers.*') ? 'is-active' : '' }}" href="{{ route('admin.marketplace.providers.index') }}"><span>⇢</span>{{ __('marketplace.admin.providers.title') }}</a>
+                    </div>
                     <a
                         class="admin-nav-link {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.product-categories.*') ? 'is-active' : '' }}"
                         href="{{ route('admin.products.index') }}"

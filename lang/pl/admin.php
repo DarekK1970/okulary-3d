@@ -154,11 +154,23 @@ return [
             'expires_help' => 'Pozostaw puste, jeśli plan ma obowiązywać bezterminowo.',
             'save' => 'Zapisz plan',
         ],
+        'wallet' => [
+            'title' => 'Portfel użytkownika',
+            'description' => 'Saldo i niezmienny rejestr operacji TOKEN_LENS.',
+            'amount' => 'Korekta salda',
+            'amount_help' => 'Wpisz wartość dodatnią, aby dodać tokeny, albo ujemną, aby je odjąć.',
+            'reason' => 'Powód korekty',
+            'adjust' => 'Zapisz korektę',
+            'history' => 'Ostatnie operacje',
+            'empty' => 'Brak operacji TOKEN_LENS.',
+            'types' => ['grant' => 'Przyznanie tokenów', 'admin_adjustment' => 'Korekta administratora', 'ai_video' => 'Generowanie filmu AI', 'marketplace_order' => 'Zamówienie w marketplace'],
+        ],
         'messages' => [
             'updated' => 'Plan użytkownika został zapisany.',
             'suspended' => 'Konto użytkownika zostało zawieszone.',
             'restored' => 'Konto użytkownika zostało odblokowane.',
             'cannot_suspend_self' => 'Nie możesz zawiesić własnego konta.',
+            'tokens_adjusted' => 'Saldo TOKEN_LENS zostało zaktualizowane.',
         ],
     ],
 ];

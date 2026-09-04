@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
-use App\Http\Controllers\AiLenticularProjectController;
 use App\Http\Controllers\Admin\AdminNavigationController;
 use App\Http\Controllers\Admin\AiTranslationController;
 use App\Http\Controllers\Admin\AiTranslationSettingsController;
@@ -17,18 +16,21 @@ use App\Http\Controllers\Admin\DiscoveryController;
 use App\Http\Controllers\Admin\DiscoverySettingsController;
 use App\Http\Controllers\Admin\FalAiSettingsController;
 use App\Http\Controllers\Admin\MaintenanceSettingsController;
+use App\Http\Controllers\Admin\MarketplaceCategoryController;
+use App\Http\Controllers\Admin\MarketplaceProductController;
+use App\Http\Controllers\Admin\MarketplaceShippingProviderController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
 use App\Http\Controllers\Admin\OrchestratorController;
 use App\Http\Controllers\Admin\OrchestratorSettingsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
-use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StaticPageController as AdminStaticPageController;
 use App\Http\Controllers\Admin\StereoGalleryController as AdminStereoGalleryController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AiLenticularProjectController;
 use App\Http\Controllers\AnalyticsEventController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
@@ -44,6 +46,7 @@ use App\Http\Controllers\FalAiWebhookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\LenticularProjectController;
+use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayNowNotificationController;
@@ -137,6 +140,9 @@ Route::prefix('{locale}')
 
         Route::get('/shop', [ShopController::class, 'index'])
             ->name('shop.index');
+
+        Route::get('/marketplace', [MarketplaceController::class, 'index'])
+            ->name('marketplace.index');
 
         Route::get('/shop/{slug}', [ShopController::class, 'show'])
             // Last-segment wildcard also supports nested EN category paths.
@@ -346,6 +352,19 @@ Route::prefix('admin')
                 Route::get('/shop', [AdminNavigationController::class, 'shop'])
                     ->name('shop');
 
+                Route::resource('marketplace/products', MarketplaceProductController::class)
+                    ->except(['show'])
+                    ->names('marketplace.products')
+                    ->parameters(['products' => 'product']);
+                Route::get('/marketplace/categories', [MarketplaceCategoryController::class, 'index'])->name('marketplace.categories.index');
+                Route::post('/marketplace/categories', [MarketplaceCategoryController::class, 'store'])->name('marketplace.categories.store');
+                Route::put('/marketplace/categories/{category}', [MarketplaceCategoryController::class, 'update'])->name('marketplace.categories.update');
+                Route::delete('/marketplace/categories/{category}', [MarketplaceCategoryController::class, 'destroy'])->name('marketplace.categories.destroy');
+                Route::resource('marketplace/providers', MarketplaceShippingProviderController::class)
+                    ->except(['show'])
+                    ->names('marketplace.providers')
+                    ->parameters(['providers' => 'provider']);
+
                 Route::resource('products', ProductController::class)
                     ->except(['show']);
                 Route::get('/product-categories', [ProductCategoryController::class, 'index'])
@@ -372,6 +391,7 @@ Route::prefix('admin')
                 Route::get('/users', [AdminUserController::class, 'index'])->name('users');
                 Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
                 Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+                Route::post('/users/{user}/token-lens', [AdminUserController::class, 'adjustTokens'])->name('users.tokens.adjust');
                 Route::patch('/users/{user}/suspend', [AdminUserController::class, 'suspend'])->name('users.suspend');
                 Route::patch('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore');
 

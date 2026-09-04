@@ -41,7 +41,6 @@ class AiLenticularProjectController extends Controller
             'end_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'print_size' => ['required', Rule::in($access->agentPrintSizes($plan))],
             'lpi' => ['required', Rule::in([50, 60, 75])],
-            'confirm_ai_cost' => ['accepted'],
         ]);
 
         $this->ensureBudgetAvailable($settings);
@@ -49,7 +48,7 @@ class AiLenticularProjectController extends Controller
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'ai_pair', 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
+            'settings' => ['workflow' => 'ai_pair', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
         ]);
         $start = $this->storeImage($project, $request->file('start_image'), 'ai_start_image');
         $end = $this->storeImage($project, $request->file('end_image'), 'ai_end_image');
@@ -92,14 +91,13 @@ class AiLenticularProjectController extends Controller
             'source_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'print_size' => ['required', Rule::in($access->agentPrintSizes($plan))],
             'lpi' => ['required', Rule::in([50, 60, 75])],
-            'confirm_ai_cost' => ['accepted'],
         ]);
         $this->ensureBudgetAvailable($settings);
 
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'ai_single', 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
+            'settings' => ['workflow' => 'ai_single', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
         ]);
         $source = $this->storeImage($project, $request->file('source_image'), 'ai_start_image');
         $job = $jobs->create(
@@ -119,9 +117,12 @@ class AiLenticularProjectController extends Controller
     public function showJob(Request $request, string $locale, FalAiJob $job): View
     {
         abort_unless($job->user_id === $request->user()->id, 404);
-        $job->load(['lenticularProject', 'resultFile']);
+        $job->load(['lenticularProject.falAiJobs', 'resultFile']);
+        $pipelineJob = $job->lenticularProject->falAiJobs
+            ->sortByDesc('created_at')
+            ->first() ?? $job;
 
-        return view('lab.projects.ai-job', compact('job'));
+        return view('lab.projects.ai-job', compact('job', 'pipelineJob'));
     }
 
     public function createSequence(Request $request, string $locale, LenticularAccessService $access): View

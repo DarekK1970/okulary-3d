@@ -485,3 +485,4 @@
         animation-iteration-count: 1 !important;
     }
 }
+@media (max-width: 1100px){.header-account-summary{display:none}.mobile-account-summary{display:grid;gap:4px;margin-top:12px;padding:12px;border:1px solid #dce5ef;border-radius:11px;background:#f8fafc;color:#233149}.mobile-account-summary span{color:#6d7890;font-size:.78rem}}

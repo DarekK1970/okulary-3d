@@ -326,3 +326,5 @@
         padding: 21px 17px;
     }
 }
+
+.account-token-card{grid-column:1/-1}.account-token-balance{display:block;margin:10px 0 22px;font-size:2.6rem;color:#087ca4}.account-token-balance small{font-size:.85rem;letter-spacing:.08em}.account-token-history{display:grid;gap:8px}.account-token-history>div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid #edf1f5}.account-token-history p{margin:0;color:#778399}

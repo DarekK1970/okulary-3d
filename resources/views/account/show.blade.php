@@ -31,6 +31,16 @@
         @endif
 
         <div class="account-grid">
+            <section class="account-card account-token-card">
+                <div class="account-card-heading"><h2>{{ __('portal_auth.wallet.title') }}</h2><span>{{ __('portal_auth.wallet.description') }}</span></div>
+                <strong class="account-token-balance">{{ $tokenLensBalance }} <small>TOKEN_LENS</small></strong>
+                <div class="account-token-history">
+                    @forelse($tokenLensTransactions as $transaction)
+                        <div><span>{{ $transaction->description ?: __('portal_auth.wallet.types.'.$transaction->type) }}</span><strong class="{{ $transaction->amount > 0 ? 'is-credit' : 'is-debit' }}">{{ $transaction->amount > 0 ? '+' : '' }}{{ $transaction->amount }} TL</strong></div>
+                    @empty<p>{{ __('portal_auth.wallet.empty') }}</p>@endforelse
+                </div>
+            </section>
+
             <section class="account-card">
                 <div class="account-card-heading">
                     <h2>{{ __('portal_auth.account.profile_title') }}</h2>

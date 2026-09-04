@@ -69,6 +69,17 @@ return [
         'super_admin' => 'Super Administrator',
     ],
 
+    'wallet' => [
+        'title' => 'Your TOKEN_LENS wallet',
+        'description' => 'Use tokens for AI generation and marketplace services.',
+        'empty' => 'There are no wallet transactions yet.',
+        'insufficient' => 'You do not have enough TOKEN_LENS.',
+        'types' => ['grant' => 'Token grant', 'admin_adjustment' => 'Balance adjustment', 'ai_video' => 'AI video generation', 'marketplace_order' => 'Marketplace order'],
+        'header_balance' => 'Your TOKEN_LENS: :count',
+        'valid_until' => 'valid until :date',
+        'no_expiry' => 'no expiry date',
+    ],
+
     'messages' => [
         'registered' => 'Your account has been created.',
         'logged_out' => 'You have been signed out.',

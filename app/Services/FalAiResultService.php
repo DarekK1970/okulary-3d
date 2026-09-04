@@ -42,7 +42,10 @@ class FalAiResultService
 
         return LenticularProjectFile::query()->create([
             'lenticular_project_id' => $job->lenticular_project_id,
-            'kind' => $job->operation === FalAiJobOperation::ImageToVideo ? 'source_video' : 'fal_ai_result',
+            'kind' => match ($job->operation) {
+                FalAiJobOperation::ImageToVideo => 'source_video',
+                FalAiJobOperation::VideoUpscale => 'upscaled_video',
+            },
             'disk' => $disk,
             'path' => $path,
             'original_name' => "fal-ai-{$job->id}.{$extension}",

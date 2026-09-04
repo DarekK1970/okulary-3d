@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\LenticularAccessService;
+use App\Services\TokenLensWalletService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,9 +36,13 @@ class UserController extends Controller
         return view('admin.users.index', compact('users', 'filters'));
     }
 
-    public function edit(User $user): View
+    public function edit(User $user, TokenLensWalletService $wallet): View
     {
-        return view('admin.users.edit', compact('user'));
+        return view('admin.users.edit', [
+            'user' => $user,
+            'tokenLensBalance' => $wallet->balance($user),
+            'tokenLensTransactions' => $user->tokenLensTransactions()->latest('created_at')->limit(20)->get(),
+        ]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -68,6 +73,18 @@ class UserController extends Controller
         $user->forceFill(['suspended_at' => null])->save();
 
         return back()->with('status', __('admin.users.messages.restored'));
+    }
+
+    public function adjustTokens(Request $request, User $user, TokenLensWalletService $wallet): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'integer', 'between:-10000,10000', 'not_in:0'],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $wallet->adminAdjust($user, (int) $validated['amount'], $validated['reason'], $request->user());
+
+        return back()->with('status', __('admin.users.messages.tokens_adjusted'));
     }
 
     /** @return list<string> */

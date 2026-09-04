@@ -167,6 +167,8 @@ svg {
     gap: 7px;
 }
 
+.header-account-summary{display:grid;gap:1px;min-width:145px;padding:7px 10px;border:1px solid var(--color-border);border-radius:11px;background:#f8fafc;color:var(--color-navy);line-height:1.2}.header-account-summary strong{display:flex;align-items:center;gap:6px;font-size:.76rem}.header-account-summary strong span{padding:2px 5px;border-radius:999px;background:#e7f5fa;color:#087ca4;font-size:.61rem}.header-account-summary small{color:var(--color-muted);font-size:.62rem}.mobile-account-summary{display:none}
+
 .language-switcher {
     display: inline-flex;
     align-items: center;

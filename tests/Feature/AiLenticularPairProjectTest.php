@@ -30,7 +30,8 @@ class AiLenticularPairProjectTest extends TestCase
         $this->actingAs($premiumUser)->get('/pl/lab/lenticular/studio/two-photos')
             ->assertOk()
             ->assertSee('Utwórz ruch kamery między zdjęciami')
-            ->assertSee('5,00 USD')
+            ->assertDontSee('5,00 USD')
+            ->assertDontSee('Akceptuję uruchomienie zadania')
             ->assertDontSee('Seedance')
             ->assertDontSee('fal.ai');
     }
@@ -48,7 +49,6 @@ class AiLenticularPairProjectTest extends TestCase
             'end_image' => UploadedFile::fake()->image('end.jpg', 1280, 720),
             'print_size' => 'A4',
             'lpi' => 60,
-            'confirm_ai_cost' => '1',
         ]);
 
         $project = LenticularProject::query()->sole();
@@ -68,7 +68,7 @@ class AiLenticularPairProjectTest extends TestCase
         LenticularProjectFile::query()->each(fn (LenticularProjectFile $file) => Storage::disk('local')->assertExists($file->path));
     }
 
-    public function test_cost_confirmation_is_required_before_any_paid_job_is_created(): void
+    public function test_pair_job_can_be_created_without_separate_usd_cost_confirmation(): void
     {
         Storage::fake('local');
         Queue::fake();
@@ -76,16 +76,16 @@ class AiLenticularPairProjectTest extends TestCase
         $premiumUser = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
 
         $this->actingAs($premiumUser)->from('/pl/lab/lenticular/studio/two-photos')->post('/pl/lab/lenticular/studio/two-photos', [
-            'name' => 'Bez zgody',
+            'name' => 'Projekt w planie płatnym',
             'start_image' => UploadedFile::fake()->image('start.jpg'),
             'end_image' => UploadedFile::fake()->image('end.jpg'),
             'print_size' => 'A4',
             'lpi' => 60,
-        ])->assertRedirect('/pl/lab/lenticular/studio/two-photos')->assertSessionHasErrors('confirm_ai_cost');
+        ])->assertRedirect();
 
-        $this->assertDatabaseCount('lenticular_projects', 0);
-        $this->assertDatabaseCount('fal_ai_jobs', 0);
-        Queue::assertNothingPushed();
+        $this->assertDatabaseCount('lenticular_projects', 1);
+        $this->assertDatabaseCount('fal_ai_jobs', 1);
+        Queue::assertPushed(SubmitFalAiJob::class);
     }
 
     public function test_daily_budget_is_checked_before_project_is_created(): void
@@ -104,7 +104,6 @@ class AiLenticularPairProjectTest extends TestCase
             'end_image' => UploadedFile::fake()->image('end.jpg'),
             'print_size' => 'A4',
             'lpi' => 60,
-            'confirm_ai_cost' => '1',
         ])->assertTooManyRequests();
 
         $this->assertSame($existingProjects, LenticularProject::query()->count());

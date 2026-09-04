@@ -77,6 +77,11 @@
     $isTechniquesSection = $articleSection === \App\Enums\ArticlePortalSection::Techniques->value;
     $isLabSection = request()->routeIs('lab.*');
     $isPowerLabSection = request()->routeIs('lab.lenticular.studio', 'lab.lenticular.ai.*');
+    $isMarketplace = request()->routeIs('marketplace.*');
+    $headerUser = auth()->user();
+    $headerPlan = $headerUser ? app(\App\Services\LenticularAccessService::class)->plan($headerUser) : null;
+    $headerTokenBalance = $headerUser ? app(\App\Services\TokenLensWalletService::class)->balance($headerUser) : 0;
+    $headerTokenExpiry = $headerUser ? app(\App\Services\TokenLensWalletService::class)->expiresAt($headerUser) : null;
 @endphp
 
 <style>
@@ -261,8 +266,8 @@
                 {{ __('site.nav.techniques') }}
             </a>
 
-            <details class="nav-dropdown" @if ($isLabSection) open @endif>
-                <summary class="nav-link {{ $isLabSection ? 'is-active' : '' }}">
+            <details class="nav-dropdown" @if ($isLabSection || $isMarketplace) open @endif>
+                <summary class="nav-link {{ $isLabSection || $isMarketplace ? 'is-active' : '' }}">
                     {{ __('site.nav.lab') }}
                     <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
                 </summary>
@@ -278,6 +283,12 @@
                         href="{{ route('lab.lenticular.studio', ['locale' => $locale]) }}"
                     >
                         {{ __('site.nav.lab_power') }}
+                    </a>
+                    <a
+                        class="nav-dropdown-item {{ $isMarketplace ? 'is-active' : '' }}"
+                        href="{{ route('marketplace.index', ['locale' => $locale]) }}"
+                    >
+                        {{ __('site.nav.lab_marketplace') }}
                     </a>
                 </div>
             </details>
@@ -296,12 +307,13 @@
                 {{ __('partners.nav') }}
             </a>
 
-            <a
-                class="nav-link {{ request()->routeIs('shop.*') ? 'is-active' : '' }}"
-                href="{{ route('shop.index', ['locale' => $locale]) }}"
-            >
-                {{ __('site.nav.shop') }}
-            </a>
+            <details class="nav-dropdown" @if(request()->routeIs('shop.*') || $isMarketplace) open @endif>
+                <summary class="nav-link {{ request()->routeIs('shop.*') || $isMarketplace ? 'is-active' : '' }}">{{ __('site.nav.shop') }}<span class="nav-dropdown-caret" aria-hidden="true">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a class="nav-dropdown-item {{ request()->routeIs('shop.*') ? 'is-active' : '' }}" href="{{ route('shop.index', ['locale' => $locale]) }}">{{ __('site.nav.shop_accessories') }}</a>
+                    <a class="nav-dropdown-item {{ $isMarketplace ? 'is-active' : '' }}" href="{{ route('marketplace.index', ['locale' => $locale]) }}">{{ __('site.nav.shop_marketplace') }}</a>
+                </div>
+            </details>
 
             <a
                 class="nav-link {{ request()->routeIs('static-pages.show') && request()->route('key') === 'about' ? 'is-active' : '' }}"
@@ -393,10 +405,16 @@
                         ({{ app(\App\Services\CartService::class)->count() }})
                     </a>
                 </div>
+                @auth
+                    <a class="mobile-account-summary" href="{{ $accountUrl }}"><strong>{{ $headerUser->name }} · {{ strtoupper($headerPlan) }}</strong><span>{{ __('portal_auth.wallet.header_balance', ['count' => $headerTokenBalance]) }} · {{ $headerTokenExpiry ? __('portal_auth.wallet.valid_until', ['date' => $headerTokenExpiry->format('d.m.Y')]) : __('portal_auth.wallet.no_expiry') }}</span></a>
+                @endauth
             </div>
         </nav>
 
         <div class="header-actions">
+            @auth
+                <a class="header-account-summary" href="{{ $accountUrl }}"><strong>{{ $headerUser->name }} <span>{{ strtoupper($headerPlan) }}</span></strong><small>{{ __('portal_auth.wallet.header_balance', ['count' => $headerTokenBalance]) }}</small><small>{{ $headerTokenExpiry ? __('portal_auth.wallet.valid_until', ['date' => $headerTokenExpiry->format('d.m.Y')]) : __('portal_auth.wallet.no_expiry') }}</small></a>
+            @endauth
             <div
                 class="language-switcher"
                 aria-label="{{ __('site.language_switcher') }}"

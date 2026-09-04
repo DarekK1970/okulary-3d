@@ -13,4 +13,18 @@
             <button class="admin-user-save" type="submit">{{ __('admin.users.edit.save') }}</button>
         </form>
     </section>
+    <section class="admin-user-edit-card admin-token-card">
+        <header><div><span class="admin-eyebrow">TOKEN_LENS</span><h2>{{ __('admin.users.wallet.title') }}</h2><p>{{ __('admin.users.wallet.description') }}</p></div><strong class="admin-token-balance">{{ $tokenLensBalance }} TL</strong></header>
+        <form method="post" action="{{ route('admin.users.tokens.adjust', $user) }}">@csrf
+            <label><span>{{ __('admin.users.wallet.amount') }}</span><input type="number" name="amount" min="-10000" max="10000" step="1" required value="{{ old('amount') }}"><small>{{ __('admin.users.wallet.amount_help') }}</small></label>
+            <label><span>{{ __('admin.users.wallet.reason') }}</span><input type="text" name="reason" maxlength="255" required value="{{ old('reason') }}"></label>
+            @error('token_lens')<p class="admin-token-error">{{ $message }}</p>@enderror
+            <button class="admin-user-save" type="submit">{{ __('admin.users.wallet.adjust') }}</button>
+        </form>
+        <div class="admin-token-history"><h3>{{ __('admin.users.wallet.history') }}</h3>
+            @forelse($tokenLensTransactions as $transaction)
+                <div><span><strong class="{{ $transaction->amount > 0 ? 'is-credit' : 'is-debit' }}">{{ $transaction->amount > 0 ? '+' : '' }}{{ $transaction->amount }} TL</strong>{{ $transaction->description ?: __('admin.users.wallet.types.'.$transaction->type) }}</span><time>{{ $transaction->created_at->format('d.m.Y H:i') }}</time></div>
+            @empty<p>{{ __('admin.users.wallet.empty') }}</p>@endforelse
+        </div>
+    </section>
 @endsection

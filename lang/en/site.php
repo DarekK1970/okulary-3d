@@ -26,6 +26,9 @@ return [
         'lab_power' => 'POWER AI LENTICULAR STUDIO',
         'gallery' => 'Gallery',
         'shop' => 'Shop',
+        'shop_accessories' => 'Accessories',
+        'shop_marketplace' => 'Marketplace (Services)',
+        'lab_marketplace' => 'Print services marketplace',
         'about' => 'About',
     ],
     'layout_preview' => [

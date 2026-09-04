@@ -85,7 +85,7 @@ class FalAiAsyncIntegrationTest extends TestCase
     public function test_webhook_downloads_result_once_and_completes_job(): void
     {
         Storage::fake('local');
-        Http::fake(['https://v3.fal.media/*' => Http::response('video-bytes', 200, ['Content-Type' => 'video/mp4'])]);
+        Http::fake(fn () => Http::response('video-bytes', 200, ['Content-Type' => 'video/mp4']));
         $project = LenticularProject::factory()->create();
         $service = app(FalAiJobService::class);
         $job = $service->create($project, FalAiJobOperation::ImageToVideo, 'model/path', [], (string) Str::uuid());
@@ -93,8 +93,8 @@ class FalAiAsyncIntegrationTest extends TestCase
         $payload = ['request_id' => 'fal-result-1', 'status' => 'OK', 'payload' => ['video' => ['url' => 'https://v3.fal.media/result.mp4', 'content_type' => 'video/mp4']]];
 
         $handler = new ProcessFalAiWebhook($payload);
-        $handler->handle($service, app(FalAiResultService::class));
-        $handler->handle($service, app(FalAiResultService::class));
+        $handler->handle($service, app(FalAiResultService::class), app(FalAiSettingsService::class));
+        $handler->handle($service, app(FalAiResultService::class), app(FalAiSettingsService::class));
 
         $job->refresh();
         $this->assertSame(FalAiJobStatus::Succeeded, $job->status);
@@ -102,6 +102,44 @@ class FalAiAsyncIntegrationTest extends TestCase
         $this->assertSame(1, LenticularProjectFile::query()->where('kind', 'source_video')->count());
         $this->assertSame(1, LenticularJob::query()->where('operation', 'analyze_video')->count());
         Storage::disk('local')->assertExists($job->resultFile->path);
+    }
+
+    public function test_a3_ai_video_is_upscaled_before_frame_analysis(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        Http::fake(fn () => Http::response('video-bytes', 200, ['Content-Type' => 'video/mp4']));
+        $this->configureFal();
+        $settings = app(FalAiSettingsService::class);
+        $settings->set('upscaling_enabled', '1');
+        $settings->set('upscaler_model', 'fal-ai/bytedance-upscaler/upscale/video');
+        $settings->set('upscale_resolution', '4k');
+        $settings->set('maximum_job_cost_usd', '5');
+        $settings->set('daily_budget_usd', '50');
+        $project = LenticularProject::factory()->create(['settings' => ['print_size' => 'A3']]);
+        $service = app(FalAiJobService::class);
+        $generation = $service->create($project, FalAiJobOperation::ImageToVideo, 'model/path', [], (string) Str::uuid());
+        $generation = $service->markSubmitted($generation, 'fal-a3-generation');
+
+        (new ProcessFalAiWebhook($this->successPayload('fal-a3-generation', 'generated.mp4')))
+            ->handle($service, app(FalAiResultService::class), $settings);
+
+        $upscale = FalAiJob::query()->where('operation', FalAiJobOperation::VideoUpscale)->firstOrFail();
+        $this->assertSame('fal-ai/bytedance-upscaler/upscale/video', $upscale->endpoint);
+        $this->assertSame('4k', $upscale->parameters['target_resolution']);
+        $this->assertSame('aigc', $upscale->parameters['enhancement_preset']);
+        $this->assertSame($generation->fresh()->result_file_id, $upscale->source_file_id);
+        Queue::assertPushed(SubmitFalAiJob::class, fn (SubmitFalAiJob $queued): bool => $queued->falAiJobId === $upscale->id);
+        $this->assertDatabaseCount('lenticular_jobs', 0);
+
+        $upscale = $service->markSubmitted($upscale, 'fal-a3-upscale');
+        (new ProcessFalAiWebhook($this->successPayload('fal-a3-upscale', 'upscaled.mp4')))
+            ->handle($service, app(FalAiResultService::class), $settings);
+
+        $this->assertSame(FalAiJobStatus::Succeeded, $upscale->fresh()->status);
+        $this->assertDatabaseHas('lenticular_project_files', ['kind' => 'upscaled_video']);
+        $analysis = LenticularJob::query()->where('operation', 'analyze_video')->firstOrFail();
+        $this->assertSame($upscale->fresh()->result_file_id, $analysis->source_file_id);
     }
 
     public function test_unsigned_private_input_is_rejected(): void
@@ -139,5 +177,18 @@ class FalAiAsyncIntegrationTest extends TestCase
         $settings = app(FalAiSettingsService::class);
         $settings->set('enabled', '1');
         $settings->set('api_key', 'fal-test-key', true);
+    }
+
+    /** @return array<string, mixed> */
+    private function successPayload(string $requestId, string $filename): array
+    {
+        return [
+            'request_id' => $requestId,
+            'status' => 'OK',
+            'payload' => ['video' => [
+                'url' => "https://v3.fal.media/{$filename}",
+                'content_type' => 'video/mp4',
+            ]],
+        ];
     }
 }

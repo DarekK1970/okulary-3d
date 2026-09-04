@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TokenLensWalletService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,10 +12,14 @@ use Illuminate\View\View;
 
 class AccountController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request, TokenLensWalletService $wallet): View
     {
+        $user = $request->user();
+
         return view('account.show', [
-            'user' => $request->user(),
+            'user' => $user,
+            'tokenLensBalance' => $wallet->balance($user),
+            'tokenLensTransactions' => $user->tokenLensTransactions()->latest('created_at')->limit(5)->get(),
         ]);
     }
 

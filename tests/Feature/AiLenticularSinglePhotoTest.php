@@ -35,7 +35,6 @@ class AiLenticularSinglePhotoTest extends TestCase
             'source_image' => UploadedFile::fake()->image('scene.jpg', 1280, 720),
             'print_size' => 'A4',
             'lpi' => 60,
-            'confirm_ai_cost' => '1',
         ]);
 
         $project = LenticularProject::query()->sole();
