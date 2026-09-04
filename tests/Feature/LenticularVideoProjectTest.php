@@ -99,6 +99,28 @@ class LenticularVideoProjectTest extends TestCase
             ->assertSee(__('lenticular_projects.select_range'));
     }
 
+    public function test_timeline_thumbnails_are_rendered_in_numeric_frame_order(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20]]);
+        LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.04]]);
+        foreach ([0, 5, 51, 10, 15] as $index => $frameIndex) {
+            LenticularProjectFile::factory()->create([
+                'lenticular_project_id' => $project->id,
+                'kind' => "timeline_thumbnail_{$index}",
+                'path' => "lenticular/previews/{$project->id}/timeline_{$index}.jpg",
+                'metadata' => ['frame_index' => $frameIndex],
+            ]);
+        }
+
+        $content = $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")->assertOk()->getContent();
+
+        $positions = collect([0, 5, 10, 15, 51])->map(fn (int $frameIndex): int|false => strpos($content, "data-frame-index=\"{$frameIndex}\""));
+        $this->assertNotContains(false, $positions);
+        $this->assertSame($positions->sort()->values()->all(), $positions->values()->all());
+    }
+
     public function test_step_three_alignment_view_renders(): void
     {
         $user = User::factory()->create();
