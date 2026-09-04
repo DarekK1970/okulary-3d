@@ -6,15 +6,16 @@
 @section('content')
 @php($source = $project->files->firstWhere('kind', 'source_video'))
 @php($analysis = $project->jobs->where('operation', 'analyze_video')->sortByDesc('created_at')->first())
-@php($extraction = $project->jobs->where('operation', 'extract_video_frames')->sortByDesc('created_at')->first())
-@php($alignment = $project->jobs->where('operation', 'align_sequence')->sortByDesc('created_at')->first())
-@php($finalization = $project->jobs->where('operation', 'finalize_sequence')->sortByDesc('created_at')->first())
+@php($extraction = $project->jobs->where('operation', 'extract_video_frames')->sortByDesc('id')->first())
+@php($alignment = $project->jobs->where('operation', 'align_sequence')->filter(fn($job) => $extraction && strcmp((string) $job->id, (string) $extraction->id) > 0)->sortByDesc('id')->first())
+@php($finalization = $project->jobs->where('operation', 'finalize_sequence')->filter(fn($job) => $alignment && strcmp((string) $job->id, (string) $alignment->id) > 0)->sortByDesc('id')->first())
 @php($analysisPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'analysis_thumbnail_'))->sortBy('kind')->values())
 @php($timelinePreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'timeline_thumbnail_'))->sortBy(fn($file) => (int) ($file->metadata['frame_index'] ?? 0))->values())
 @php($alignmentPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_preview_'))->sortBy('kind')->values())
 @php($alignmentFrames = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_frame_'))->sortBy(fn($file) => (int) ($file->metadata['sequence_index'] ?? 0))->values())
 @php($finalPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'final_preview_'))->sortBy(fn($file) => (int) ($file->metadata['sequence_index'] ?? 0))->values())
 @php($framesReady = $extraction?->status === \App\Enums\LenticularJobStatus::Completed)
+@php($showFrameSelection = $source?->metadata && (request()->integer('step') === 2 || !$framesReady))
 @php($printSettings = array_merge(['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20], $project->settings ?? []))
 @php($savedSelection = $printSettings['selection'] ?? $extraction?->parameters['selection'] ?? null)
 @php($selectionTargets = is_array($savedSelection) ? [$savedSelection['start'], (int) round(($savedSelection['start'] + $savedSelection['end']) / 2), $savedSelection['end']] : [])
@@ -22,13 +23,13 @@
 @php($stagePreviews = $selectedPreviews->count() === 3 ? $selectedPreviews : $analysisPreviews)
 <section class="lab-workspace-page lenticular-page"><div class="container"><div class="lenticular-panel">
     <div class="lenticular-panel-heading"><div><span class="lab-kicker">PRO / VIDEO</span><h1>{{ $project->name }}</h1><p>{{ $printSettings['print_size'] }} · {{ $printSettings['dpi'] }} DPI · {{ $printSettings['lpi'] }} LPI · {{ __('lenticular_projects.available_frames') }} <strong>{{ $printSettings['max_frames'] }}</strong></p></div></div>
-    <ol class="lenticular-stepper"><li class="is-complete"><span>1</span>{{ __('lenticular_projects.step_1') }}</li><li @class(['is-active' => !$framesReady, 'is-complete' => $framesReady])><span>2</span>{{ __('lenticular_projects.step_2') }}</li><li @class(['is-active' => $framesReady, 'is-locked' => !$framesReady])><span>3</span>{{ __('lenticular_projects.step_3') }}</li></ol>
+    <ol class="lenticular-stepper"><li class="is-complete"><span>1</span>{{ __('lenticular_projects.step_1') }}</li><li @class(['is-active' => $showFrameSelection, 'is-complete' => $framesReady && !$showFrameSelection])><a href="{{ route('lab.projects.show', ['locale' => app()->getLocale(), 'project' => $project, 'step' => 2]) }}" aria-label="{{ __('lenticular_projects.return_to_frame_selection') }}"><span>2</span>{{ __('lenticular_projects.step_2') }}</a></li><li @class(['is-active' => $framesReady && !$showFrameSelection, 'is-locked' => !$framesReady || $showFrameSelection])><span>3</span>{{ __('lenticular_projects.step_3') }}</li></ol>
     @if(session('status'))<p class="lenticular-export-note">{{ session('status') }}</p>@endif
     @if(!$source)
         <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.upload_video') }}</h2><p>{{ __('lenticular_projects.upload_help') }}</p><form method="post" action="{{ route('lab.projects.video.store', ['locale' => app()->getLocale(), 'project' => $project]) }}" enctype="multipart/form-data" class="lenticular-controls">@csrf<div class="lab-control"><label for="project-video">{{ __('lenticular_projects.video') }}</label><input id="project-video" name="video" type="file" accept="video/mp4,video/quicktime,video/webm" required>@error('video')<small>{{ $message }}</small>@enderror</div><button class="lab-primary-button" type="submit">{{ __('lenticular_projects.upload') }}</button></form></section>
     @elseif(!$source->metadata)
         <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.analysis_in_progress') }}</h2><p>{{ $analysis?->stage ?? 'queued' }} · {{ $analysis?->progress ?? 0 }}%</p></section><meta http-equiv="refresh" content="5">
-    @elseif(!$framesReady)
+    @elseif($showFrameSelection)
         <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.select_range') }}</h2><div class="lenticular-result-grid"><div><span>{{ __('lenticular_projects.resolution') }}</span><strong>{{ $source->metadata['width'] }} × {{ $source->metadata['height'] }}</strong></div><div><span>{{ __('lenticular_projects.frames') }}</span><strong>{{ $source->metadata['frame_count'] }}</strong></div><div><span>FPS</span><strong>{{ number_format($source->metadata['fps'], 3, ',', ' ') }}</strong></div><div><span>{{ __('lenticular_projects.duration') }}</span><strong>{{ number_format($source->metadata['duration_seconds'], 2, ',', ' ') }} s</strong></div></div>
         @if($extraction && !$extraction->status->isTerminal())<p class="lenticular-export-note">{{ __('lenticular_projects.extracting') }} <strong>{{ $extraction->progress }}%</strong></p><meta http-equiv="refresh" content="5">
         @else

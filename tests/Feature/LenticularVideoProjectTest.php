@@ -184,4 +184,33 @@ class LenticularVideoProjectTest extends TestCase
         $this->assertTrue($job->parameters['finalization']['reverse']);
         $this->assertSame(0.7, $job->parameters['finalization']['crop']['width']);
     }
+
+    public function test_user_can_return_from_alignment_to_frame_selection(): void
+    {
+        $user = User::factory()->create();
+        $selection = ['start' => 0, 'end' => 19, 'step' => 1, 'jpeg_quality' => 95];
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20, 'selection' => $selection]]);
+        $source = LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.04]]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed]);
+
+        $response = $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}?step=2");
+
+        $response->assertOk()->assertSee(__('lenticular_projects.select_range'))->assertSee(__('lenticular_projects.extract_frames'));
+    }
+
+    public function test_old_alignment_is_ignored_after_new_frame_selection(): void
+    {
+        $user = User::factory()->create();
+        $selection = ['start' => 0, 'end' => 19, 'step' => 1, 'jpeg_quality' => 95];
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20, 'selection' => $selection]]);
+        $source = LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1178, 'height' => 786, 'frame_count' => 97, 'fps' => 24, 'duration_seconds' => 4.04]]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed, 'created_at' => now()->subMinutes(4)]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'align_sequence', 'status' => LenticularJobStatus::Completed, 'created_at' => now()->subMinutes(3)]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed, 'created_at' => now()->subMinute()]);
+
+        $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")
+            ->assertOk()
+            ->assertSee(__('lenticular_projects.alignment_help'))
+            ->assertDontSee(__('lenticular_projects.crop_help'));
+    }
 }

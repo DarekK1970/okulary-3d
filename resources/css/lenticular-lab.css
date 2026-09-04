@@ -534,6 +534,25 @@
     font-weight: 800;
 }
 
+.lenticular-stepper li:has(> a) {
+    padding: 0;
+}
+
+.lenticular-stepper li > a {
+    width: 100%;
+    min-height: 52px;
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    padding: 12px;
+    border-radius: inherit;
+    color: inherit;
+}
+
+.lenticular-stepper li > a:hover {
+    background: rgba(0, 168, 223, .08);
+}
+
 .lenticular-stepper span {
     width: 28px;
     height: 28px;
