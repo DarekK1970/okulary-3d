@@ -15,6 +15,7 @@
         'resources/css/admin-shop.css',
         'resources/css/admin-orders.css',
         'resources/css/admin-settings.css',
+        'resources/css/admin-fal-ai.css',
         'resources/css/admin-gallery.css',
         'resources/css/admin-archive.css',
         'resources/css/admin-ai-translator.css',
@@ -146,6 +147,13 @@
                     >
                         <span>◌</span>
                         {{ __('admin.menu.maintenance') }}
+                    </a>
+                    <a
+                        class="admin-nav-link {{ request()->routeIs('admin.settings.fal-ai*') ? 'is-active' : '' }}"
+                        href="{{ route('admin.settings.fal-ai') }}"
+                    >
+                        <span>✦</span>
+                        {{ __('fal_ai.menu') }}
                     </a>
                 @endif
             </nav>

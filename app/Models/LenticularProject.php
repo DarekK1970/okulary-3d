@@ -36,4 +36,9 @@ class LenticularProject extends Model
     {
         return $this->hasMany(LenticularJob::class);
     }
+
+    public function falAiJobs(): HasMany
+    {
+        return $this->hasMany(FalAiJob::class);
+    }
 }

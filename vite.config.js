@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/css/admin-shop.css',
                 'resources/css/admin-orders.css',
                 'resources/css/admin-settings.css',
+                'resources/css/admin-fal-ai.css',
                 'resources/css/article.css',
                 'resources/css/cart.css',
                 'resources/css/shop.css',

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -11,8 +12,11 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     public const ROLE_USER = 'user';
+
     public const ROLE_EDITOR = 'editor';
+
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_SUPER_ADMIN = 'super_admin';
 
     /**
@@ -55,5 +59,10 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_SUPER_ADMIN,
         ], true);
+    }
+
+    public function falAiJobs(): HasMany
+    {
+        return $this->hasMany(FalAiJob::class);
     }
 }

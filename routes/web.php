@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CommerceSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DiscoveryController;
 use App\Http\Controllers\Admin\DiscoverySettingsController;
+use App\Http\Controllers\Admin\FalAiSettingsController;
 use App\Http\Controllers\Admin\MaintenanceSettingsController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
@@ -430,6 +431,14 @@ Route::prefix('admin')
 
                 Route::put('/settings/ai-translation', [AiTranslationSettingsController::class, 'update'])
                     ->name('settings.ai-translation.update');
+
+                Route::get('/settings/fal-ai', [FalAiSettingsController::class, 'edit'])
+                    ->name('settings.fal-ai');
+                Route::put('/settings/fal-ai', [FalAiSettingsController::class, 'update'])
+                    ->name('settings.fal-ai.update');
+                Route::post('/settings/fal-ai/test', [FalAiSettingsController::class, 'test'])
+                    ->middleware('throttle:5,1')
+                    ->name('settings.fal-ai.test');
 
                 Route::get('/settings/discovery', [DiscoverySettingsController::class, 'edit'])
                     ->name('settings.discovery');
