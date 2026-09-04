@@ -128,6 +128,28 @@ class LenticularProjectController extends Controller
         return response()->download(Storage::disk($artifact->disk)->path($artifact->path), $project->name.'_JPG.zip', ['Content-Type' => 'application/zip']);
     }
 
+    public function destroy(Request $request, string $locale, LenticularProject $project): RedirectResponse
+    {
+        $this->authorizeOwner($request, $project);
+        $project->load(['files', 'jobs.artifacts']);
+
+        $storedFiles = $project->files
+            ->map(fn (LenticularProjectFile $file): array => [$file->disk, $file->path])
+            ->concat($project->jobs->flatMap(
+                fn (LenticularJob $job) => $job->artifacts->map(
+                    fn (LenticularArtifact $artifact): array => [$artifact->disk, $artifact->path]
+                )
+            ))
+            ->unique(fn (array $file): string => implode(':', $file));
+
+        $project->delete();
+
+        $storedFiles->each(fn (array $file) => Storage::disk($file[0])->delete($file[1]));
+
+        return redirect()->route('account', ['locale' => $locale])
+            ->with('status', __('portal_auth.projects.deleted'));
+    }
+
     private function authorizeOwner(Request $request, LenticularProject $project): void
     {
         abort_unless($project->user_id === $request->user()->id, 404);

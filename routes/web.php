@@ -183,6 +183,7 @@ Route::prefix('{locale}')
             Route::post('/{project}/alignment', [LenticularProjectController::class, 'alignFrames'])->name('alignment.store');
             Route::post('/{project}/finalize', [LenticularProjectController::class, 'finalize'])->name('finalize.store');
             Route::get('/{project}/download', [LenticularProjectController::class, 'download'])->name('download');
+            Route::delete('/{project}', [LenticularProjectController::class, 'destroy'])->name('destroy');
         });
         Route::get('/lab/mpo-viewer', [LabController::class, 'mpo'])
             ->name('lab.mpo');

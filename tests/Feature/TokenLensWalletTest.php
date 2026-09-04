@@ -98,4 +98,29 @@ class TokenLensWalletTest extends TestCase
             ->assertSee(route('plans.index', ['locale' => 'pl']), false)
             ->assertSee(route('account', ['locale' => 'pl', 'purchase' => 'tokens']), false);
     }
+
+    public function test_premium_account_does_not_offer_a_higher_plan(): void
+    {
+        $premium = User::factory()->create([
+            'lenticular_plan' => 'premium',
+            'plan_expires_at' => now()->addMonth(),
+        ]);
+
+        $this->actingAs($premium)->get('/pl/account')
+            ->assertOk()
+            ->assertDontSee('Przejdź na wyższy plan')
+            ->assertSee('Dokup TOKEN_LENS');
+    }
+
+    public function test_pro_account_can_upgrade_its_plan(): void
+    {
+        $pro = User::factory()->create([
+            'lenticular_plan' => 'pro',
+            'plan_expires_at' => now()->addMonth(),
+        ]);
+
+        $this->actingAs($pro)->get('/pl/account')
+            ->assertOk()
+            ->assertSee('Przejdź na wyższy plan');
+    }
 }

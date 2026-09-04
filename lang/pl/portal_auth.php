@@ -75,6 +75,7 @@ return [
         'help_label' => 'Czym są TOKEN_LENS?',
         'help' => 'TOKEN_LENS to Twoje wartościowe punkty, które możesz wymieniać na działania sztucznej inteligencji pomagające zamienić zwykłe zdjęcie 2D lub parę zdjęć w wydruk lentikularny. Możesz też wykorzystać TOKEN_LENS do wydrukowania obrazu lentikularnego w naszym sklepie.',
         'zero_balance' => 'Nie masz TOKEN_LENS. Przejdź na wyższy plan lub dokup tokeny.',
+        'zero_balance_premium' => 'Nie masz TOKEN_LENS. Możesz dokupić dodatkowe tokeny.',
         'change_plan' => 'Przejdź na wyższy plan',
         'buy_tokens' => 'Dokup TOKEN_LENS',
         'empty' => 'Nie masz jeszcze operacji w portfelu.',
@@ -83,6 +84,25 @@ return [
         'header_balance' => 'Twoje TOKEN_LENS: :count',
         'valid_until' => 'ważne do :date',
         'no_expiry' => 'bez terminu ważności',
+    ],
+
+    'projects' => [
+        'title' => 'Moje projekty',
+        'description' => 'Wróć do rozpoczętej pracy, pobierz gotowe pliki lub wybierz projekt do wydruku.',
+        'number' => 'Lp.',
+        'created_at' => 'Data utworzenia',
+        'name' => 'Nazwa',
+        'preview' => 'Podgląd',
+        'actions' => 'Akcje',
+        'preview_alt' => 'Podgląd projektu :name',
+        'no_preview' => 'Brak podglądu',
+        'download' => 'Pobierz finalny plik',
+        'edit' => 'Edytuj projekt',
+        'order' => 'Zamów wydruk UV',
+        'delete' => 'Usuń projekt',
+        'delete_confirm' => 'Czy na pewno usunąć projekt „:name” wraz z jego plikami?',
+        'deleted' => 'Projekt został usunięty.',
+        'empty' => 'Nie masz jeszcze żadnych projektów.',
     ],
 
     'messages' => [

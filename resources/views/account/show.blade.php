@@ -46,9 +46,11 @@
                 <strong class="account-token-balance">{{ $tokenLensBalance }} <small>TOKEN_LENS</small></strong>
                 @if ($tokenLensBalance === 0)
                     <div class="account-token-empty-balance">
-                        <p>{{ __('portal_auth.wallet.zero_balance') }}</p>
+                        <p>{{ __($lenticularPlan === \App\Services\LenticularAccessService::PREMIUM ? 'portal_auth.wallet.zero_balance_premium' : 'portal_auth.wallet.zero_balance') }}</p>
                         <div class="account-token-actions">
-                            <a href="{{ route('plans.index', ['locale' => app()->getLocale()]) }}">{{ __('portal_auth.wallet.change_plan') }}</a>
+                            @if ($lenticularPlan !== \App\Services\LenticularAccessService::PREMIUM)
+                                <a href="{{ route('plans.index', ['locale' => app()->getLocale()]) }}">{{ __('portal_auth.wallet.change_plan') }}</a>
+                            @endif
                             <a href="{{ route('account', ['locale' => app()->getLocale(), 'purchase' => 'tokens']) }}">{{ __('portal_auth.wallet.buy_tokens') }}</a>
                         </div>
                     </div>
@@ -119,6 +121,69 @@
                         {{ __('portal_auth.account.save_password') }}
                     </button>
                 </form>
+            </section>
+
+            <section class="account-card account-projects-card">
+                <div class="account-card-heading">
+                    <h2>{{ __('portal_auth.projects.title') }}</h2>
+                    <span>{{ __('portal_auth.projects.description') }}</span>
+                </div>
+
+                <div class="account-projects-table-wrap">
+                    <table class="account-projects-table">
+                        <thead><tr><th>{{ __('portal_auth.projects.number') }}</th><th>{{ __('portal_auth.projects.created_at') }}</th><th>{{ __('portal_auth.projects.name') }}</th><th>{{ __('portal_auth.projects.preview') }}</th><th>{{ __('portal_auth.projects.actions') }}</th></tr></thead>
+                        <tbody>
+                        @forelse ($projects as $project)
+                            @php
+                                $preview = $project->files->sortByDesc('created_at')->first(fn ($file) => str_starts_with($file->kind, 'final_preview_'))
+                                    ?? $project->files->sortByDesc('created_at')->first(fn ($file) => str_starts_with($file->kind, 'alignment_preview_'))
+                                    ?? $project->files->sortByDesc('created_at')->first(fn ($file) => str_starts_with($file->kind, 'timeline_thumbnail_') || str_starts_with($file->kind, 'analysis_thumbnail_'));
+                                $finalArtifact = $project->jobs->flatMap->artifacts->firstWhere('kind', 'final');
+                                $hasFinal = $finalArtifact && Storage::disk($finalArtifact->disk)->exists($finalArtifact->path);
+                            @endphp
+                            <tr>
+                                <td>{{ $projects->firstItem() + $loop->index }}</td>
+                                <td><time datetime="{{ $project->created_at->toIso8601String() }}">{{ $project->created_at->format('d.m.Y H:i') }}</time></td>
+                                <td><strong>{{ $project->name }}</strong></td>
+                                <td>
+                                    @if ($preview)
+                                        <img class="account-project-preview" src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('portal_auth.projects.preview_alt', ['name' => $project->name]) }}">
+                                    @else
+                                        <span class="account-project-no-preview">{{ __('portal_auth.projects.no_preview') }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="account-project-actions">
+                                        @if ($hasFinal)
+                                            <a href="{{ route('lab.projects.download', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.download') }}" aria-label="{{ __('portal_auth.projects.download') }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 19h14"/></svg>
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('lab.projects.show', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.edit') }}" aria-label="{{ __('portal_auth.projects.edit') }}">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.5-10.5-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></svg>
+                                        </a>
+                                        <a class="is-order" href="{{ route('marketplace.index', ['locale' => app()->getLocale(), 'project' => $project]) }}" title="{{ __('portal_auth.projects.order') }}" aria-label="{{ __('portal_auth.projects.order') }}">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h2l2 10h10l2-7H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+                                        </a>
+                                        <form method="post" action="{{ route('lab.projects.destroy', ['locale' => app()->getLocale(), 'project' => $project]) }}" onsubmit="return confirm(@js(__('portal_auth.projects.delete_confirm', ['name' => $project->name])))">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="is-danger" type="submit" title="{{ __('portal_auth.projects.delete') }}" aria-label="{{ __('portal_auth.projects.delete') }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td class="account-projects-empty" colspan="5">{{ __('portal_auth.projects.empty') }}</td></tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if ($projects->hasPages())
+                    <div class="account-projects-pagination">{{ $projects->links() }}</div>
+                @endif
             </section>
         </div>
     </div>

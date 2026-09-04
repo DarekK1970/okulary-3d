@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LenticularJob extends Model
 {
@@ -35,5 +36,10 @@ class LenticularJob extends Model
     public function lenticularProject(): BelongsTo
     {
         return $this->belongsTo(LenticularProject::class);
+    }
+
+    public function artifacts(): HasMany
+    {
+        return $this->hasMany(LenticularArtifact::class);
     }
 }

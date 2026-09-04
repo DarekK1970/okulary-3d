@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LenticularAccessService;
 use App\Services\TokenLensWalletService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ use Illuminate\View\View;
 
 class AccountController extends Controller
 {
-    public function show(Request $request, TokenLensWalletService $wallet): View
+    public function show(Request $request, TokenLensWalletService $wallet, LenticularAccessService $access): View
     {
         $user = $request->user();
 
@@ -20,6 +21,11 @@ class AccountController extends Controller
             'user' => $user,
             'tokenLensBalance' => $wallet->balance($user),
             'tokenLensTransactions' => $user->tokenLensTransactions()->latest('created_at')->limit(5)->get(),
+            'lenticularPlan' => $access->plan($user),
+            'projects' => $user->lenticularProjects()
+                ->with(['files', 'jobs.artifacts'])
+                ->latest('created_at')
+                ->paginate(10, ['*'], 'projects_page'),
         ]);
     }
 

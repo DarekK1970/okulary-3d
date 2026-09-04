@@ -75,6 +75,7 @@ return [
         'help_label' => 'What are TOKEN_LENS?',
         'help' => 'TOKEN_LENS are valuable points that you can exchange for artificial intelligence operations which help turn a regular 2D photo or a pair of photos into a lenticular print. You can also use TOKEN_LENS to order a lenticular print from our shop.',
         'zero_balance' => 'You have no TOKEN_LENS. Upgrade your plan or buy more tokens.',
+        'zero_balance_premium' => 'You have no TOKEN_LENS. You can buy additional tokens.',
         'change_plan' => 'Upgrade your plan',
         'buy_tokens' => 'Buy TOKEN_LENS',
         'empty' => 'There are no wallet transactions yet.',
@@ -83,6 +84,25 @@ return [
         'header_balance' => 'Your TOKEN_LENS: :count',
         'valid_until' => 'valid until :date',
         'no_expiry' => 'no expiry date',
+    ],
+
+    'projects' => [
+        'title' => 'My projects',
+        'description' => 'Resume a project, download completed files or select a project for printing.',
+        'number' => 'No.',
+        'created_at' => 'Created',
+        'name' => 'Name',
+        'preview' => 'Preview',
+        'actions' => 'Actions',
+        'preview_alt' => 'Preview of :name',
+        'no_preview' => 'No preview',
+        'download' => 'Download final file',
+        'edit' => 'Edit project',
+        'order' => 'Order a UV print',
+        'delete' => 'Delete project',
+        'delete_confirm' => 'Delete “:name” together with its files?',
+        'deleted' => 'The project has been deleted.',
+        'empty' => 'You do not have any projects yet.',
     ],
 
     'messages' => [
