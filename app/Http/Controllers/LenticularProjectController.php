@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\LenticularJobStatus;
 use App\Http\Requests\StoreLenticularProjectRequest;
+use App\Models\LenticularArtifact;
 use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
@@ -11,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LenticularProjectController extends Controller
 {
@@ -79,6 +81,30 @@ class LenticularProjectController extends Controller
         LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'align_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignment]]);
 
         return back()->with('status', 'Automatyczne wyrównanie zostało uruchomione.');
+    }
+
+    public function finalize(Request $request, string $locale, LenticularProject $project): RedirectResponse
+    {
+        $this->authorizeOwner($request, $project);
+        $source = $project->files()->where('kind', 'source_video')->firstOrFail();
+        $alignmentJob = $project->jobs()->where('operation', 'align_sequence')->where('status', LenticularJobStatus::Completed)->latest()->first();
+        $selection = $project->settings['selection'] ?? null;
+        abort_unless($alignmentJob && is_array($selection), 409, 'Alignment must be completed first.');
+        $validated = $request->validate(['crop_x' => ['required', 'numeric', 'between:0,1'], 'crop_y' => ['required', 'numeric', 'between:0,1'], 'crop_width' => ['required', 'numeric', 'between:0.01,1'], 'crop_height' => ['required', 'numeric', 'between:0.01,1'], 'reverse' => ['nullable', 'boolean']]);
+        $crop = ['x' => (float) $validated['crop_x'], 'y' => (float) $validated['crop_y'], 'width' => (float) $validated['crop_width'], 'height' => (float) $validated['crop_height']];
+        abort_if($crop['x'] + $crop['width'] > 1.00001 || $crop['y'] + $crop['height'] > 1.00001, 422, 'Crop exceeds image bounds.');
+        LenticularJob::query()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'finalize_sequence', 'status' => LenticularJobStatus::Queued, 'parameters' => ['selection' => $selection, 'alignment' => $alignmentJob->parameters['alignment'], 'finalization' => ['crop' => $crop, 'reverse' => $request->boolean('reverse'), 'basename' => $project->name]]]);
+
+        return back()->with('status', 'Kadrowanie i zapis sekwencji zostały uruchomione.');
+    }
+
+    public function download(Request $request, string $locale, LenticularProject $project): BinaryFileResponse
+    {
+        $this->authorizeOwner($request, $project);
+        $job = $project->jobs()->where('operation', 'finalize_sequence')->where('status', LenticularJobStatus::Completed)->latest()->firstOrFail();
+        $artifact = LenticularArtifact::query()->where('lenticular_job_id', $job->id)->where('kind', 'final')->firstOrFail();
+
+        return response()->download(Storage::disk($artifact->disk)->path($artifact->path), $project->name.'_JPG.zip', ['Content-Type' => 'application/zip']);
     }
 
     private function authorizeOwner(Request $request, LenticularProject $project): void

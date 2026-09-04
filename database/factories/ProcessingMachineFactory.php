@@ -21,7 +21,7 @@ class ProcessingMachineFactory extends Factory
             'machine_id' => fake()->unique()->slug(2),
             'api_key_id' => fake()->unique()->uuid(),
             'api_secret' => str_repeat('s', 32),
-            'capabilities' => ['analyze_video:v1', 'extract_video_frames:v1', 'align_sequence:v1'],
+            'capabilities' => ['analyze_video:v1', 'extract_video_frames:v1', 'align_sequence:v1', 'finalize_sequence:v1'],
             'is_active' => true,
         ];
     }

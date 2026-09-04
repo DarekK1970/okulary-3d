@@ -49,7 +49,7 @@ class PortalGateway:
     def claim(self) -> JobManifest | None:
         data = self._json("POST", "/api/worker/v1/jobs/claim", {
             "lease_seconds": self.settings.lease_seconds,
-            "capabilities": ["analyze_video:v1", "extract_video_frames:v1", "align_sequence:v1"],
+            "capabilities": ["analyze_video:v1", "extract_video_frames:v1", "align_sequence:v1", "finalize_sequence:v1"],
         })
         return JobManifest.from_dict(data) if data else None
 

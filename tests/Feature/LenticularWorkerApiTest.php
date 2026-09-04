@@ -200,6 +200,7 @@ class LenticularWorkerApiTest extends TestCase
                     ],
                 ],
                 'previews' => [$preview, $preview],
+                'animation_frames' => [$preview, $preview],
             ],
         ];
 
@@ -207,6 +208,25 @@ class LenticularWorkerApiTest extends TestCase
 
         $this->assertSame(1170, $job->lenticularProject->fresh()->settings['alignment']['crop'][2]);
         $this->assertSame(2, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'alignment_preview_%')->count());
+        $this->assertSame(2, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'alignment_frame_%')->count());
+    }
+
+    public function test_finalization_completion_stores_metadata_and_previews(): void
+    {
+        Storage::fake('local');
+        [$machine, $job] = $this->queuedJob('video-content');
+        $job->update(['operation' => 'finalize_sequence', 'parameters' => ['selection' => ['start' => 0, 'end' => 2, 'step' => 1, 'jpeg_quality' => 95], 'alignment' => ['z_center' => 0.5], 'finalization' => ['crop' => ['x' => 0, 'y' => 0, 'width' => 1, 'height' => 1], 'reverse' => true, 'basename' => 'Projekt']]]);
+        $claim = $this->signedJson('POST', '/api/worker/v1/jobs/claim', ['lease_seconds' => 120, 'capabilities' => ['finalize_sequence:v1']], $machine);
+        $claim->assertOk()->assertJsonPath('finalization.reverse', true);
+        $artifact = 'final-zip';
+        $this->call('PUT', $this->localUrl($claim->json('upload_url')), [], [], [], ['CONTENT_TYPE' => 'application/zip'], $artifact)->assertCreated();
+        $preview = base64_encode("\xFF\xD8\xFFpreview");
+        $payload = ['lease_token' => $claim->json('lease_token'), 'artifact' => ['sha256' => hash('sha256', $artifact), 'size_bytes' => strlen($artifact), 'media_type' => 'application/zip'], 'result' => ['finalization' => ['frame_count' => 2, 'width' => 800, 'height' => 600], 'previews' => [$preview, $preview]]];
+
+        $this->signedJson('POST', "/api/worker/v1/jobs/{$job->id}/complete", $payload, $machine)->assertOk();
+
+        $this->assertSame(800, $job->lenticularProject->fresh()->settings['finalization']['width']);
+        $this->assertSame(2, LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', 'final_preview_%')->count());
     }
 
     /** @return array{ProcessingMachine, LenticularJob} */

@@ -37,6 +37,7 @@ class AlignmentResult:
     transforms: list[FrameTransform]
     crop: tuple[int, int, int, int]
     previews: list[Path]
+    animation_frames: list[Path]
 
 
 class SequenceAligner:
@@ -88,4 +89,14 @@ class SequenceAligner:
             cv2.imwrite(str(preview_path), overlay, [cv2.IMWRITE_JPEG_QUALITY, 90])
             preview_paths.append(preview_path)
 
-        return AlignmentResult(transforms, (min_x, min_y, max_x - min_x, max_y - min_y), preview_paths)
+        animation_paths = []
+        for index, source in enumerate(sources):
+            aligned = cv2.imread(str(output_dir / source.name), cv2.IMREAD_COLOR)
+            scale = min(1.0, 720 / aligned.shape[1])
+            if scale < 1:
+                aligned = cv2.resize(aligned, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            animation_path = output_dir / f"animation_{index:03d}.jpg"
+            cv2.imwrite(str(animation_path), aligned, [cv2.IMWRITE_JPEG_QUALITY, 82])
+            animation_paths.append(animation_path)
+
+        return AlignmentResult(transforms, (min_x, min_y, max_x - min_x, max_y - min_y), preview_paths, animation_paths)

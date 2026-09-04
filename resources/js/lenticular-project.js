@@ -130,3 +130,90 @@ if (stage) {
     fitStageToViewport();
     updateGuide();
 }
+
+const cropForm = document.querySelector('[data-crop-form]');
+
+if (cropForm) {
+    const stage = cropForm.querySelector('[data-crop-stage]');
+    const selection = cropForm.querySelector('[data-crop-selection]');
+    const ratioSelect = cropForm.querySelector('[data-crop-ratio]');
+    const inputs = {
+        x: cropForm.querySelector('[data-crop-x]'),
+        y: cropForm.querySelector('[data-crop-y]'),
+        width: cropForm.querySelector('[data-crop-width]'),
+        height: cropForm.querySelector('[data-crop-height]'),
+    };
+    let start = null;
+
+    const draw = (crop) => {
+        selection.style.left = `${crop.x * 100}%`;
+        selection.style.top = `${crop.y * 100}%`;
+        selection.style.width = `${crop.width * 100}%`;
+        selection.style.height = `${crop.height * 100}%`;
+        Object.entries(crop).forEach(([key, value]) => { inputs[key].value = value.toFixed(6); });
+    };
+
+    const point = (event) => {
+        const bounds = stage.getBoundingClientRect();
+        return {
+            x: Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)),
+            y: Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height)),
+        };
+    };
+
+    const update = (event) => {
+        if (!start) return;
+        const current = point(event);
+        let width = Math.abs(current.x - start.x);
+        let height = Math.abs(current.y - start.y);
+        const ratio = Number(ratioSelect.value);
+        if (ratio) {
+            const pixelRatio = ratio * (stage.clientHeight / stage.clientWidth);
+            if (width / Math.max(height, 0.000001) > pixelRatio) height = width / pixelRatio;
+            else width = height * pixelRatio;
+        }
+        const directionX = current.x >= start.x ? 1 : -1;
+        const directionY = current.y >= start.y ? 1 : -1;
+        width = Math.min(width, directionX > 0 ? 1 - start.x : start.x);
+        height = Math.min(height, directionY > 0 ? 1 - start.y : start.y);
+        draw({ x: directionX > 0 ? start.x : start.x - width, y: directionY > 0 ? start.y : start.y - height, width, height });
+    };
+
+    stage.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        start = point(event);
+        stage.setPointerCapture(event.pointerId);
+        draw({ x: start.x, y: start.y, width: 0.01, height: 0.01 });
+    });
+    stage.addEventListener('pointermove', update);
+    stage.addEventListener('pointerup', (event) => {
+        update(event);
+        start = null;
+        stage.releasePointerCapture(event.pointerId);
+    });
+    draw({ x: 0, y: 0, width: 1, height: 1 });
+}
+
+const animation = document.querySelector('[data-sequence-animation]');
+
+if (animation) {
+    const frames = [...animation.querySelectorAll('img')];
+    const toggle = document.querySelector('[data-animation-toggle]');
+    let index = 0;
+    let direction = 1;
+    let running = true;
+    const delay = frames.length > 1 ? 700 / (frames.length - 1) : 700;
+    const timer = window.setInterval(() => {
+        if (!running || frames.length < 2) return;
+        frames[index].classList.remove('is-visible');
+        if (index === frames.length - 1) direction = -1;
+        if (index === 0) direction = 1;
+        index += direction;
+        frames[index].classList.add('is-visible');
+    }, delay);
+    toggle?.addEventListener('click', () => {
+        running = !running;
+        toggle.textContent = toggle.dataset[running ? 'pauseLabel' : 'playLabel'];
+    });
+    window.addEventListener('pagehide', () => window.clearInterval(timer), { once: true });
+}

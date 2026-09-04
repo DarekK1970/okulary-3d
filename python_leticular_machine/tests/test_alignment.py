@@ -28,6 +28,8 @@ class AlignmentTest(unittest.TestCase):
             self.assertEqual(result.crop, (0, 4, 312, 236))
             self.assertEqual(len(result.previews), 1)
             self.assertTrue(result.previews[0].exists())
+            self.assertEqual(len(result.animation_frames), 2)
+            self.assertTrue(all(path.exists() for path in result.animation_frames))
 
 
 if __name__ == "__main__":

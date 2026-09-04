@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from lenticular_machine.alignment import AlignmentConfig, SequenceAligner
+from lenticular_machine.finalizer import SequenceFinalizer
 from lenticular_machine.models import JobManifest
 from lenticular_machine.processor import VideoFrameProcessor
 
@@ -115,6 +116,14 @@ class VideoIntegrationTest(unittest.TestCase):
             self.assertEqual(len(result.transforms), 5)
             self.assertEqual(len(result.previews), 2)
             self.assertTrue(all(path.is_file() for path in result.previews))
+
+            final = SequenceFinalizer().finalize(
+                root / "aligned", result, root / "final", root / "final_previews",
+                {"x": 0.1, "y": 0.1, "width": 0.8, "height": 0.8}, "integracja", True,
+            )
+            self.assertEqual(final.frame_count, 5)
+            self.assertEqual(len(list((root / "final").glob("integracja_*.jpg"))), 5)
+            self.assertEqual(len(final.previews), 5)
 
 
 if __name__ == "__main__":

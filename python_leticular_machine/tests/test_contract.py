@@ -60,6 +60,18 @@ class ContractTest(unittest.TestCase):
 
         self.assertEqual(job.alignment["z_center"], 0.4)
 
+    def test_parses_finalization_job_options(self) -> None:
+        data = manifest()
+        data["operation"] = "finalize_sequence"
+        data["artifact_kind"] = "final"
+        data["alignment"] = {"z_center": 0.4, "z_width": 0.05, "alignment_y": 0.6}
+        data["finalization"] = {"crop": {"x": 0.1, "y": 0.2, "width": 0.7, "height": 0.6}, "reverse": True, "basename": "Projekt"}
+
+        job = JobManifest.from_dict(data)
+
+        self.assertTrue(job.finalization["reverse"])
+        self.assertEqual(job.finalization["crop"]["width"], 0.7)
+
     def test_rejects_untrusted_download_host(self) -> None:
         with self.assertRaises(ValueError):
             validate_remote_url("https://attacker.example/file", frozenset({"okulary-3d.pl"}))

@@ -8,9 +8,12 @@
 @php($analysis = $project->jobs->where('operation', 'analyze_video')->sortByDesc('created_at')->first())
 @php($extraction = $project->jobs->where('operation', 'extract_video_frames')->sortByDesc('created_at')->first())
 @php($alignment = $project->jobs->where('operation', 'align_sequence')->sortByDesc('created_at')->first())
+@php($finalization = $project->jobs->where('operation', 'finalize_sequence')->sortByDesc('created_at')->first())
 @php($analysisPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'analysis_thumbnail_'))->sortBy('kind')->values())
 @php($timelinePreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'timeline_thumbnail_'))->sortBy('kind')->values())
 @php($alignmentPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_preview_'))->sortBy('kind')->values())
+@php($alignmentFrames = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_frame_'))->sortBy('kind')->values())
+@php($finalPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'final_preview_'))->sortBy('kind')->values())
 @php($framesReady = $extraction?->status === \App\Enums\LenticularJobStatus::Completed)
 @php($printSettings = array_merge(['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20], $project->settings ?? []))
 @php($savedSelection = $printSettings['selection'] ?? $extraction?->parameters['selection'] ?? null)
@@ -38,7 +41,9 @@
             </form>
         @endif</section>
     @else
-        <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.step_3') }}</h2><p>{{ __('lenticular_projects.alignment_help') }}</p><form method="post" action="{{ route('lab.projects.alignment.store', ['locale' => app()->getLocale(), 'project' => $project]) }}" class="lenticular-controls">@csrf<input id="z-center" name="z_center" type="hidden" value="0.5">
+        <section class="lenticular-wizard-step"><h2>{{ __('lenticular_projects.step_3') }}</h2>
+        @if(!$alignment || $alignment->status !== \App\Enums\LenticularJobStatus::Completed)
+            <p>{{ __('lenticular_projects.alignment_help') }}</p><form method="post" action="{{ route('lab.projects.alignment.store', ['locale' => app()->getLocale(), 'project' => $project]) }}" class="lenticular-controls">@csrf<input id="z-center" name="z_center" type="hidden" value="0.5">
             <div class="lenticular-alignment-editor"><div class="lenticular-vertical-control"><output data-range-output="alignment-y">50%</output><input id="alignment-y" name="alignment_y" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="{{ __('lenticular_projects.alignment_y') }}"></div><div class="lenticular-alignment-preview"><div class="lenticular-alignment-stage" data-alignment-stage data-source-width="{{ $source->metadata['width'] }}" data-source-height="{{ $source->metadata['height'] }}">@foreach($stagePreviews as $preview)<img class="lenticular-alignment-frame frame-{{ $loop->index }}" src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.preview_frame', ['number' => $loop->iteration]) }}">@endforeach<button class="lenticular-z-zone" type="button" data-z-zone aria-label="{{ __('lenticular_projects.move_z') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span></span></button></div><div class="lenticular-width-control"><label for="z-width">{{ __('lenticular_projects.z_width') }} <output data-range-output="z-width">5%</output></label><input id="z-width" name="z_width" type="range" min="0.01" max="0.5" step="0.01" value="0.05"></div></div><div class="lenticular-overlay-switches"><label><input type="checkbox" data-overlay-toggle="1"> {{ __('lenticular_projects.middle_frame') }}</label><label><input type="checkbox" data-overlay-toggle="2"> {{ __('lenticular_projects.last_frame') }}</label></div></div>
             <button class="lab-primary-button" type="submit">{{ __('lenticular_projects.auto_alignment') }}</button></form>
             @if($alignment)
@@ -54,6 +59,31 @@
                     @endforeach
                 </div>
             @endif
+        @elseif(!$finalization || $finalization->status !== \App\Enums\LenticularJobStatus::Completed)
+            @if($finalization && !$finalization->status->isTerminal())
+                <p class="lenticular-export-note">{{ __('lenticular_projects.finalization_in_progress') }} <strong>{{ $finalization->progress }}%</strong></p><meta http-equiv="refresh" content="5">
+            @else
+                <p>{{ __('lenticular_projects.crop_help') }}</p>
+                <form method="post" action="{{ route('lab.projects.finalize.store', ['locale' => app()->getLocale(), 'project' => $project]) }}" class="lenticular-controls" data-crop-form>@csrf
+                    <div class="lenticular-crop-toolbar"><label for="crop-ratio">{{ __('lenticular_projects.crop_ratio') }}</label><select id="crop-ratio" data-crop-ratio><option value="free">{{ __('lenticular_projects.free_ratio') }}</option><option value="1">1:1</option><option value="1.333333">4:3</option><option value="0.75">3:4</option><option value="1.777778">16:9</option></select></div>
+                    <div class="lenticular-crop-stage" data-crop-stage>
+                        @if($alignmentFrames->isNotEmpty())<img src="{{ Storage::disk($alignmentFrames->first()->disk)->temporaryUrl($alignmentFrames->first()->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.crop_preview') }}">@endif
+                        <div class="lenticular-crop-selection" data-crop-selection></div>
+                    </div>
+                    <input name="crop_x" type="hidden" value="0" data-crop-x><input name="crop_y" type="hidden" value="0" data-crop-y><input name="crop_width" type="hidden" value="1" data-crop-width><input name="crop_height" type="hidden" value="1" data-crop-height>
+                    <label class="lenticular-reverse"><input name="reverse" type="checkbox" value="1"> {{ __('lenticular_projects.reverse_sequence') }}</label>
+                    <button class="lab-primary-button" type="submit">{{ __('lenticular_projects.save_frames') }}</button>
+                </form>
+                @if($finalization?->status === \App\Enums\LenticularJobStatus::Failed)<p class="lenticular-warning">{{ $finalization->error_message }}</p>@endif
+            @endif
+        @else
+            <p>{{ __('lenticular_projects.animation_help') }}</p>
+            <div class="lenticular-final-result">
+                <div class="lenticular-sequence-animation" data-sequence-animation>@foreach($finalPreviews as $preview)<img @class(['is-visible' => $loop->first]) src="{{ Storage::disk($preview->disk)->temporaryUrl($preview->path, now()->addMinutes(15)) }}" alt="{{ __('lenticular_projects.preview_frame', ['number' => $loop->iteration]) }}">@endforeach</div>
+                <button class="lab-secondary-button" type="button" data-animation-toggle data-pause-label="{{ __('lenticular_projects.pause_animation') }}" data-play-label="{{ __('lenticular_projects.play_animation') }}">{{ __('lenticular_projects.pause_animation') }}</button>
+                <a class="lab-primary-button" href="{{ route('lab.projects.download', ['locale' => app()->getLocale(), 'project' => $project]) }}">{{ __('lenticular_projects.download_jpg') }}</a>
+            </div>
+        @endif
         </section>
     @endif
 </div></div></section>

@@ -145,4 +145,21 @@ class LenticularVideoProjectTest extends TestCase
         $job = $project->jobs()->where('operation', 'align_sequence')->sole();
         $this->assertSame(['selection' => $selection, 'alignment' => ['z_center' => 0.4, 'z_width' => 0.05, 'alignment_y' => 0.6]], $job->parameters);
     }
+
+    public function test_completed_alignment_unlocks_crop_and_queues_finalization(): void
+    {
+        $user = User::factory()->create();
+        $selection = ['start' => 0, 'end' => 2, 'step' => 1, 'jpeg_quality' => 95];
+        $project = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20, 'selection' => $selection]]);
+        $source = LenticularProjectFile::factory()->create(['lenticular_project_id' => $project->id, 'metadata' => ['width' => 1200, 'height' => 800, 'frame_count' => 3, 'fps' => 24, 'duration_seconds' => 1]]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'extract_video_frames', 'status' => LenticularJobStatus::Completed]);
+        LenticularJob::factory()->create(['lenticular_project_id' => $project->id, 'source_file_id' => $source->id, 'operation' => 'align_sequence', 'status' => LenticularJobStatus::Completed, 'parameters' => ['selection' => $selection, 'alignment' => ['z_center' => 0.5, 'z_width' => 0.05, 'alignment_y' => 0.5]]]);
+
+        $this->actingAs($user)->get("/pl/lab/lenticular/projects/{$project->id}")->assertOk()->assertSee(__('lenticular_projects.crop_help'));
+        $this->actingAs($user)->post("/pl/lab/lenticular/projects/{$project->id}/finalize", ['crop_x' => 0.1, 'crop_y' => 0.2, 'crop_width' => 0.7, 'crop_height' => 0.6, 'reverse' => 1])->assertSessionHas('status');
+
+        $job = $project->jobs()->where('operation', 'finalize_sequence')->sole();
+        $this->assertTrue($job->parameters['finalization']['reverse']);
+        $this->assertSame(0.7, $job->parameters['finalization']['crop']['width']);
+    }
 }

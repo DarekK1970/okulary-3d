@@ -82,6 +82,7 @@ class JobController extends Controller
             'upload_url' => $this->absoluteUrl(URL::temporarySignedRoute('worker.transfers.result', now()->addMinutes(config('lenticular_machine.transfer_url_minutes')), ['job' => $job->id, 'lease_token' => $job->lease_token], absolute: false)),
             'selection' => $job->parameters['selection'] ?? null,
             'alignment' => $job->parameters['alignment'] ?? null,
+            'finalization' => $job->parameters['finalization'] ?? null,
         ]);
     }
 
@@ -108,6 +109,8 @@ class JobController extends Controller
     {
         $analysisPresence = $job->operation === 'analyze_video' ? 'required' : 'nullable';
         $alignmentPresence = $job->operation === 'align_sequence' ? 'required' : 'nullable';
+        $finalPresence = $job->operation === 'finalize_sequence' ? 'required' : 'nullable';
+        $previewPresence = in_array($job->operation, ['align_sequence', 'finalize_sequence'], true) ? 'required' : 'nullable';
         $validated = $request->validate([
             'lease_token' => ['required', 'string', 'size:64'],
             'artifact.sha256' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
@@ -132,8 +135,14 @@ class JobController extends Controller
             'result.alignment.transforms.*.x' => ['required_with:result.alignment', 'numeric'],
             'result.alignment.transforms.*.y' => ['required_with:result.alignment', 'numeric'],
             'result.alignment.transforms.*.score' => ['required_with:result.alignment', 'numeric'],
-            'result.previews' => [$alignmentPresence, 'array', 'between:1,2'],
+            'result.previews' => [$previewPresence, 'array', 'between:1,100'],
             'result.previews.*' => ['string', 'max:1400000'],
+            'result.animation_frames' => [$alignmentPresence, 'array', 'between:2,100'],
+            'result.animation_frames.*' => ['string', 'max:700000'],
+            'result.finalization' => [$finalPresence, 'array'],
+            'result.finalization.frame_count' => [$finalPresence, 'integer', 'between:2,100'],
+            'result.finalization.width' => [$finalPresence, 'integer', 'min:2'],
+            'result.finalization.height' => [$finalPresence, 'integer', 'min:2'],
         ]);
         if ($job->status === LenticularJobStatus::Completed) {
             /** @var ProcessingMachine $machine */
@@ -149,6 +158,8 @@ class JobController extends Controller
             $this->storeAnalysisResult($job, $validated['result']);
         } elseif ($job->operation === 'align_sequence') {
             $this->storeAlignmentResult($job, $validated['result']);
+        } elseif ($job->operation === 'finalize_sequence') {
+            $this->storeFinalizationResult($job, $validated['result']);
         }
         $job->update(['status' => LenticularJobStatus::Completed, 'progress' => 100, 'stage' => 'completed', 'completed_at' => now(), 'lease_expires_at' => null]);
         LenticularJobEvent::query()->create(['lenticular_job_id' => $job->id, 'type' => 'completed', 'payload' => ['artifact_id' => $artifact->id]]);
@@ -195,7 +206,7 @@ class JobController extends Controller
     private function artifactKind(LenticularJob $job): string
     {
         return match ($job->operation) {
-            'analyze_video' => 'analysis', 'align_sequence' => 'aligned', default => 'frames'
+            'analyze_video' => 'analysis', 'align_sequence' => 'aligned', 'finalize_sequence' => 'final', default => 'frames'
         };
     }
 
@@ -238,6 +249,26 @@ class JobController extends Controller
                 ['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "alignment_preview_{$index}"],
                 ['disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "alignment_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => []]
             );
+        }
+        $this->storeJpegSequence($job, $result['animation_frames'], 'alignment_frame');
+    }
+
+    private function storeFinalizationResult(LenticularJob $job, array $result): void
+    {
+        $project = $job->lenticularProject;
+        $project->update(['settings' => array_merge($project->settings ?? [], ['finalization' => $result['finalization']])]);
+        $this->storeJpegSequence($job, $result['previews'], 'final_preview');
+    }
+
+    private function storeJpegSequence(LenticularJob $job, array $images, string $kindPrefix): void
+    {
+        LenticularProjectFile::query()->where('lenticular_project_id', $job->lenticular_project_id)->where('kind', 'like', "{$kindPrefix}_%")->delete();
+        foreach ($images as $index => $encoded) {
+            $contents = base64_decode($encoded, true);
+            abort_unless(is_string($contents) && strlen($contents) <= 1048576 && str_starts_with($contents, "\xFF\xD8\xFF"), 422, 'Invalid sequence preview.');
+            $path = "lenticular/previews/{$job->lenticular_project_id}/{$kindPrefix}_{$index}.jpg";
+            Storage::disk(config('lenticular_machine.disk'))->put($path, $contents);
+            LenticularProjectFile::query()->create(['lenticular_project_id' => $job->lenticular_project_id, 'kind' => "{$kindPrefix}_{$index}", 'disk' => config('lenticular_machine.disk'), 'path' => $path, 'original_name' => "{$kindPrefix}_{$index}.jpg", 'media_type' => 'image/jpeg', 'size_bytes' => strlen($contents), 'sha256' => hash('sha256', $contents), 'metadata' => ['sequence_index' => $index]]);
         }
     }
 }

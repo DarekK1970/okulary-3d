@@ -474,6 +474,45 @@
     }
 }
 
+.lenticular-crop-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: #46546b;
+    font-size: .65rem;
+    font-weight: 800;
+}
+
+.lenticular-crop-toolbar select {
+    min-height: 38px;
+    padding: 0 32px 0 10px;
+    border: 1px solid #d8e1ec;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.lenticular-crop-stage,
+.lenticular-sequence-animation {
+    position: relative;
+    width: min(60vw, 900px);
+    max-width: 100%;
+    margin-inline: auto;
+    overflow: hidden;
+    border: 1px solid #d8e1ec;
+    border-radius: 14px;
+    background: #e9edf2;
+}
+
+.lenticular-crop-stage { cursor: crosshair; touch-action: none; }
+.lenticular-crop-stage img { width: 100%; max-height: calc(100vh - 300px); display: block; object-fit: contain; }
+.lenticular-crop-selection { position: absolute; border: 2px solid #00a8df; background: rgba(0, 168, 223, .16); box-shadow: 0 0 0 9999px rgba(10, 19, 34, .48); pointer-events: none; }
+.lenticular-reverse { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0; color: #46546b; font-size: .65rem; font-weight: 800; }
+.lenticular-final-result { display: grid; justify-items: center; gap: 12px; }
+.lenticular-sequence-animation img { width: 100%; display: none; }
+.lenticular-sequence-animation img.is-visible { display: block; }
+
 .lenticular-stepper {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
