@@ -39,6 +39,7 @@ class LoginController extends Controller
         if (! Auth::attempt([
             'email' => $credentials['email'],
             'password' => $credentials['password'],
+            'suspended_at' => null,
         ], (bool) ($credentials['remember'] ?? false))) {
             RateLimiter::hit($key, 60);
 
@@ -49,6 +50,10 @@ class LoginController extends Controller
 
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        $request->user()->forceFill([
+            'last_activity_at' => now(),
+            'preferred_locale' => app()->getLocale(),
+        ])->saveQuietly();
 
         return redirect()->intended(
             route('account', ['locale' => app()->getLocale()])

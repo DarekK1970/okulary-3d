@@ -73,8 +73,8 @@ class LenticularProjectController extends Controller
     public function alignFrames(Request $request, string $locale, LenticularProject $project): RedirectResponse
     {
         $this->authorizeOwner($request, $project);
-        $source = $project->files()->where('kind', 'source_video')->firstOrFail();
-        $extraction = $project->jobs()->where('operation', 'extract_video_frames')->where('status', LenticularJobStatus::Completed)->latest()->first();
+        $source = $this->source($project);
+        $extraction = $project->jobs()->whereIn('operation', ['extract_video_frames', 'import_sequence'])->where('status', LenticularJobStatus::Completed)->latest()->first();
         $selection = $project->settings['selection'] ?? $extraction?->parameters['selection'] ?? null;
         abort_unless(is_array($selection) && $extraction !== null, 409, 'Frames must be extracted first.');
         $alignment = collect($request->validate(['z_center' => ['required', 'numeric', 'between:0,1'], 'z_width' => ['required', 'numeric', 'between:0.01,0.5'], 'alignment_y' => ['required', 'numeric', 'between:0,1']]))->map(fn ($value): float => (float) $value)->all();
@@ -86,7 +86,7 @@ class LenticularProjectController extends Controller
     public function finalize(Request $request, string $locale, LenticularProject $project): RedirectResponse
     {
         $this->authorizeOwner($request, $project);
-        $source = $project->files()->where('kind', 'source_video')->firstOrFail();
+        $source = $this->source($project);
         $alignmentJob = $project->jobs()->where('operation', 'align_sequence')->where('status', LenticularJobStatus::Completed)->latest()->first();
         $selection = $project->settings['selection'] ?? null;
         abort_unless($alignmentJob && is_array($selection), 409, 'Alignment must be completed first.');
@@ -110,5 +110,10 @@ class LenticularProjectController extends Controller
     private function authorizeOwner(Request $request, LenticularProject $project): void
     {
         abort_unless($project->user_id === $request->user()->id, 404);
+    }
+
+    private function source(LenticularProject $project): LenticularProjectFile
+    {
+        return $project->files()->whereIn('kind', ['source_video', 'source_sequence'])->firstOrFail();
     }
 }

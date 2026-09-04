@@ -24,6 +24,7 @@
         'resources/css/admin-contextual-recommendations.css',
         'resources/css/admin-analytics.css',
         'resources/css/admin-newsletter.css',
+        'resources/css/admin-users.css',
         'resources/js/admin-cms.js',
         'resources/js/admin-multilang.js',
         'resources/js/admin-media.js',
@@ -82,7 +83,7 @@
                         <span>✉</span>
                         {{ __('newsletter.admin.title') }}
                     </a>
-                    <a class="admin-nav-link {{ request()->routeIs('admin.users') ? 'is-active' : '' }}" href="{{ route('admin.users') }}">
+                    <a class="admin-nav-link {{ request()->routeIs('admin.users*') ? 'is-active' : '' }}" href="{{ route('admin.users') }}">
                         <span>◎</span>
                         {{ __('admin.menu.users') }}
                     </a>

@@ -74,5 +74,6 @@ return [
         'logged_out' => 'You have been signed out.',
         'profile_updated' => 'Profile details have been saved.',
         'password_updated' => 'Your password has been changed.',
+        'account_suspended' => 'This account has been suspended. Contact the administrator.',
     ],
 ];

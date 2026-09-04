@@ -7,6 +7,7 @@ use App\Enums\FalAiJobStatus;
 use App\Jobs\ProcessFalAiWebhook;
 use App\Jobs\SubmitFalAiJob;
 use App\Models\FalAiJob;
+use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
 use App\Services\FalAiClient;
@@ -98,7 +99,8 @@ class FalAiAsyncIntegrationTest extends TestCase
         $job->refresh();
         $this->assertSame(FalAiJobStatus::Succeeded, $job->status);
         $this->assertNotNull($job->result_file_id);
-        $this->assertSame(1, LenticularProjectFile::query()->where('kind', 'fal_ai_result')->count());
+        $this->assertSame(1, LenticularProjectFile::query()->where('kind', 'source_video')->count());
+        $this->assertSame(1, LenticularJob::query()->where('operation', 'analyze_video')->count());
         Storage::disk('local')->assertExists($job->resultFile->path);
     }
 

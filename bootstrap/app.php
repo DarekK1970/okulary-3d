@@ -5,6 +5,7 @@ use App\Http\Middleware\EnforceMaintenanceMode;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\TrackPortalAnalytics;
+use App\Http\Middleware\TrackAuthenticatedUser;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 AddSecurityHeaders::class,
                 EnforceMaintenanceMode::class,
                 TrackPortalAnalytics::class,
+                TrackAuthenticatedUser::class,
             ]
         );
         $middleware->alias([

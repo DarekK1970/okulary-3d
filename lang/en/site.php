@@ -1,4 +1,5 @@
 <?php
+
 return [
     'title' => '3D Glasses Portal',
     'meta_description' => 'Portal about stereoscopy, 3D imaging, spatial photography, lenticular techniques and online 3D tools.',
@@ -21,6 +22,8 @@ return [
         'history' => '3D History',
         'techniques' => '3D Techniques',
         'lab' => '3D LAB',
+        'lab_standard' => 'Standard Studio (free for everyone)',
+        'lab_power' => 'POWER AI LENTICULAR STUDIO',
         'gallery' => 'Gallery',
         'shop' => 'Shop',
         'about' => 'About',

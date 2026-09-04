@@ -8,6 +8,7 @@
 @endpush
 
 @section('content')
+@php($hasAiAccess = in_array($accessPlan, ['pro', 'premium'], true))
 <section class="studio-page">
     <div class="site-container">
         <nav class="lab-breadcrumbs">
@@ -24,8 +25,8 @@
             </div>
             <div class="studio-account-card">
                 <span>{{ __('lenticular_studio.your_plan') }}</span>
-                <strong>{{ $accessPlan === 'premium' ? __('lenticular_studio.premium_plan') : __('lenticular_studio.free_plan') }}</strong>
-                <small>{{ $accessPlan === 'premium' ? __('lenticular_studio.premium_plan_help') : __('lenticular_studio.free_plan_help') }}</small>
+                <strong>{{ __('lenticular_studio.'.$accessPlan.'_plan') }}</strong>
+                <small>{{ __('lenticular_studio.'.$accessPlan.'_plan_help') }}</small>
             </div>
         </header>
 
@@ -51,25 +52,25 @@
                 <div class="studio-path-footer"><span class="studio-plan-tag is-free">{{ __('lenticular_studio.available_now') }}</span><a class="lab-primary-button" href="{{ route('lab.projects.create', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_studio.start') }} →</a></div>
             </article>
 
-            <article class="studio-path-card is-planned">
+            <article class="studio-path-card is-available">
                 <div class="studio-path-visual is-sequence" aria-hidden="true"><svg viewBox="0 0 120 90"><rect x="12" y="22" width="54" height="42" rx="7"/><rect x="28" y="15" width="54" height="42" rx="7"/><rect x="45" y="9" width="62" height="48" rx="7"/><path d="M56 46l14-15 11 10 8-7 12 12"/></svg></div>
                 <div class="studio-path-number">02</div><h3>{{ __('lenticular_studio.paths.sequence.title') }}</h3><p>{{ __('lenticular_studio.paths.sequence.description') }}</p>
                 <ul><li>{{ __('lenticular_studio.paths.sequence.feature_1') }}</li><li>{{ __('lenticular_studio.paths.sequence.feature_2') }}</li></ul>
-                <div class="studio-path-footer"><span class="studio-plan-tag is-free">FREE · 12 · A5</span><button type="button" disabled>{{ __('lenticular_studio.in_preparation') }}</button></div>
+                <div class="studio-path-footer"><span class="studio-plan-tag is-free">{{ $accessPlan === 'premium' ? __('lenticular_studio.available_now') : __('lenticular_studio.available_with_limit', ['limit' => $accessPlan === 'pro' ? '25 · A3' : '12 · A5']) }}</span><a class="lab-primary-button" href="{{ route('lab.lenticular.ai.sequence.create', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_studio.start') }} →</a></div>
             </article>
 
-            <article class="studio-path-card is-locked">
+            <article class="studio-path-card {{ $hasAiAccess ? 'is-available' : 'is-locked' }}">
                 <div class="studio-path-visual is-pair" aria-hidden="true"><svg viewBox="0 0 120 90"><rect x="9" y="18" width="47" height="55" rx="8"/><rect x="64" y="18" width="47" height="55" rx="8"/><circle cx="34" cy="37" r="7"/><circle cx="89" cy="37" r="7"/><path d="M54 46h12m-5-5 5 5-5 5"/></svg></div>
                 <div class="studio-path-number">03</div><h3>{{ __('lenticular_studio.paths.pair.title') }}</h3><p>{{ __('lenticular_studio.paths.pair.description') }}</p>
                 <ul><li>{{ __('lenticular_studio.paths.pair.feature_1') }}</li><li>{{ __('lenticular_studio.paths.pair.feature_2') }}</li></ul>
-                <div class="studio-path-footer"><span class="studio-plan-tag">{{ $accessPlan === 'premium' ? 'PREMIUM' : 'PRO · A4' }}</span><button type="button" disabled>@if($accessPlan !== 'premium')<span>🔒</span>@endif {{ $accessPlan === 'premium' ? __('lenticular_studio.in_preparation') : __('lenticular_studio.requires_pro') }}</button></div>
+                <div class="studio-path-footer">@if($hasAiAccess)<span class="studio-plan-tag is-free">{{ $accessPlan === 'premium' ? __('lenticular_studio.available_now') : __('lenticular_studio.available_with_limit', ['limit' => 'A4']) }}</span><a class="lab-primary-button" href="{{ route('lab.lenticular.ai.pair.create', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_studio.start') }} →</a>@else<div><span class="studio-plan-tag is-locked">{{ __('lenticular_studio.unavailable_in_plan') }}</span><div class="studio-upgrade-links"><span>{{ __('lenticular_studio.upgrade_to') }}</span><a href="{{ route('account', ['locale' => app()->getLocale(), 'upgrade' => 'pro']) }}">PRO</a><a href="{{ route('account', ['locale' => app()->getLocale(), 'upgrade' => 'premium']) }}">PREMIUM</a></div></div>@endif</div>
             </article>
 
-            <article class="studio-path-card is-locked">
+            <article class="studio-path-card {{ $hasAiAccess ? 'is-available' : 'is-locked' }}">
                 <div class="studio-path-visual is-ai" aria-hidden="true"><svg viewBox="0 0 120 90"><rect x="26" y="15" width="68" height="60" rx="10"/><path d="M39 59l17-18 12 11 9-8 10 15"/><path d="M99 12v14m-7-7h14M17 27v10m-5-5h10"/></svg></div>
                 <div class="studio-path-number">04</div><h3>{{ __('lenticular_studio.paths.single.title') }}</h3><p>{{ __('lenticular_studio.paths.single.description') }}</p>
                 <ul><li>{{ __('lenticular_studio.paths.single.feature_1') }}</li><li>{{ __('lenticular_studio.paths.single.feature_2') }}</li></ul>
-                <div class="studio-path-footer"><span class="studio-plan-tag">{{ $accessPlan === 'premium' ? 'PREMIUM' : 'PRO · A4' }}</span><button type="button" disabled>@if($accessPlan !== 'premium')<span>🔒</span>@endif {{ $accessPlan === 'premium' ? __('lenticular_studio.in_preparation') : __('lenticular_studio.requires_pro') }}</button></div>
+                <div class="studio-path-footer">@if($hasAiAccess)<span class="studio-plan-tag is-free">{{ $accessPlan === 'premium' ? __('lenticular_studio.available_now') : __('lenticular_studio.available_with_limit', ['limit' => 'A4']) }}</span><a class="lab-primary-button" href="{{ route('lab.lenticular.ai.single.create', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_studio.start') }} →</a>@else<div><span class="studio-plan-tag is-locked">{{ __('lenticular_studio.unavailable_in_plan') }}</span><div class="studio-upgrade-links"><span>{{ __('lenticular_studio.upgrade_to') }}</span><a href="{{ route('account', ['locale' => app()->getLocale(), 'upgrade' => 'pro']) }}">PRO</a><a href="{{ route('account', ['locale' => app()->getLocale(), 'upgrade' => 'premium']) }}">PREMIUM</a></div></div>@endif</div>
             </article>
         </div>
 

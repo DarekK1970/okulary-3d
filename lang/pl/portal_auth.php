@@ -74,5 +74,6 @@ return [
         'logged_out' => 'Zostałeś wylogowany.',
         'profile_updated' => 'Dane profilu zostały zapisane.',
         'password_updated' => 'Hasło zostało zmienione.',
+        'account_suspended' => 'To konto zostało zawieszone. Skontaktuj się z administratorem.',
     ],
 ];

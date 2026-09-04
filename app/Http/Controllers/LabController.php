@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Services\FalAiSettingsService;
+use App\Services\LenticularAccessService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -29,11 +29,11 @@ class LabController extends Controller
         return view('lab.lenticular');
     }
 
-    public function lenticularStudio(Request $request, string $locale, FalAiSettingsService $settings): View
+    public function lenticularStudio(Request $request, string $locale, FalAiSettingsService $settings, LenticularAccessService $access): View
     {
         return view('lab.lenticular-studio', [
             'falReady' => $settings->configured(),
-            'accessPlan' => $request->user()?->role === User::ROLE_SUPER_ADMIN ? 'premium' : 'free',
+            'accessPlan' => $access->plan($request->user()),
         ]);
     }
 

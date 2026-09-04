@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountOrderController;
+use App\Http\Controllers\AiLenticularProjectController;
 use App\Http\Controllers\Admin\AdminNavigationController;
 use App\Http\Controllers\Admin\AiTranslationController;
 use App\Http\Controllers\Admin\AiTranslationSettingsController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StaticPageController as AdminStaticPageController;
 use App\Http\Controllers\Admin\StereoGalleryController as AdminStereoGalleryController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AnalyticsEventController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
@@ -154,6 +156,15 @@ Route::prefix('{locale}')
         Route::get('/lab/lenticular/studio', [LabController::class, 'lenticularStudio'])
             ->middleware('auth')
             ->name('lab.lenticular.studio');
+        Route::middleware('auth')->prefix('/lab/lenticular/studio')->name('lab.lenticular.ai.')->group(function (): void {
+            Route::get('/two-photos', [AiLenticularProjectController::class, 'createPair'])->name('pair.create');
+            Route::post('/two-photos', [AiLenticularProjectController::class, 'storePair'])->name('pair.store');
+            Route::get('/one-photo', [AiLenticularProjectController::class, 'createSingle'])->name('single.create');
+            Route::post('/one-photo', [AiLenticularProjectController::class, 'storeSingle'])->name('single.store');
+            Route::get('/photo-sequence', [AiLenticularProjectController::class, 'createSequence'])->name('sequence.create');
+            Route::post('/photo-sequence', [AiLenticularProjectController::class, 'storeSequence'])->name('sequence.store');
+            Route::get('/jobs/{job}', [AiLenticularProjectController::class, 'showJob'])->name('jobs.show');
+        });
         Route::middleware('auth')->prefix('/lab/lenticular/projects')->name('lab.projects.')->group(function (): void {
             Route::get('/create', [LenticularProjectController::class, 'create'])->name('create');
             Route::post('/', [LenticularProjectController::class, 'store'])->name('store');
@@ -358,9 +369,11 @@ Route::prefix('admin')
                     '/orders/{order}/documents/{document}',
                     [SalesDocumentController::class, 'adminShow']
                 )->name('orders.documents.show');
-                Route::get('/users', [PlaceholderController::class, 'show'])
-                    ->defaults('section', 'users')
-                    ->name('users');
+                Route::get('/users', [AdminUserController::class, 'index'])->name('users');
+                Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+                Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+                Route::patch('/users/{user}/suspend', [AdminUserController::class, 'suspend'])->name('users.suspend');
+                Route::patch('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore');
 
                 Route::get('/newsletter', [AdminNewsletterController::class, 'index'])
                     ->name('newsletter.index');

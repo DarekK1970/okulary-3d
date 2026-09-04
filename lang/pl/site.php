@@ -1,4 +1,5 @@
 <?php
+
 return [
     'title' => 'Wortal Okulary 3D',
     'meta_description' => 'Wortal o stereoskopii, obrazie 3D, fotografii przestrzennej, technikach lentikularnych i narzędziach online.',
@@ -21,6 +22,8 @@ return [
         'history' => 'Historia 3D',
         'techniques' => 'Techniki 3D',
         'lab' => '3D LAB',
+        'lab_standard' => 'Standard Studio (bezpłatne dla wszystkich)',
+        'lab_power' => 'POWER AI LENTICULAR STUDIO',
         'gallery' => 'Galeria',
         'shop' => 'Sklep',
         'about' => 'O nas',

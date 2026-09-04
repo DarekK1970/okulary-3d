@@ -39,8 +39,10 @@ class LenticularStudioFrontendTest extends TestCase
             ->assertDontSee('Seedance')
             ->assertSee('3D z jednego zdjęcia')
             ->assertSee('Plan podstawowy')
-            ->assertSee('Wymaga PRO')
-            ->assertSee(route('lab.projects.create', ['locale' => 'pl']));
+            ->assertSee('NIEDOSTĘPNE W TYM PLANIE')
+            ->assertSee('Przejdź na')
+            ->assertSee(route('lab.projects.create', ['locale' => 'pl']))
+            ->assertSee(route('lab.lenticular.ai.sequence.create', ['locale' => 'pl']));
     }
 
     public function test_frontend_reports_when_fal_ai_is_ready_without_exposing_secrets(): void
@@ -64,6 +66,23 @@ class LenticularStudioFrontendTest extends TestCase
             ->assertOk()
             ->assertSee('Plan PREMIUM')
             ->assertSee('najwyższe bezpieczne limity technologiczne')
+            ->assertSee('DOSTĘPNE')
+            ->assertSee(route('lab.lenticular.ai.pair.create', ['locale' => 'pl']))
+            ->assertSee(route('lab.lenticular.ai.single.create', ['locale' => 'pl']))
             ->assertDontSee('Wymaga PRO');
+    }
+
+    public function test_pro_user_sees_available_ai_paths_with_a4_limit(): void
+    {
+        $pro = User::factory()->create(['lenticular_plan' => 'pro']);
+
+        $this->actingAs($pro)->get('/pl/lab/lenticular/studio')
+            ->assertOk()
+            ->assertSee('Plan PRO')
+            ->assertSee('DOSTĘPNE · A4')
+            ->assertSee('DOSTĘPNE · 25 · A3')
+            ->assertSee(route('lab.lenticular.ai.pair.create', ['locale' => 'pl']))
+            ->assertSee(route('lab.lenticular.ai.single.create', ['locale' => 'pl']))
+            ->assertDontSee('NIEDOSTĘPNE W TYM PLANIE');
     }
 }

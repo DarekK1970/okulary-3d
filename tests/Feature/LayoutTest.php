@@ -15,6 +15,9 @@ class LayoutTest extends TestCase
             ->assertSee('Wortal Okulary 3D')
             ->assertSee('Artykuły')
             ->assertSee('3D LAB')
+            ->assertSee('Standard Studio (bezpłatne dla wszystkich)')
+            ->assertSee('POWER AI LENTICULAR STUDIO')
+            ->assertSee(route('lab.lenticular.studio', ['locale' => 'pl']))
             ->assertSee('Dołącz do społeczności')
             ->assertSee('kontakt@okulary-3d.pl');
     }
@@ -28,6 +31,9 @@ class LayoutTest extends TestCase
             ->assertSee('3D Glasses Portal')
             ->assertSee('Articles')
             ->assertSee('3D LAB')
+            ->assertSee('Standard Studio (free for everyone)')
+            ->assertSee('POWER AI LENTICULAR STUDIO')
+            ->assertSee(route('lab.lenticular.studio', ['locale' => 'en']))
             ->assertSee('Join the community')
             ->assertSee('kontakt@okulary-3d.pl');
     }

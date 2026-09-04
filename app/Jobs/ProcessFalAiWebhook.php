@@ -2,8 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Enums\FalAiJobOperation;
 use App\Enums\FalAiJobStatus;
+use App\Enums\LenticularJobStatus;
 use App\Models\FalAiJob;
+use App\Models\LenticularJob;
 use App\Services\FalAiJobService;
 use App\Services\FalAiResultService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -45,6 +48,12 @@ class ProcessFalAiWebhook implements ShouldQueue
         try {
             $resultFile = $results->store($job, (array) ($this->payload['payload'] ?? []));
             $jobs->markSucceeded($job, $resultFile, response: (array) ($this->payload['payload'] ?? []));
+            if ($job->operation === FalAiJobOperation::ImageToVideo) {
+                LenticularJob::query()->firstOrCreate(
+                    ['source_file_id' => $resultFile->id, 'operation' => 'analyze_video'],
+                    ['lenticular_project_id' => $job->lenticular_project_id, 'status' => LenticularJobStatus::Queued, 'parameters' => []],
+                );
+            }
         } catch (Throwable $exception) {
             FalAiJob::query()->whereKey($job->id)
                 ->whereNotIn('status', [FalAiJobStatus::Succeeded, FalAiJobStatus::Failed, FalAiJobStatus::Cancelled])

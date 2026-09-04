@@ -31,6 +31,7 @@ class SubmitFalAiJob implements ShouldQueue
         }
 
         $parameters = $job->parameters;
+        unset($parameters['scene_analysis'], $parameters['analysis_usage']);
         if ($job->sourceFile) {
             $key = $job->operation === FalAiJobOperation::VideoUpscale ? 'video_url' : 'image_url';
             $parameters[$key] = $this->fileUrl($job->sourceFile);

@@ -4,9 +4,10 @@
     @vite(['resources/css/lab.css', 'resources/css/lenticular-lab.css', 'resources/js/lenticular-project.js'])
 @endpush
 @section('content')
-@php($source = $project->files->firstWhere('kind', 'source_video'))
+@php($source = $project->files->firstWhere('kind', 'source_video') ?? $project->files->firstWhere('kind', 'source_sequence'))
+@php($isSequence = $source?->kind === 'source_sequence')
 @php($analysis = $project->jobs->where('operation', 'analyze_video')->sortByDesc('created_at')->first())
-@php($extraction = $project->jobs->where('operation', 'extract_video_frames')->sortByDesc('id')->first())
+@php($extraction = $project->jobs->whereIn('operation', ['extract_video_frames', 'import_sequence'])->sortByDesc('id')->first())
 @php($alignment = $project->jobs->where('operation', 'align_sequence')->filter(fn($job) => $extraction && strcmp((string) $job->id, (string) $extraction->id) > 0)->sortByDesc('id')->first())
 @php($finalization = $project->jobs->where('operation', 'finalize_sequence')->filter(fn($job) => $alignment && strcmp((string) $job->id, (string) $alignment->id) > 0)->sortByDesc('id')->first())
 @php($analysisPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'analysis_thumbnail_'))->sortBy('kind')->values())
@@ -14,13 +15,14 @@
 @php($alignmentPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_preview_'))->sortBy('kind')->values())
 @php($alignmentFrames = $project->files->filter(fn($file) => str_starts_with($file->kind, 'alignment_frame_'))->sortBy(fn($file) => (int) ($file->metadata['sequence_index'] ?? 0))->values())
 @php($finalPreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'final_preview_'))->sortBy(fn($file) => (int) ($file->metadata['sequence_index'] ?? 0))->values())
+@php($sequencePreviews = $project->files->filter(fn($file) => str_starts_with($file->kind, 'sequence_preview_'))->sortBy(fn($file) => (int) ($file->metadata['sequence_index'] ?? 0))->values())
 @php($framesReady = $extraction?->status === \App\Enums\LenticularJobStatus::Completed)
-@php($showFrameSelection = $source?->metadata && (request()->integer('step') === 2 || !$framesReady))
+@php($showFrameSelection = !$isSequence && $source?->metadata && (request()->integer('step') === 2 || !$framesReady))
 @php($printSettings = array_merge(['print_size' => 'A4', 'dpi' => 1200, 'lpi' => 60, 'max_frames' => 20], $project->settings ?? []))
 @php($savedSelection = $printSettings['selection'] ?? $extraction?->parameters['selection'] ?? null)
 @php($selectionTargets = is_array($savedSelection) ? [$savedSelection['start'], (int) round(($savedSelection['start'] + $savedSelection['end']) / 2), $savedSelection['end']] : [])
 @php($selectedPreviews = collect($selectionTargets)->map(fn($target) => $timelinePreviews->sortBy(fn($file) => abs(($file->metadata['frame_index'] ?? 0) - $target))->first())->filter()->unique('id')->values())
-@php($stagePreviews = $selectedPreviews->count() === 3 ? $selectedPreviews : $analysisPreviews)
+@php($stagePreviews = $isSequence ? $sequencePreviews : ($selectedPreviews->count() === 3 ? $selectedPreviews : $analysisPreviews))
 <section class="lab-workspace-page lenticular-page"><div class="container"><div class="lenticular-panel">
     <div class="lenticular-panel-heading"><div><span class="lab-kicker">PRO / VIDEO</span><h1>{{ $project->name }}</h1><p>{{ $printSettings['print_size'] }} · {{ $printSettings['dpi'] }} DPI · {{ $printSettings['lpi'] }} LPI · {{ __('lenticular_projects.available_frames') }} <strong>{{ $printSettings['max_frames'] }}</strong></p></div></div>
     <ol class="lenticular-stepper"><li class="is-complete"><span>1</span>{{ __('lenticular_projects.step_1') }}</li><li @class(['is-active' => $showFrameSelection, 'is-complete' => $framesReady && !$showFrameSelection])><a href="{{ route('lab.projects.show', ['locale' => app()->getLocale(), 'project' => $project, 'step' => 2]) }}" aria-label="{{ __('lenticular_projects.return_to_frame_selection') }}"><span>2</span>{{ __('lenticular_projects.step_2') }}</a></li><li @class(['is-active' => $framesReady && !$showFrameSelection, 'is-locked' => !$framesReady || $showFrameSelection])><span>3</span>{{ __('lenticular_projects.step_3') }}</li></ol>

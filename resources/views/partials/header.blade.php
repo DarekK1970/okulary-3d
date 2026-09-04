@@ -75,6 +75,8 @@
     $isHistorySection = request()->routeIs('archive.*')
         || $articleSection === \App\Enums\ArticlePortalSection::HistoryCuriosities->value;
     $isTechniquesSection = $articleSection === \App\Enums\ArticlePortalSection::Techniques->value;
+    $isLabSection = request()->routeIs('lab.*');
+    $isPowerLabSection = request()->routeIs('lab.lenticular.studio', 'lab.lenticular.ai.*');
 @endphp
 
 <style>
@@ -128,6 +130,21 @@
     .nav-dropdown-item.is-active {
         background: #f4f7fb;
         color: var(--color-red);
+    }
+    .nav-lab-menu {
+        min-width: 300px;
+    }
+    .nav-power-studio {
+        margin-top: 3px;
+        background: linear-gradient(105deg, #fff1f4, #edfaff);
+        color: #e52d52;
+        font-weight: 850;
+        letter-spacing: .01em;
+    }
+    .nav-power-studio::before {
+        content: '✦';
+        margin-right: 7px;
+        color: #00a4dc;
     }
     @media (max-width: 1180px) {
         .nav-dropdown {
@@ -244,12 +261,26 @@
                 {{ __('site.nav.techniques') }}
             </a>
 
-            <a
-                class="nav-link {{ request()->routeIs('lab.*') ? 'is-active' : '' }}"
-                href="{{ route('lab.index', ['locale' => $locale]) }}"
-            >
-                {{ __('site.nav.lab') }}
-            </a>
+            <details class="nav-dropdown" @if ($isLabSection) open @endif>
+                <summary class="nav-link {{ $isLabSection ? 'is-active' : '' }}">
+                    {{ __('site.nav.lab') }}
+                    <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
+                </summary>
+                <div class="nav-dropdown-menu nav-lab-menu">
+                    <a
+                        class="nav-dropdown-item {{ $isLabSection && ! $isPowerLabSection ? 'is-active' : '' }}"
+                        href="{{ route('lab.index', ['locale' => $locale]) }}"
+                    >
+                        {{ __('site.nav.lab_standard') }}
+                    </a>
+                    <a
+                        class="nav-dropdown-item nav-power-studio {{ $isPowerLabSection ? 'is-active' : '' }}"
+                        href="{{ route('lab.lenticular.studio', ['locale' => $locale]) }}"
+                    >
+                        {{ __('site.nav.lab_power') }}
+                    </a>
+                </div>
+            </details>
 
             <a
                 class="nav-link {{ request()->routeIs('gallery.*') || request()->routeIs('account.gallery.*') ? 'is-active' : '' }}"

@@ -17,6 +17,7 @@ from .finalizer import SequenceFinalizer
 from .models import JobManifest
 from .processor import VideoFrameProcessor
 from .state import JobState
+from .sequence import SequenceArchiveProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ class Worker:
                     info = self.processor.analyze(source, frames)
                 elif job.operation in {"align_sequence", "finalize_sequence"}:
                     raw_frames = work_dir / "raw_frames"
-                    info = self.processor.extract(job, source, raw_frames)
+                    info = SequenceArchiveProcessor().extract(source, raw_frames) if job.source.filename.lower().endswith(".tar") else self.processor.extract(job, source, raw_frames)
                     aligned_dir = frames if job.operation == "align_sequence" else work_dir / "aligned"
                     alignment_result = SequenceAligner().align(sorted(raw_frames.glob("*.jpg")), aligned_dir, AlignmentConfig(**(job.alignment or {})))
                     if job.operation == "finalize_sequence":

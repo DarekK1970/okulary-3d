@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FalAiJobOperation;
 use App\Models\FalAiJob;
 use App\Models\LenticularProjectFile;
 use Illuminate\Support\Facades\Http;
@@ -41,7 +42,7 @@ class FalAiResultService
 
         return LenticularProjectFile::query()->create([
             'lenticular_project_id' => $job->lenticular_project_id,
-            'kind' => 'fal_ai_result',
+            'kind' => $job->operation === FalAiJobOperation::ImageToVideo ? 'source_video' : 'fal_ai_result',
             'disk' => $disk,
             'path' => $path,
             'original_name' => "fal-ai-{$job->id}.{$extension}",
