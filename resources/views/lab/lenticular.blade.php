@@ -59,7 +59,7 @@
             <a href="#wizard">{{ __('lab.lenticular.nav.wizard') }}</a>
         </nav>
 
-        <p><a class="lab-primary-button" href="{{ auth()->check() ? route('lab.projects.create', ['locale' => app()->getLocale()]) : route('login', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_projects.open') }}</a></p>
+        <p><a class="lab-primary-button" href="{{ auth()->check() ? route('lab.lenticular.studio', ['locale' => app()->getLocale()]) : route('login', ['locale' => app()->getLocale()]) }}">{{ __('lenticular_studio.open') }}</a></p>
 
         <section class="lenticular-panel" id="interlacer">
             <div class="lenticular-panel-heading">

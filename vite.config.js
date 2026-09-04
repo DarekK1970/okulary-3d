@@ -21,6 +21,7 @@ export default defineConfig({
                 'resources/css/shop.css',
                 'resources/css/lab.css',
                 'resources/css/lenticular-lab.css',
+                'resources/css/lenticular-studio.css',
                 'resources/css/advanced-stereo-lab.css',
                 'resources/css/gallery.css',
                 'resources/css/archive.css',

@@ -151,6 +151,9 @@ Route::prefix('{locale}')
 
         Route::get('/lab/lenticular', [LabController::class, 'lenticular'])
             ->name('lab.lenticular');
+        Route::get('/lab/lenticular/studio', [LabController::class, 'lenticularStudio'])
+            ->middleware('auth')
+            ->name('lab.lenticular.studio');
         Route::middleware('auth')->prefix('/lab/lenticular/projects')->name('lab.projects.')->group(function (): void {
             Route::get('/create', [LenticularProjectController::class, 'create'])->name('create');
             Route::post('/', [LenticularProjectController::class, 'store'])->name('store');
