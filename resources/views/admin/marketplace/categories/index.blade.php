@@ -30,11 +30,7 @@
                 <td><div class="market-language-badges">@foreach(config('locales.supported', []) as $locale => $language) @php($translation = $category->translation($locale)) <span class="market-language-badge {{ $translation ? 'is-present' : '' }}">{{ strtoupper($locale) }} · {{ $translation ? __('ai_translator.target_statuses.'.$translation->translation_status->value) : __('ai_translator.target_statuses.missing') }}</span>@endforeach</div></td>
                 <td>{{ $category->products_count }}</td><td>{{ $category->sort_order }}</td>
                 <td><span class="market-status {{ $category->is_active ? 'is-active' : '' }}">{{ $category->is_active ? __('marketplace.admin.common.active') : __('marketplace.admin.common.inactive') }}</span></td>
-                <td><div class="market-actions">
-                    <a class="market-button is-light" href="{{ route('admin.marketplace.categories.edit', $category) }}">{{ __('marketplace.admin.common.edit') }}</a>
-                    <form method="post" action="{{ route('admin.translations.translate', [\App\Services\AiTranslationService::TYPE_MARKETPLACE_CATEGORY, $category->id]) }}">@csrf<button class="market-button is-light" type="submit">{{ __('marketplace.admin.common.ai_translation') }}</button></form>
-                    @if($category->products_count === 0)<form method="post" action="{{ route('admin.marketplace.categories.destroy', $category) }}" onsubmit="return confirm('{{ __('marketplace.admin.common.delete_confirm') }}')">@csrf @method('DELETE')<button class="market-button is-danger" type="submit">{{ __('marketplace.admin.common.delete') }}</button></form>@endif
-                </div></td>
+                <td>@include('admin.marketplace._action-icons', ['item' => $category, 'editUrl' => route('admin.marketplace.categories.edit', $category), 'translationType' => \App\Services\AiTranslationService::TYPE_MARKETPLACE_CATEGORY, 'canDelete' => $category->products_count === 0, 'deleteUrl' => route('admin.marketplace.categories.destroy', $category)])</td>
             </tr>
         @empty
             <tr><td colspan="6">{{ __('marketplace.admin.categories.empty') }}</td></tr>

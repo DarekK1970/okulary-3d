@@ -12,6 +12,8 @@ use App\Models\Article;
 use App\Models\ArticleTranslation;
 use App\Models\MarketplaceCategory;
 use App\Models\MarketplaceCategoryTranslation;
+use App\Models\MarketplaceProduct;
+use App\Models\MarketplaceProductTranslation;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductCategoryTranslation;
@@ -33,6 +35,8 @@ class AiTranslationService
     public const TYPE_ARCHIVE = 'archive';
 
     public const TYPE_MARKETPLACE_CATEGORY = 'marketplace_category';
+
+    public const TYPE_MARKETPLACE_PRODUCT = 'marketplace_product';
 
     public function __construct(
         private AiTranslationProviderService $provider,
@@ -56,6 +60,7 @@ class AiTranslationService
             $types[] = self::TYPE_PRODUCT;
             $types[] = self::TYPE_PRODUCT_CATEGORY;
             $types[] = self::TYPE_MARKETPLACE_CATEGORY;
+            $types[] = self::TYPE_MARKETPLACE_PRODUCT;
         }
 
         return $types;
@@ -235,6 +240,7 @@ class AiTranslationService
             self::TYPE_PRODUCT => Product::class,
             self::TYPE_PRODUCT_CATEGORY => ProductCategory::class,
             self::TYPE_MARKETPLACE_CATEGORY => MarketplaceCategory::class,
+            self::TYPE_MARKETPLACE_PRODUCT => MarketplaceProduct::class,
             self::TYPE_ARCHIVE => ArchiveItem::class,
             default => throw new RuntimeException(
                 __('ai_translator.errors.type')
@@ -304,6 +310,11 @@ class AiTranslationService
                 'name' => (string) $translation->name,
                 'description' => (string) ($translation->description ?? ''),
             ],
+            self::TYPE_MARKETPLACE_PRODUCT => [
+                'name' => (string) $translation->name,
+                'short_description' => (string) $translation->short_description,
+                'description' => (string) $translation->description,
+            ],
             self::TYPE_ARCHIVE => [
                 'title' => (string) $translation->title,
                 'description' => (string) ($translation->description ?? ''),
@@ -343,6 +354,11 @@ class AiTranslationService
                 $fields
             ),
             self::TYPE_MARKETPLACE_CATEGORY => $this->saveMarketplaceCategory(
+                $content,
+                $targetLocale,
+                $fields
+            ),
+            self::TYPE_MARKETPLACE_PRODUCT => $this->saveMarketplaceProduct(
                 $content,
                 $targetLocale,
                 $fields
@@ -502,6 +518,21 @@ class AiTranslationService
         );
     }
 
+    /** @param array<string, string> $fields */
+    private function saveMarketplaceProduct(MarketplaceProduct $product, string $locale, array $fields): void
+    {
+        $existing = $product->translation($locale);
+        $slug = $this->uniqueSlug(MarketplaceProductTranslation::class, $locale, $fields['name'], $existing?->id);
+
+        $product->translations()->updateOrCreate(['locale' => $locale], [
+            'name' => $this->limit($fields['name'], 180),
+            'slug' => $slug,
+            'short_description' => $this->limit($fields['short_description'], 500),
+            'description' => $this->limit($fields['description'], 10000),
+            'translation_status' => CatalogTranslationStatus::Draft,
+        ]);
+    }
+
     /**
      * @param  class-string<Model>  $translationClass
      */
@@ -544,7 +575,8 @@ class AiTranslationService
         return match ($type) {
             self::TYPE_PRODUCT,
             self::TYPE_PRODUCT_CATEGORY,
-            self::TYPE_MARKETPLACE_CATEGORY => (string) $source->name,
+            self::TYPE_MARKETPLACE_CATEGORY,
+            self::TYPE_MARKETPLACE_PRODUCT => (string) $source->name,
             default => (string) $source->title,
         };
     }
@@ -569,6 +601,7 @@ class AiTranslationService
                 'admin.marketplace.categories.edit',
                 $content
             ),
+            self::TYPE_MARKETPLACE_PRODUCT => route('admin.marketplace.products.edit', $content),
             self::TYPE_ARCHIVE => route(
                 'admin.archive.edit',
                 $content
@@ -597,6 +630,7 @@ class AiTranslationService
             self::TYPE_MARKETPLACE_CATEGORY => [
                 'name',
             ],
+            self::TYPE_MARKETPLACE_PRODUCT => ['name', 'short_description', 'description'],
             self::TYPE_ARCHIVE => [
                 'title',
             ],

@@ -9,6 +9,7 @@ use App\Models\AiTranslationRun;
 use App\Models\Article;
 use App\Models\ArticleCategory;
 use App\Models\MarketplaceCategory;
+use App\Models\MarketplaceProduct;
 use App\Models\ProductCategory;
 use App\Models\User;
 use App\Services\AiTranslationSettingsService;
@@ -352,6 +353,35 @@ class AiTranslatorTest extends TestCase
         $english = $category->fresh()->translation('en');
         $this->assertSame('Lenticular prints', $english?->name);
         $this->assertSame(CatalogTranslationStatus::Draft, $english?->translation_status);
+    }
+
+    public function test_gemini_can_translate_marketplace_product_for_admin(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $settings = app(AiTranslationSettingsService::class);
+        $settings->set('enabled', '1');
+        $settings->set('provider', 'gemini');
+        $settings->set('gemini.model', 'gemini-3.7-flash');
+        $settings->set('gemini.api_key', 'gemini-test', true);
+        Http::fake(['https://generativelanguage.googleapis.com/*' => Http::response([
+            'candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'A4 print', 'short_description' => 'Short', 'description' => 'Full description'])]]]]],
+            'usageMetadata' => ['totalTokenCount' => 50],
+        ])]);
+
+        $category = MarketplaceCategory::query()->create(['name' => 'Druk', 'slug' => 'druk']);
+        $product = MarketplaceProduct::query()->create([
+            'marketplace_category_id' => $category->id, 'source_locale' => 'pl', 'name' => 'Wydruk A4',
+            'slug' => 'wydruk-a4', 'short_description' => 'Krótko', 'description' => 'Pełny opis', 'print_size' => 'A4', 'token_cost' => 30,
+        ]);
+        $product->translations()->create([
+            'locale' => 'pl', 'name' => 'Wydruk A4', 'slug' => 'wydruk-a4', 'short_description' => 'Krótko',
+            'description' => 'Pełny opis', 'translation_status' => CatalogTranslationStatus::Source,
+        ]);
+
+        $this->actingAs($admin)->post('/admin/translations/marketplace_product/'.$product->id)
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('A4 print', $product->fresh()->translation('en')?->name);
+        $this->assertSame(CatalogTranslationStatus::Draft, $product->fresh()->translation('en')?->translation_status);
     }
 
     private function article(User $user): Article

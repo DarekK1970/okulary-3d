@@ -15,7 +15,7 @@
             @if($category->products->isNotEmpty())
                 @php($categoryTranslation = $category->publicTranslation(app()->getLocale()) ?? $category->sourceTranslation())
                 <section class="marketplace-category"><header><h2>{{ $categoryTranslation?->name ?? $category->name }}</h2>@if($categoryTranslation?->description)<p>{{ $categoryTranslation->description }}</p>@endif</header>
-                    <div class="marketplace-grid">@foreach($category->products as $product)<article class="marketplace-product">@if($product->imageUrl())<img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">@else<div class="marketplace-placeholder">3D</div>@endif<div><span>{{ $product->print_size }}</span><h3>{{ $product->name }}</h3><p>{{ $product->short_description }}</p><footer><strong>{{ $product->token_cost }} TOKEN_LENS</strong><span>{{ __('marketplace.public.order_soon') }}</span></footer></div></article>@endforeach</div>
+                    <div class="marketplace-grid">@foreach($category->products as $product) @php($productTranslation = $product->publicTranslation(app()->getLocale()) ?? $product->sourceTranslation()) <article class="marketplace-product">@if($product->imageUrl())<img src="{{ $product->imageUrl() }}" alt="{{ $productTranslation?->name ?? $product->name }}">@else<div class="marketplace-placeholder">3D</div>@endif<div><span>{{ $product->print_size }}</span><h3>{{ $productTranslation?->name ?? $product->name }}</h3><p>{{ $productTranslation?->short_description ?? $product->short_description }}</p><footer><strong>{{ $product->token_cost }} TOKEN_LENS</strong><span>{{ __('marketplace.public.order_soon') }}</span></footer></div></article>@endforeach</div>
                 </section>
             @endif
         @empty

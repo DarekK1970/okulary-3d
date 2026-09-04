@@ -11,6 +11,7 @@ return [
         'product' => 'Produkty',
         'product_category' => 'Kategorie produktów',
         'marketplace_category' => 'Kategorie Marketplace',
+        'marketplace_product' => 'Produkty Marketplace',
         'archive' => 'Archiwum',
     ],
 

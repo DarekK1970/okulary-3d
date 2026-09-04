@@ -43,6 +43,7 @@ class MarketplaceAdminTest extends TestCase
         $product = MarketplaceProduct::query()->sole();
         $response->assertRedirect(route('admin.marketplace.products.edit', $product))->assertSessionHasNoErrors();
         $this->assertSame(60, $product->token_cost);
+        $this->assertSame('Wydruk UV 3D A3', $product->sourceTranslation()?->name);
         Storage::disk('public')->assertExists($product->image_path);
         $this->actingAs($admin)->get(route('admin.marketplace.products.index'))->assertOk()->assertSee('Wydruk UV 3D A3');
         $this->actingAs($admin)->get(route('admin.marketplace.products.edit', $product))->assertOk()->assertSee('Płaski wydruk lentikularny.');
@@ -53,6 +54,36 @@ class MarketplaceAdminTest extends TestCase
             ->assertSee('Tłumaczenie AI')
             ->assertSee('<table', false)
             ->assertDontSee('value="Wydruki soczewkowe"', false);
+    }
+
+    public function test_admin_can_edit_polish_and_english_marketplace_product_versions(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $category = MarketplaceCategory::query()->create(['name' => 'Druk', 'slug' => 'druk']);
+        $product = MarketplaceProduct::query()->create([
+            'marketplace_category_id' => $category->id,
+            'name' => 'Wydruk A4', 'slug' => 'wydruk-a4', 'short_description' => 'Krótko', 'description' => 'Opis',
+            'print_size' => 'A4', 'token_cost' => 30, 'source_locale' => 'pl',
+        ]);
+        $product->translations()->create([
+            'locale' => 'pl', 'name' => 'Wydruk A4', 'slug' => 'wydruk-a4', 'short_description' => 'Krótko',
+            'description' => 'Opis', 'translation_status' => 'source',
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.marketplace.products.update', $product), [
+            'marketplace_category_id' => $category->id, 'source_locale' => 'pl', 'print_size' => 'A4',
+            'token_cost' => 30, 'is_active' => '1', 'sort_order' => 0,
+            'translations' => [
+                'pl' => ['name' => 'Wydruk A4', 'slug' => 'wydruk-a4', 'short_description' => 'Krótko', 'description' => 'Opis', 'translation_status' => 'draft'],
+                'en' => ['name' => 'A4 print', 'slug' => 'a4-print', 'short_description' => 'Short', 'description' => 'Description', 'translation_status' => 'ready'],
+            ],
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $product->refresh();
+        $this->assertSame('source', $product->translation('pl')?->translation_status->value);
+        $this->assertSame('A4 print', $product->translation('en')?->name);
+        $this->actingAs($admin)->get(route('admin.marketplace.products.index'))
+            ->assertOk()->assertSee('aria-label="Edytuj"', false)->assertSee('aria-label="Tłumaczenie AI"', false);
     }
 
     public function test_admin_can_edit_polish_and_english_marketplace_category_versions(): void
