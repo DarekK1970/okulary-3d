@@ -140,3 +140,12 @@ Schedule::command('currency:rates-update --scheduled')
 Schedule::command('fal-ai:sync --limit=50')
     ->everyFiveMinutes()
     ->withoutOverlapping(10);
+
+/*
+ * Plesk already invokes schedule:run every minute. Drain queued portal jobs
+ * in a bounded process so webhook processing does not depend on a resident
+ * queue worker being configured separately on shared hosting.
+ */
+Schedule::command('queue:work --stop-when-empty --tries=5 --timeout=600 --max-time=840')
+    ->everyMinute()
+    ->withoutOverlapping(15);
