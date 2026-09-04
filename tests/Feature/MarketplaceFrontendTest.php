@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LenticularProject;
 use App\Models\MarketplaceCategory;
 use App\Models\MarketplaceProduct;
 use App\Models\User;
@@ -31,8 +32,29 @@ class MarketplaceFrontendTest extends TestCase
             ->assertSee('Marketplace usług druku 3D')
             ->assertSee('Wydruk UV 3D A3')
             ->assertSee('60 TOKEN_LENS')
+            ->assertSee('Stwórz swój projekt')
+            ->assertSee(route('lab.lenticular.studio', ['locale' => 'pl']), false)
+            ->assertDontSee('Zamówienia wkrótce')
             ->assertSee('Marketplace (Usługi)')
             ->assertSee('Marketplace usług druku');
+    }
+
+    public function test_product_cta_uses_matching_project_print_size(): void
+    {
+        $user = User::factory()->create();
+        $category = MarketplaceCategory::query()->create(['name' => 'Druk', 'slug' => 'druk']);
+        MarketplaceProduct::query()->create([
+            'marketplace_category_id' => $category->id, 'name' => 'Wydruk A4', 'slug' => 'wydruk-a4',
+            'short_description' => 'Opis', 'description' => 'Opis', 'print_size' => 'A4', 'token_cost' => 30, 'is_active' => true,
+        ]);
+        $matching = LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A4']]);
+        LenticularProject::factory()->for($user)->create(['settings' => ['print_size' => 'A5']]);
+
+        $this->actingAs($user)->get('/pl/marketplace')
+            ->assertOk()
+            ->assertSee('Zamów u nas wydruk')
+            ->assertSee(route('lab.projects.show', ['locale' => 'pl', 'project' => $matching]), false)
+            ->assertDontSee('Stwórz swój projekt');
     }
 
     public function test_authenticated_header_shows_name_plan_balance_and_expiry(): void
