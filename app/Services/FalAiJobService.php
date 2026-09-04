@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FalAiJobOperation;
 use App\Enums\FalAiJobStatus;
+use App\Jobs\SubmitFalAiJob;
 use App\Models\FalAiJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
@@ -14,6 +15,15 @@ use LogicException;
 
 class FalAiJobService
 {
+    public function queueForSubmission(FalAiJob $job): void
+    {
+        if ($job->status !== FalAiJobStatus::Queued || filled($job->provider_request_id)) {
+            throw new LogicException('Only a new queued fal.ai job can be submitted.');
+        }
+
+        SubmitFalAiJob::dispatch($job->id);
+    }
+
     /**
      * @param  array<string, mixed>  $parameters
      */

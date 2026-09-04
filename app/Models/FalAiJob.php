@@ -30,6 +30,7 @@ class FalAiJob extends Model
             'submitted_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'result_claimed_at' => 'datetime',
         ];
     }
 

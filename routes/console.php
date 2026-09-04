@@ -136,3 +136,7 @@ Schedule::command('partners:check-backlinks')
 Schedule::command('currency:rates-update --scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('fal-ai:sync --limit=50')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10);

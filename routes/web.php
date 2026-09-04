@@ -37,6 +37,8 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\FalAiInputController;
+use App\Http\Controllers\FalAiWebhookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\LenticularProjectController;
@@ -73,6 +75,14 @@ Route::get('/health/ready', ReadinessController::class)
 Route::post('/analytics/event', [AnalyticsEventController::class, 'store'])
     ->middleware('throttle:180,1')
     ->name('analytics.event');
+
+Route::get('/integrations/fal/input/{file}', FalAiInputController::class)
+    ->middleware('signed')
+    ->name('integrations.fal.input');
+Route::post('/integrations/fal/webhook', FalAiWebhookController::class)
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->middleware('throttle:120,1')
+    ->name('integrations.fal.webhook');
 
 Route::redirect('/', '/'.$defaultLocale);
 
