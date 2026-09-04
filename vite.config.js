@@ -37,6 +37,7 @@ export default defineConfig({
                 'resources/css/admin-newsletter.css',
                 'resources/css/admin-users.css',
                 'resources/css/admin-marketplace.css',
+                'resources/css/admin-marketplace-categories.css',
                 'resources/css/admin-gallery.css',
                 'resources/js/app.js',
                 'resources/js/analytics.js',

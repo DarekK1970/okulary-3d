@@ -27,6 +27,8 @@ class MarketplaceAdminTest extends TestCase
         ])->assertRedirect()->assertSessionHasNoErrors();
 
         $category = MarketplaceCategory::query()->sole();
+        $this->assertSame('Wydruki soczewkowe', $category->sourceTranslation()?->name);
+        $this->assertSame('source', $category->sourceTranslation()?->translation_status->value);
         $response = $this->actingAs($admin)->post(route('admin.marketplace.products.store'), [
             'marketplace_category_id' => $category->id,
             'name' => 'Wydruk UV 3D A3',
@@ -44,7 +46,50 @@ class MarketplaceAdminTest extends TestCase
         Storage::disk('public')->assertExists($product->image_path);
         $this->actingAs($admin)->get(route('admin.marketplace.products.index'))->assertOk()->assertSee('Wydruk UV 3D A3');
         $this->actingAs($admin)->get(route('admin.marketplace.products.edit', $product))->assertOk()->assertSee('Płaski wydruk lentikularny.');
-        $this->actingAs($admin)->get(route('admin.marketplace.categories.index'))->assertOk()->assertSee('Wydruki soczewkowe');
+        $this->actingAs($admin)->get(route('admin.marketplace.categories.index'))
+            ->assertOk()
+            ->assertSee('Wydruki soczewkowe')
+            ->assertSee('Utworzone kategorie')
+            ->assertSee('Tłumaczenie AI')
+            ->assertSee('<table', false)
+            ->assertDontSee('value="Wydruki soczewkowe"', false);
+    }
+
+    public function test_admin_can_edit_polish_and_english_marketplace_category_versions(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $category = MarketplaceCategory::query()->create([
+            'name' => 'Wydruki',
+            'slug' => 'wydruki',
+            'source_locale' => 'pl',
+        ]);
+        $category->translations()->create([
+            'locale' => 'pl',
+            'name' => 'Wydruki',
+            'slug' => 'wydruki',
+            'description' => 'Opis PL',
+            'translation_status' => 'source',
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.marketplace.categories.edit', $category))
+            ->assertOk()
+            ->assertSee('PL — Polski')
+            ->assertSee('EN — English');
+
+        $this->actingAs($admin)->put(route('admin.marketplace.categories.update', $category), [
+            'source_locale' => 'pl',
+            'sort_order' => 10,
+            'is_active' => '1',
+            'translations' => [
+                'pl' => ['name' => 'Wydruki', 'slug' => 'wydruki', 'description' => 'Opis PL', 'translation_status' => 'draft'],
+                'en' => ['name' => 'Prints', 'slug' => 'prints', 'description' => 'English description', 'translation_status' => 'ready'],
+            ],
+        ])->assertRedirect(route('admin.marketplace.categories.index'))->assertSessionHasNoErrors();
+
+        $category->refresh();
+        $this->assertSame('source', $category->translation('pl')?->translation_status->value);
+        $this->assertSame('Prints', $category->translation('en')?->name);
+        $this->assertSame('ready', $category->translation('en')?->translation_status->value);
     }
 
     public function test_product_size_larger_than_a3_is_rejected(): void

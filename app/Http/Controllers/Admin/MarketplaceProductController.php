@@ -61,7 +61,7 @@ class MarketplaceProductController extends Controller
     {
         return view('admin.marketplace.products.form', [
             'product' => $product,
-            'categories' => MarketplaceCategory::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'categories' => MarketplaceCategory::query()->with('translations')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'printSizes' => MarketplaceProduct::PRINT_SIZES,
         ]);
     }

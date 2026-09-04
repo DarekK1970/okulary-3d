@@ -10,6 +10,8 @@ use App\Models\ArchiveItem;
 use App\Models\ArchiveItemTranslation;
 use App\Models\Article;
 use App\Models\ArticleTranslation;
+use App\Models\MarketplaceCategory;
+use App\Models\MarketplaceCategoryTranslation;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductCategoryTranslation;
@@ -23,16 +25,20 @@ use RuntimeException;
 class AiTranslationService
 {
     public const TYPE_ARTICLE = 'article';
+
     public const TYPE_PRODUCT = 'product';
+
     public const TYPE_PRODUCT_CATEGORY = 'product_category';
+
     public const TYPE_ARCHIVE = 'archive';
+
+    public const TYPE_MARKETPLACE_CATEGORY = 'marketplace_category';
 
     public function __construct(
         private AiTranslationProviderService $provider,
         private AiTranslationSettingsService $settings,
         private ArticleHtmlSanitizer $sanitizer
-    ) {
-    }
+    ) {}
 
     /** @return list<string> */
     public function allowedTypesFor(User $user): array
@@ -49,6 +55,7 @@ class AiTranslationService
         )) {
             $types[] = self::TYPE_PRODUCT;
             $types[] = self::TYPE_PRODUCT_CATEGORY;
+            $types[] = self::TYPE_MARKETPLACE_CATEGORY;
         }
 
         return $types;
@@ -217,7 +224,7 @@ class AiTranslationService
 
     public function typeLabelKey(string $type): string
     {
-        return 'ai_translator.types.' . $type;
+        return 'ai_translator.types.'.$type;
     }
 
     /** @return class-string<Model> */
@@ -227,6 +234,7 @@ class AiTranslationService
             self::TYPE_ARTICLE => Article::class,
             self::TYPE_PRODUCT => Product::class,
             self::TYPE_PRODUCT_CATEGORY => ProductCategory::class,
+            self::TYPE_MARKETPLACE_CATEGORY => MarketplaceCategory::class,
             self::TYPE_ARCHIVE => ArchiveItem::class,
             default => throw new RuntimeException(
                 __('ai_translator.errors.type')
@@ -292,6 +300,10 @@ class AiTranslationService
                 'name' => (string) $translation->name,
                 'description' => (string) ($translation->description ?? ''),
             ],
+            self::TYPE_MARKETPLACE_CATEGORY => [
+                'name' => (string) $translation->name,
+                'description' => (string) ($translation->description ?? ''),
+            ],
             self::TYPE_ARCHIVE => [
                 'title' => (string) $translation->title,
                 'description' => (string) ($translation->description ?? ''),
@@ -306,7 +318,7 @@ class AiTranslationService
     }
 
     /**
-     * @param array<string, string> $fields
+     * @param  array<string, string>  $fields
      */
     private function saveDraft(
         string $type,
@@ -326,6 +338,11 @@ class AiTranslationService
                 $fields
             ),
             self::TYPE_PRODUCT_CATEGORY => $this->saveProductCategory(
+                $content,
+                $targetLocale,
+                $fields
+            ),
+            self::TYPE_MARKETPLACE_CATEGORY => $this->saveMarketplaceCategory(
                 $content,
                 $targetLocale,
                 $fields
@@ -460,8 +477,33 @@ class AiTranslationService
         );
     }
 
+    /** @param array<string, string> $fields */
+    private function saveMarketplaceCategory(
+        MarketplaceCategory $category,
+        string $locale,
+        array $fields
+    ): void {
+        $existing = $category->translation($locale);
+        $slug = $this->uniqueSlug(
+            MarketplaceCategoryTranslation::class,
+            $locale,
+            $fields['name'],
+            $existing?->id
+        );
+
+        $category->translations()->updateOrCreate(
+            ['locale' => $locale],
+            [
+                'name' => $this->limit($fields['name'], 150),
+                'slug' => $slug,
+                'description' => $this->nullableLimited($fields['description'], 2000),
+                'translation_status' => CatalogTranslationStatus::Draft,
+            ]
+        );
+    }
+
     /**
-     * @param class-string<Model> $translationClass
+     * @param  class-string<Model>  $translationClass
      */
     private function uniqueSlug(
         string $translationClass,
@@ -486,7 +528,7 @@ class AiTranslationService
                 return $candidate;
             }
 
-            $candidate = $base . '-' . $number;
+            $candidate = $base.'-'.$number;
             $number += 1;
         }
     }
@@ -501,8 +543,8 @@ class AiTranslationService
 
         return match ($type) {
             self::TYPE_PRODUCT,
-            self::TYPE_PRODUCT_CATEGORY =>
-                (string) $source->name,
+            self::TYPE_PRODUCT_CATEGORY,
+            self::TYPE_MARKETPLACE_CATEGORY => (string) $source->name,
             default => (string) $source->title,
         };
     }
@@ -523,6 +565,10 @@ class AiTranslationService
             self::TYPE_PRODUCT_CATEGORY => route(
                 'admin.product-categories.index'
             ),
+            self::TYPE_MARKETPLACE_CATEGORY => route(
+                'admin.marketplace.categories.edit',
+                $content
+            ),
             self::TYPE_ARCHIVE => route(
                 'admin.archive.edit',
                 $content
@@ -532,7 +578,7 @@ class AiTranslationService
     }
 
     /**
-     * @param array<string, string> $fields
+     * @param  array<string, string>  $fields
      */
     private function validateGeneratedFields(
         string $type,
@@ -547,7 +593,8 @@ class AiTranslationService
                 'name',
                 'description_html',
             ],
-            self::TYPE_PRODUCT_CATEGORY => [
+            self::TYPE_PRODUCT_CATEGORY,
+            self::TYPE_MARKETPLACE_CATEGORY => [
                 'name',
             ],
             self::TYPE_ARCHIVE => [

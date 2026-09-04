@@ -1,0 +1,13 @@
+.market-category-create{max-width:none}
+.market-category-create-form{grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) 130px auto;align-items:end}
+.market-category-description{grid-column:1/-1}
+.market-category-description textarea{min-height:80px}
+.market-category-table{min-width:1000px}
+.market-table-subtitle{display:block;margin-top:4px;color:#7c879a}
+.market-language-badges{display:flex;gap:6px;flex-wrap:wrap}
+.market-language-badge,.market-status{display:inline-flex;padding:5px 8px;border-radius:999px;background:#f0f2f5;color:#7a8495;font-size:.75rem;font-weight:800}
+.market-language-badge.is-present,.market-status.is-active{background:#e5f7ee;color:#087c4a}
+.market-translation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.market-language-panel{display:grid;gap:14px;padding:18px;border:1px solid #dfe6ef;border-radius:12px}
+.market-language-panel legend{padding:0 8px;font-weight:850;color:#26344d}
+@media(max-width:900px){.market-category-create-form{grid-template-columns:1fr}.market-category-description{grid-column:auto}}

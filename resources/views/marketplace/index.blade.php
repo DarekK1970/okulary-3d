@@ -13,7 +13,8 @@
     <div class="site-container marketplace-content">
         @forelse($categories as $category)
             @if($category->products->isNotEmpty())
-                <section class="marketplace-category"><header><h2>{{ $category->name }}</h2>@if($category->description)<p>{{ $category->description }}</p>@endif</header>
+                @php($categoryTranslation = $category->publicTranslation(app()->getLocale()) ?? $category->sourceTranslation())
+                <section class="marketplace-category"><header><h2>{{ $categoryTranslation?->name ?? $category->name }}</h2>@if($categoryTranslation?->description)<p>{{ $categoryTranslation->description }}</p>@endif</header>
                     <div class="marketplace-grid">@foreach($category->products as $product)<article class="marketplace-product">@if($product->imageUrl())<img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">@else<div class="marketplace-placeholder">3D</div>@endif<div><span>{{ $product->print_size }}</span><h3>{{ $product->name }}</h3><p>{{ $product->short_description }}</p><footer><strong>{{ $product->token_cost }} TOKEN_LENS</strong><span>{{ __('marketplace.public.order_soon') }}</span></footer></div></article>@endforeach</div>
                 </section>
             @endif

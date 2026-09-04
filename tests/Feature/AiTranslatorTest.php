@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Enums\ArchiveTranslationStatus;
 use App\Enums\ArticleStatus;
 use App\Enums\ArticleTranslationStatus;
 use App\Enums\CatalogTranslationStatus;
 use App\Models\AiTranslationRun;
-use App\Models\AppSetting;
 use App\Models\Article;
 use App\Models\ArticleCategory;
+use App\Models\MarketplaceCategory;
 use App\Models\ProductCategory;
 use App\Models\User;
 use App\Services\AiTranslationSettingsService;
@@ -109,31 +108,30 @@ class AiTranslatorTest extends TestCase
         );
 
         Http::fake([
-            'https://api.openai.com/v1/responses' =>
-                Http::response([
-                    'output' => [
-                        [
-                            'type' => 'message',
-                            'content' => [
-                                [
-                                    'type' => 'output_text',
-                                    'text' => json_encode([
-                                        'title' => 'How stereoscopy works',
-                                        'excerpt' => 'A short introduction.',
-                                        'body_html' => '<p>Stereoscopy creates an impression of depth.</p>',
-                                        'seo_title' => 'How stereoscopy works',
-                                        'seo_description' => 'Learn the basics of stereoscopic imaging.',
-                                    ]),
-                                ],
+            'https://api.openai.com/v1/responses' => Http::response([
+                'output' => [
+                    [
+                        'type' => 'message',
+                        'content' => [
+                            [
+                                'type' => 'output_text',
+                                'text' => json_encode([
+                                    'title' => 'How stereoscopy works',
+                                    'excerpt' => 'A short introduction.',
+                                    'body_html' => '<p>Stereoscopy creates an impression of depth.</p>',
+                                    'seo_title' => 'How stereoscopy works',
+                                    'seo_description' => 'Learn the basics of stereoscopic imaging.',
+                                ]),
                             ],
                         ],
                     ],
-                    'usage' => [
-                        'input_tokens' => 120,
-                        'output_tokens' => 80,
-                        'total_tokens' => 200,
-                    ],
-                ], 200),
+                ],
+                'usage' => [
+                    'input_tokens' => 120,
+                    'output_tokens' => 80,
+                    'total_tokens' => 200,
+                ],
+            ], 200),
         ]);
 
         $article = $this->article($editor);
@@ -141,7 +139,7 @@ class AiTranslatorTest extends TestCase
         $this->actingAs($editor)
             ->post(
                 '/admin/translations/article/'
-                . $article->id
+                .$article->id
             )
             ->assertRedirect();
 
@@ -204,15 +202,14 @@ class AiTranslatorTest extends TestCase
             'slug' => 'editorial-translation',
             'excerpt' => null,
             'body_html' => '<p>Approved text.</p>',
-            'translation_status' =>
-                ArticleTranslationStatus::Ready,
+            'translation_status' => ArticleTranslationStatus::Ready,
         ]);
 
         $this->actingAs($editor)
             ->from('/admin/translations')
             ->post(
                 '/admin/translations/article/'
-                . $article->id
+                .$article->id
             )
             ->assertRedirect('/admin/translations')
             ->assertSessionHasErrors('translation');
@@ -249,28 +246,27 @@ class AiTranslatorTest extends TestCase
         );
 
         Http::fake([
-            'https://generativelanguage.googleapis.com/*' =>
-                Http::response([
-                    'candidates' => [
-                        [
-                            'content' => [
-                                'parts' => [
-                                    [
-                                        'text' => json_encode([
-                                            'name' => 'Anaglyph glasses',
-                                            'description' => 'Glasses for red-cyan stereoscopic images.',
-                                        ]),
-                                    ],
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'name' => 'Anaglyph glasses',
+                                        'description' => 'Glasses for red-cyan stereoscopic images.',
+                                    ]),
                                 ],
                             ],
                         ],
                     ],
-                    'usageMetadata' => [
-                        'promptTokenCount' => 70,
-                        'candidatesTokenCount' => 35,
-                        'totalTokenCount' => 105,
-                    ],
-                ], 200),
+                ],
+                'usageMetadata' => [
+                    'promptTokenCount' => 70,
+                    'candidatesTokenCount' => 35,
+                    'totalTokenCount' => 105,
+                ],
+            ], 200),
         ]);
 
         $category = ProductCategory::create([
@@ -284,14 +280,13 @@ class AiTranslatorTest extends TestCase
             'name' => 'Okulary anaglifowe',
             'slug' => 'okulary-anaglifowe',
             'description' => 'Okulary do obrazów czerwono-cyjanowych.',
-            'translation_status' =>
-                CatalogTranslationStatus::Source,
+            'translation_status' => CatalogTranslationStatus::Source,
         ]);
 
         $this->actingAs($admin)
             ->post(
                 '/admin/translations/product_category/'
-                . $category->id
+                .$category->id
             )
             ->assertRedirect();
 
@@ -317,11 +312,53 @@ class AiTranslatorTest extends TestCase
         );
     }
 
+    public function test_gemini_can_translate_marketplace_category_for_admin(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $settings = app(AiTranslationSettingsService::class);
+        $settings->set('enabled', '1');
+        $settings->set('provider', 'gemini');
+        $settings->set('gemini.model', 'gemini-3.7-flash');
+        $settings->set('gemini.api_key', 'gemini-test', true);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'name' => 'Lenticular prints',
+                    'description' => 'Professional UV prints.',
+                ])]]]]],
+                'usageMetadata' => ['promptTokenCount' => 30, 'candidatesTokenCount' => 20, 'totalTokenCount' => 50],
+            ]),
+        ]);
+
+        $category = MarketplaceCategory::query()->create([
+            'name' => 'Wydruki soczewkowe',
+            'slug' => 'wydruki-soczewkowe',
+            'source_locale' => 'pl',
+        ]);
+        $category->translations()->create([
+            'locale' => 'pl',
+            'name' => 'Wydruki soczewkowe',
+            'slug' => 'wydruki-soczewkowe',
+            'description' => 'Profesjonalne wydruki UV.',
+            'translation_status' => CatalogTranslationStatus::Source,
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/translations/marketplace_category/'.$category->id)
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $english = $category->fresh()->translation('en');
+        $this->assertSame('Lenticular prints', $english?->name);
+        $this->assertSame(CatalogTranslationStatus::Draft, $english?->translation_status);
+    }
+
     private function article(User $user): Article
     {
         $category = ArticleCategory::create([
             'name' => 'Historia',
-            'slug' => 'historia-' . uniqid(),
+            'slug' => 'historia-'.uniqid(),
             'is_active' => true,
             'sort_order' => 0,
         ]);
@@ -330,7 +367,7 @@ class AiTranslatorTest extends TestCase
             'category_id' => $category->id,
             'source_locale' => 'pl',
             'title' => 'Jak działa stereoskopia',
-            'slug' => 'jak-dziala-stereoskopia-' . uniqid(),
+            'slug' => 'jak-dziala-stereoskopia-'.uniqid(),
             'excerpt' => 'Krótki wstęp.',
             'body_html' => '<p>Stereoskopia tworzy wrażenie głębi.</p>',
             'status' => ArticleStatus::Draft,
@@ -341,13 +378,12 @@ class AiTranslatorTest extends TestCase
         $article->translations()->create([
             'locale' => 'pl',
             'title' => 'Jak działa stereoskopia',
-            'slug' => 'jak-dziala-stereoskopia-' . uniqid(),
+            'slug' => 'jak-dziala-stereoskopia-'.uniqid(),
             'excerpt' => 'Krótki wstęp.',
             'body_html' => '<p>Stereoskopia tworzy wrażenie głębi.</p>',
             'seo_title' => 'Jak działa stereoskopia',
             'seo_description' => 'Podstawy obrazu stereoskopowego.',
-            'translation_status' =>
-                ArticleTranslationStatus::Source,
+            'translation_status' => ArticleTranslationStatus::Source,
         ]);
 
         return $article->load('translations');

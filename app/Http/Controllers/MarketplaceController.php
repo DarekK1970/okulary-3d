@@ -11,6 +11,7 @@ class MarketplaceController extends Controller
     {
         return view('marketplace.index', [
             'categories' => MarketplaceCategory::query()
+                ->with('translations')
                 ->where('is_active', true)
                 ->whereHas('products', fn ($query) => $query->where('is_active', true))
                 ->with(['products' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name')])

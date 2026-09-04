@@ -364,6 +364,7 @@ Route::prefix('admin')
                     ->parameters(['products' => 'product']);
                 Route::get('/marketplace/categories', [MarketplaceCategoryController::class, 'index'])->name('marketplace.categories.index');
                 Route::post('/marketplace/categories', [MarketplaceCategoryController::class, 'store'])->name('marketplace.categories.store');
+                Route::get('/marketplace/categories/{category}/edit', [MarketplaceCategoryController::class, 'edit'])->name('marketplace.categories.edit');
                 Route::put('/marketplace/categories/{category}', [MarketplaceCategoryController::class, 'update'])->name('marketplace.categories.update');
                 Route::delete('/marketplace/categories/{category}', [MarketplaceCategoryController::class, 'destroy'])->name('marketplace.categories.destroy');
                 Route::resource('marketplace/providers', MarketplaceShippingProviderController::class)

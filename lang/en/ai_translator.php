@@ -10,6 +10,7 @@ return [
         'article' => 'Articles',
         'product' => 'Products',
         'product_category' => 'Product categories',
+        'marketplace_category' => 'Marketplace categories',
         'archive' => 'Archive',
     ],
 
