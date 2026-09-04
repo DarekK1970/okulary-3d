@@ -9,26 +9,32 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('marketplace_categories', function (Blueprint $table): void {
-            $table->string('source_locale', 10)->default('pl')->after('id')->index();
-        });
+        if (! Schema::hasColumn('marketplace_categories', 'source_locale')) {
+            Schema::table('marketplace_categories', function (Blueprint $table): void {
+                $table->string('source_locale', 10)->default('pl')->after('id')->index();
+            });
+        }
 
-        Schema::create('marketplace_category_translations', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('marketplace_category_id')->constrained()->cascadeOnDelete();
-            $table->string('locale', 10);
-            $table->string('name', 150);
-            $table->string('slug', 170);
-            $table->text('description')->nullable();
-            $table->string('translation_status', 24)->default('draft')->index();
-            $table->timestamps();
-            $table->unique(['marketplace_category_id', 'locale'], 'marketplace_category_locale_unique');
-            $table->unique(['locale', 'slug'], 'marketplace_category_locale_slug_unique');
-        });
+        if (! Schema::hasTable('marketplace_category_translations')) {
+            Schema::create('marketplace_category_translations', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('marketplace_category_id');
+                $table->string('locale', 10);
+                $table->string('name', 150);
+                $table->string('slug', 170);
+                $table->text('description')->nullable();
+                $table->string('translation_status', 24)->default('draft')->index();
+                $table->timestamps();
+                $table->unique(['marketplace_category_id', 'locale'], 'marketplace_category_locale_unique');
+                $table->unique(['locale', 'slug'], 'marketplace_category_locale_slug_unique');
+                $table->foreign('marketplace_category_id', 'marketplace_category_translation_fk')
+                    ->references('id')->on('marketplace_categories')->cascadeOnDelete();
+            });
+        }
 
         $now = now();
         DB::table('marketplace_categories')->orderBy('id')->each(function ($category) use ($now): void {
-            DB::table('marketplace_category_translations')->insert([
+            DB::table('marketplace_category_translations')->insertOrIgnore([
                 'marketplace_category_id' => $category->id,
                 'locale' => 'pl',
                 'name' => $category->name,
