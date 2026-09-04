@@ -398,6 +398,10 @@ Route::prefix('admin')
                 )->name('orders.documents.show');
                 Route::get('/users', [AdminUserController::class, 'index'])->name('users');
                 Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+                Route::get('/users/{user}/projects', [AdminUserController::class, 'projects'])->name('users.projects');
+                Route::get('/users/{user}/projects/{project}/files', [AdminUserController::class, 'projectFiles'])->name('users.projects.files');
+                Route::get('/users/{user}/projects/{project}/files/{file}', [AdminUserController::class, 'projectFile'])->name('users.projects.files.show');
+                Route::get('/users/{user}/projects/{project}/artifacts/{artifact}', [AdminUserController::class, 'projectArtifact'])->name('users.projects.artifacts.show');
                 Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
                 Route::post('/users/{user}/token-lens', [AdminUserController::class, 'adjustTokens'])->name('users.tokens.adjust');
                 Route::patch('/users/{user}/suspend', [AdminUserController::class, 'suspend'])->name('users.suspend');

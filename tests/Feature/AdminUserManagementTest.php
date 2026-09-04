@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\LenticularProject;
+use App\Models\LenticularProjectFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
@@ -99,5 +102,91 @@ class AdminUserManagementTest extends TestCase
         $user->refresh();
         $this->assertSame('en', $user->preferred_locale);
         $this->assertNotNull($user->last_activity_at);
+    }
+
+    public function test_user_table_displays_and_filters_by_effective_plan(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'lenticular_plan' => 'free',
+            'email' => 'premium-admin@example.com',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?plan=premium')
+            ->assertOk()
+            ->assertSee('premium-admin@example.com')
+            ->assertSee('PREMIUM');
+
+        $expired = User::factory()->create([
+            'lenticular_plan' => 'premium',
+            'plan_expires_at' => now()->subDay(),
+            'email' => 'expired@example.com',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?email=expired%40example.com')
+            ->assertOk()
+            ->assertSee('expired@example.com')
+            ->assertSee('FREE')
+            ->assertDontSee('admin-user-plan is-premium', false);
+    }
+
+    public function test_admin_can_browse_a_users_projects_and_download_their_files(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $user = User::factory()->create();
+        $project = LenticularProject::factory()->for($user)->create(['name' => 'Projekt klienta']);
+        Storage::disk('local')->put('lenticular/source.jpg', 'image-content');
+        $file = LenticularProjectFile::factory()->for($project)->create([
+            'kind' => 'source_image',
+            'disk' => 'local',
+            'path' => 'lenticular/source.jpg',
+            'original_name' => 'source.jpg',
+            'media_type' => 'image/jpeg',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.projects', $user))
+            ->assertOk()
+            ->assertSee('Projekt klienta')
+            ->assertSee(route('admin.users.projects.files', [$user, $project]), false)
+            ->assertSee('Otwórz pliki projektu');
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.projects.files', [$user, $project]))
+            ->assertOk()
+            ->assertSee('source.jpg')
+            ->assertSee('Pobierz plik');
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.projects.files.show', [$user, $project, $file, 'download' => 1]))
+            ->assertOk()
+            ->assertDownload('source.jpg');
+    }
+
+    public function test_admin_project_file_routes_validate_user_and_project_relationships(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $project = LenticularProject::factory()->for($owner)->create();
+        $otherProject = LenticularProject::factory()->for($otherUser)->create();
+        Storage::disk('local')->put('lenticular/other.jpg', 'other');
+        $otherFile = LenticularProjectFile::factory()->for($otherProject)->create([
+            'disk' => 'local',
+            'path' => 'lenticular/other.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.projects.files', [$otherUser, $project]))
+            ->assertNotFound();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.projects.files.show', [$owner, $project, $otherFile]))
+            ->assertNotFound();
     }
 }
