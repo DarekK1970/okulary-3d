@@ -16,6 +16,12 @@ use Illuminate\View\View;
 
 class StereoGalleryController extends Controller
 {
+    private const MAX_FRAME_DIMENSION = 1920;
+
+    private const MIN_FRAME_DIMENSION = 260;
+
+    private const JPEG_QUALITY = 88;
+
     public function index(
         string $locale
     ): View {
@@ -153,15 +159,27 @@ class StereoGalleryController extends Controller
             $left = $request->file('left_image');
             $right = $request->file('right_image');
 
-            $leftPath = $this->storeImage(
-                $left,
+            [$leftImage, $leftWidth, $leftHeight] =
+                $this->optimizeUploadedFrame(
+                    $left,
+                    'left_image'
+                );
+
+            [$rightImage, $rightWidth, $rightHeight] =
+                $this->optimizeUploadedFrame(
+                    $right,
+                    'right_image'
+                );
+
+            $leftPath = $this->storeGeneratedImage(
+                $leftImage,
                 $folder,
                 'left'
             );
 
             try {
-                $rightPath = $this->storeImage(
-                    $right,
+                $rightPath = $this->storeGeneratedImage(
+                    $rightImage,
                     $folder,
                     'right'
                 );
@@ -172,17 +190,17 @@ class StereoGalleryController extends Controller
                 throw $exception;
             }
 
-            $stereoPath = $this->storeStereoPair(
-                $left,
-                $right,
-                $folder
+            $stereoImage = $this->makeStereoPairFromPair(
+                $leftImage,
+                $rightImage,
+                'left_image'
             );
 
-            [$leftWidth, $leftHeight] =
-                $this->dimensions($left);
-
-            [$rightWidth, $rightHeight] =
-                $this->dimensions($right);
+            $stereoPath = $this->storeGeneratedImage(
+                $stereoImage,
+                $folder,
+                'stereo_pair'
+            );
         } else {
             $source = $request->file('source_image');
 
@@ -289,11 +307,29 @@ class StereoGalleryController extends Controller
         string $folder,
         string $submissionType
     ): array {
-        [$leftImage, $rightImage, $stereoImage] =
+        [$leftImage, $rightImage] =
             $this->buildStereoPairImages(
                 $source,
                 $submissionType
             );
+
+        [$leftImage, $leftWidth, $leftHeight] =
+            $this->optimizeFrameFile(
+                $leftImage,
+                'source_image'
+            );
+
+        [$rightImage, $rightWidth, $rightHeight] =
+            $this->optimizeFrameFile(
+                $rightImage,
+                'source_image'
+            );
+
+        $stereoImage = $this->makeStereoPairFromPair(
+            $leftImage,
+            $rightImage,
+            'source_image'
+        );
 
         $leftPath = $this->storeGeneratedImage(
             $leftImage,
@@ -319,16 +355,6 @@ class StereoGalleryController extends Controller
             $folder,
             'stereo_pair'
         );
-
-        [$leftWidth, $leftHeight] =
-            $this->dimensionsFromPath(
-                $leftImage
-            );
-
-        [$rightWidth, $rightHeight] =
-            $this->dimensionsFromPath(
-                $rightImage
-            );
 
         return [
             $leftPath,
@@ -362,31 +388,13 @@ class StereoGalleryController extends Controller
                     $this->makeImageFromBlob(
                         $images[1]
                     ),
-                    $this->makeStereoPairFromPair(
-                        $this->makeImageFromBlob(
-                            $images[0]
-                        ),
-                        $this->makeImageFromBlob(
-                            $images[1]
-                        )
-                    ),
                 ];
             }
         }
 
-        [$leftImage, $rightImage] =
-            $this->splitSideBySideImage(
-                $sourcePath
-            );
-
-        return [
-            $leftImage,
-            $rightImage,
-            $this->makeStereoPairFromPair(
-                $leftImage,
-                $rightImage
-            ),
-        ];
+        return $this->splitSideBySideImage(
+            $sourcePath
+        );
     }
 
     private function splitSideBySideImage(
@@ -431,17 +439,14 @@ class StereoGalleryController extends Controller
             $height
         );
 
-        $leftPath = tempnam(
-            sys_get_temp_dir(),
+        $leftPath = $this->writeJpegImage(
+            $left,
             'gallery-left-'
         );
-        $rightPath = tempnam(
-            sys_get_temp_dir(),
+        $rightPath = $this->writeJpegImage(
+            $right,
             'gallery-right-'
         );
-
-        imagejpeg($left, $leftPath, 92);
-        imagejpeg($right, $rightPath, 92);
 
         imagedestroy($image);
         imagedestroy($left);
@@ -502,10 +507,126 @@ class StereoGalleryController extends Controller
         return $temp;
     }
 
+    private function optimizeUploadedFrame(
+        UploadedFile $file,
+        string $fieldName
+    ): array {
+        return $this->optimizeFrameFile(
+            $file->getRealPath(),
+            $fieldName
+        );
+    }
+
+    private function optimizeFrameFile(
+        string $path,
+        string $fieldName
+    ): array {
+        $image = $this->createImageFromFile(
+            $path,
+            $fieldName
+        );
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $this->assertReadableResolution(
+            $width,
+            $height,
+            $fieldName
+        );
+
+        $scale = min(
+            1,
+            self::MAX_FRAME_DIMENSION / max($width, $height)
+        );
+
+        if ($scale < 1) {
+            $newWidth = max(
+                1,
+                (int) round($width * $scale)
+            );
+            $newHeight = max(
+                1,
+                (int) round($height * $scale)
+            );
+            $optimized = imagecreatetruecolor(
+                $newWidth,
+                $newHeight
+            );
+
+            imagecopyresampled(
+                $optimized,
+                $image,
+                0,
+                0,
+                0,
+                0,
+                $newWidth,
+                $newHeight,
+                $width,
+                $height
+            );
+
+            imagedestroy($image);
+
+            $image = $optimized;
+            $width = $newWidth;
+            $height = $newHeight;
+        }
+
+        $optimizedPath = $this->writeJpegImage(
+            $image,
+            'gallery-optimized-'
+        );
+
+        imagedestroy($image);
+
+        return [
+            $optimizedPath,
+            $width,
+            $height,
+        ];
+    }
+
+    private function assertReadableResolution(
+        int $width,
+        int $height,
+        string $fieldName
+    ): void {
+        if (
+            $width < self::MIN_FRAME_DIMENSION
+            || $height < self::MIN_FRAME_DIMENSION
+        ) {
+            throw ValidationException::withMessages([
+                $fieldName => [
+                    __('gallery.validation.insufficient_resolution'),
+                ],
+            ]);
+        }
+    }
+
+    private function writeJpegImage(
+        \GdImage $image,
+        string $prefix
+    ): string {
+        $path = tempnam(
+            sys_get_temp_dir(),
+            $prefix
+        );
+
+        imagejpeg(
+            $image,
+            $path,
+            self::JPEG_QUALITY
+        );
+
+        return $path;
+    }
+
     private function createImageFromFile(
         string $path,
         string $fieldName = 'source_image'
-    ) {
+    ): \GdImage {
         $this->assertValidImageFile(
             $path,
             $fieldName
@@ -563,15 +684,16 @@ class StereoGalleryController extends Controller
 
     private function makeStereoPairFromPair(
         string $leftPath,
-        string $rightPath
+        string $rightPath,
+        string $fieldName = 'source_image'
     ): string {
         $left = $this->createImageFromFile(
             $leftPath,
-            'source_image'
+            $fieldName
         );
         $right = $this->createImageFromFile(
             $rightPath,
-            'source_image'
+            $fieldName
         );
 
         $leftWidth = imagesx($left);
@@ -610,11 +732,10 @@ class StereoGalleryController extends Controller
             $rightHeight
         );
 
-        $temp = tempnam(
-            sys_get_temp_dir(),
+        $temp = $this->writeJpegImage(
+            $combined,
             'gallery-stereo-'
         );
-        imagejpeg($combined, $temp, 92);
 
         imagedestroy($left);
         imagedestroy($right);
@@ -643,47 +764,6 @@ class StereoGalleryController extends Controller
             );
 
         return $target;
-    }
-
-    private function storeImage(
-        UploadedFile $file,
-        string $folder,
-        string $side
-    ): string {
-        $extension = strtolower(
-            $file->guessExtension()
-                ?: $file->extension()
-                ?: 'jpg'
-        );
-
-        return $file->storeAs(
-            $folder,
-            sprintf(
-                '%s.%s',
-                $side,
-                $extension
-            ),
-            'public'
-        );
-    }
-
-    private function storeStereoPair(
-        UploadedFile $left,
-        UploadedFile $right,
-        string $folder
-    ): string {
-        $leftPath = $left->getRealPath();
-        $rightPath = $right->getRealPath();
-        $combinedPath = $this->makeStereoPairFromPair(
-            $leftPath,
-            $rightPath
-        );
-
-        return $this->storeGeneratedImage(
-            $combinedPath,
-            $folder,
-            'stereo_pair'
-        );
     }
 
     /**

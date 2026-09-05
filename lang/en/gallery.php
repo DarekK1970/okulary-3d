@@ -116,6 +116,7 @@ return [
 
     'validation' => [
         'invalid_image' => 'The uploaded file is not a valid JPEG, PNG, or WEBP image.',
+        'insufficient_resolution' => 'The image resolution is too low.',
     ],
 
     'admin' => [

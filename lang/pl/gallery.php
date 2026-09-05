@@ -116,6 +116,7 @@ return [
 
     'validation' => [
         'invalid_image' => 'Przesłany plik nie jest poprawnym obrazem JPEG, PNG lub WEBP.',
+        'insufficient_resolution' => 'Zbyt słaba rozdzielczość obrazka.',
     ],
 
     'admin' => [

@@ -121,6 +121,133 @@ class CommunityStereoGalleryTest extends TestCase
             );
     }
 
+    public function test_uploaded_stereo_pair_is_optimized_to_maximum_frame_size(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Duża stereopara',
+                'description' => 'Stereopara większa niż limit.',
+                'author_name' => 'Anna 3D',
+                'license' => 'cc_by',
+                'submission_type' => 'stereo_pair',
+                'source_image' => $this->createStereoPairUpload(
+                    'large-stereo-pair.jpg',
+                    5000,
+                    1800
+                ),
+                'rights_confirmation' => '1',
+            ])
+            ->assertRedirect('/pl/account/gallery');
+
+        $item = StereoGalleryItem::query()
+            ->firstOrFail();
+
+        $this->assertSame(1920, $item->left_width);
+        $this->assertSame(1382, $item->left_height);
+        $this->assertSame(1920, $item->right_width);
+        $this->assertSame(1382, $item->right_height);
+        $this->assertStoredImageSize(
+            $item->stereo_pair_path,
+            3840,
+            1382
+        );
+    }
+
+    public function test_uploaded_left_and_right_images_are_optimized_to_maximum_frame_size(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Duże osobne klatki',
+                'description' => 'Lewy i prawy obraz większy niż limit.',
+                'author_name' => 'Jan Stereo',
+                'license' => 'cc_by',
+                'submission_type' => 'left_right',
+                'left_image' => UploadedFile::fake()
+                    ->image('left.jpg', 2600, 1600),
+                'right_image' => UploadedFile::fake()
+                    ->image('right.jpg', 2600, 1600),
+                'rights_confirmation' => '1',
+            ])
+            ->assertRedirect('/pl/account/gallery');
+
+        $item = StereoGalleryItem::query()
+            ->firstOrFail();
+
+        $this->assertSame(1920, $item->left_width);
+        $this->assertSame(1182, $item->left_height);
+        $this->assertSame(1920, $item->right_width);
+        $this->assertSame(1182, $item->right_height);
+        $this->assertStoredImageSize(
+            $item->left_image_path,
+            1920,
+            1182
+        );
+        $this->assertStoredImageSize(
+            $item->stereo_pair_path,
+            3840,
+            1182
+        );
+    }
+
+    public function test_too_small_stereo_pair_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Za mała stereopara',
+                'description' => 'Obraz poniżej minimalnego limitu.',
+                'author_name' => 'Anna 3D',
+                'license' => 'cc_by',
+                'submission_type' => 'stereo_pair',
+                'source_image' => $this->createStereoPairUpload(
+                    'small-stereo-pair.jpg',
+                    500,
+                    600
+                ),
+                'rights_confirmation' => '1',
+            ])
+            ->assertSessionHasErrors([
+                'source_image' => 'Zbyt słaba rozdzielczość obrazka.',
+            ]);
+
+        $this->assertDatabaseCount(
+            'stereo_gallery_items',
+            0
+        );
+    }
+
+    public function test_too_small_left_right_image_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Za mała klatka',
+                'description' => 'Jeden wymiar obrazu jest zbyt mały.',
+                'author_name' => 'Jan Stereo',
+                'license' => 'cc_by',
+                'submission_type' => 'left_right',
+                'left_image' => UploadedFile::fake()
+                    ->image('left.jpg', 259, 600),
+                'right_image' => UploadedFile::fake()
+                    ->image('right.jpg', 600, 600),
+                'rights_confirmation' => '1',
+            ])
+            ->assertSessionHasErrors([
+                'left_image' => 'Zbyt słaba rozdzielczość obrazka.',
+            ]);
+
+        $this->assertDatabaseCount(
+            'stereo_gallery_items',
+            0
+        );
+    }
+
     public function test_stereo_pair_with_embedded_jpeg_metadata_is_not_treated_as_mpo(): void
     {
         $user = User::factory()->create();
@@ -524,6 +651,19 @@ class CommunityStereoGalleryTest extends TestCase
             null,
             true
         );
+    }
+
+    private function assertStoredImageSize(
+        string $path,
+        int $width,
+        int $height
+    ): void {
+        $size = getimagesize(
+            Storage::disk('public')->path($path)
+        );
+
+        $this->assertSame($width, $size[0]);
+        $this->assertSame($height, $size[1]);
     }
 
     private function galleryItem(
