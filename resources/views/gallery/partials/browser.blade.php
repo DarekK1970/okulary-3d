@@ -58,10 +58,6 @@
             </span>
         </div>
 
-        <div class="gallery-active-heading">
-            <h2 data-gallery-current-title>{{ $currentGalleryItem->title }}</h2>
-        </div>
-
         <div class="community-viewer-frame">
             @if ($previousItem)
                 <a
@@ -81,6 +77,10 @@
             @endif
 
             <div class="community-viewer-stage">
+                <div class="gallery-active-heading">
+                    <h2 data-gallery-current-title>{{ $currentGalleryItem->title }}</h2>
+                </div>
+
                 <canvas data-gallery-canvas></canvas>
 
                 <div class="community-viewer-loading" data-gallery-empty>
