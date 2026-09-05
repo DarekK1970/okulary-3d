@@ -3,6 +3,10 @@
 @section('title', __('home.meta.title'))
 @section('meta_description', __('home.meta.description'))
 
+@push('head')
+    @vite('resources/js/community-gallery.js')
+@endpush
+
 @section('content')
     <section class="home-hero">
         <div class="site-container hero-grid">
@@ -251,27 +255,65 @@
             </div>
 
             <div class="gallery-grid">
-                @foreach (__('home.gallery.items') as $index => $item)
+                @forelse ($homeGalleryItems as $item)
+                    <article
+                        class="gallery-card"
+                        data-community-viewer
+                        data-left-url="{{ $item->leftImageUrl() }}"
+                        data-right-url="{{ $item->rightImageUrl() }}"
+                        data-loading="{{ __('gallery.viewer.loading') }}"
+                        data-ready="{{ __('gallery.viewer.ready') }}"
+                        data-error="{{ __('gallery.viewer.error') }}"
+                    >
+                        <div class="gallery-image">
+                            <canvas data-gallery-canvas></canvas>
+                            <span class="gallery-mode" data-gallery-status>
+                                {{ __('gallery.viewer.loading') }}
+                            </span>
+                        </div>
+
+                        <div class="gallery-view-switch">
+                            <label>
+                                <span class="sr-only">{{ __('gallery.viewer.mode') }}</span>
+                                <select data-gallery-mode>
+                                    <option value="anaglyph">{{ __('gallery.viewer.anaglyph') }}</option>
+                                    <option value="wiggle">{{ __('gallery.viewer.wiggle') }}</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="gallery-card-footer">
+                            <a
+                                class="gallery-user"
+                                href="{{ route('gallery.show', [
+                                    'locale' => app()->getLocale(),
+                                    'galleryItem' => $item,
+                                ]) }}"
+                            >
+                                {{ $item->title }}
+                            </a>
+                        </div>
+                    </article>
+                @empty
                     <a
                         class="gallery-card"
                         href="{{ route('gallery.index', ['locale' => app()->getLocale()]) }}"
                     >
                         <div class="gallery-image">
                             <img
-                                src="{{ asset('images/home/gallery-' . ($index + 1) . '.svg') }}"
+                                src="{{ asset('images/home/gallery-1.svg') }}"
                                 alt=""
                                 width="480"
                                 height="360"
                                 loading="lazy"
                             >
-                            <span class="gallery-mode">{{ $item['mode'] }}</span>
+                            <span class="gallery-mode">{{ __('gallery.home.open') }}</span>
                         </div>
                         <div class="gallery-card-footer">
-                            <span class="gallery-user">{{ $item['user'] }}</span>
-                            <span class="gallery-likes">♡ {{ $item['likes'] }}</span>
+                            <span class="gallery-user">{{ __('gallery.index.empty_title') }}</span>
                         </div>
                     </a>
-                @endforeach
+                @endforelse
             </div>
         </div>
     </section>

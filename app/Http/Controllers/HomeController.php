@@ -7,6 +7,7 @@ use App\Enums\ArticlePortalSection;
 use App\Enums\ArticleTranslationStatus;
 use App\Models\ArchiveItem;
 use App\Models\Article;
+use App\Models\StereoGalleryItem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -23,6 +24,7 @@ class HomeController extends Controller
                 3
             ),
             'archiveItems' => $this->latestArchiveItems($locale),
+            'homeGalleryItems' => $this->homeGalleryItems(),
         ]);
     }
 
@@ -149,6 +151,22 @@ class HomeController extends Controller
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->limit(5)
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, StereoGalleryItem>
+     */
+    private function homeGalleryItems(): Collection
+    {
+        if (! Schema::hasTable('stereo_gallery_items')) {
+            return collect();
+        }
+
+        return StereoGalleryItem::query()
+            ->published()
+            ->inRandomOrder()
+            ->limit(6)
             ->get();
     }
 }

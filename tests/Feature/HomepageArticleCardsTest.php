@@ -5,14 +5,25 @@ namespace Tests\Feature;
 use App\Enums\ArticlePortalSection;
 use App\Enums\ArticleStatus;
 use App\Enums\ArticleTranslationStatus;
+use App\Enums\GalleryStatus;
 use App\Models\Article;
 use App\Models\ArticleCategory;
+use App\Models\StereoGalleryItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class HomepageArticleCardsTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('public');
+    }
 
     public function test_homepage_renders_three_compact_horizontal_publication_cards(): void
     {
@@ -28,9 +39,9 @@ class HomepageArticleCardsTest extends TestCase
             $article = Article::create([
                 'category_id' => $category->id,
                 'source_locale' => 'pl',
-                'title' => 'Artykuł ' . $index,
-                'slug' => 'legacy-artykul-' . $index,
-                'excerpt' => 'Krótki wstęp publikacji numer ' . $index . '.',
+                'title' => 'Artykuł '.$index,
+                'slug' => 'legacy-artykul-'.$index,
+                'excerpt' => 'Krótki wstęp publikacji numer '.$index.'.',
                 'body_html' => '<p>Treść publikacji.</p>',
                 'status' => ArticleStatus::Published,
                 'published_at' => now()->subMinutes($index),
@@ -38,9 +49,9 @@ class HomepageArticleCardsTest extends TestCase
 
             $article->translations()->create([
                 'locale' => 'pl',
-                'title' => 'Artykuł ' . $index,
-                'slug' => 'artykul-' . $index,
-                'excerpt' => 'Krótki wstęp publikacji numer ' . $index . '.',
+                'title' => 'Artykuł '.$index,
+                'slug' => 'artykul-'.$index,
+                'excerpt' => 'Krótki wstęp publikacji numer '.$index.'.',
                 'body_html' => '<p>Treść publikacji.</p>',
                 'translation_status' => ArticleTranslationStatus::Source,
             ]);
@@ -111,6 +122,65 @@ class HomepageArticleCardsTest extends TestCase
         $this->get('/pl')
             ->assertOk()
             ->assertSee('To jest krótki wstęp wyświetlany obok pionowej miniatury.')
-            ->assertSee('href="' . $url . '"', false);
+            ->assertSee('href="'.$url.'"', false);
+    }
+
+    public function test_homepage_renders_six_published_gallery_items_with_view_switcher(): void
+    {
+        foreach (range(1, 7) as $index) {
+            $this->galleryItem(
+                GalleryStatus::Published,
+                'Galeria startowa '.$index
+            );
+        }
+
+        $this->galleryItem(
+            GalleryStatus::Pending,
+            'Galeria oczekująca'
+        );
+
+        $response = $this->get('/pl');
+        $content = $response->getContent();
+
+        $response
+            ->assertOk()
+            ->assertSee('data-community-viewer', false)
+            ->assertSee('data-gallery-mode', false)
+            ->assertSee('Anaglyph czerwono-cyjanowy')
+            ->assertSee('Wiggle')
+            ->assertDontSee('Galeria oczekująca');
+
+        $this->assertSame(
+            6,
+            substr_count($content, 'data-community-viewer')
+        );
+    }
+
+    private function galleryItem(
+        GalleryStatus $status,
+        string $title
+    ): StereoGalleryItem {
+        $user = User::factory()->create();
+
+        return StereoGalleryItem::create([
+            'user_id' => $user->id,
+            'slug' => 'homepage-gallery-'.uniqid(),
+            'title' => $title,
+            'description' => 'Opis pracy.',
+            'author_name' => 'Autor Testowy',
+            'license' => 'all_rights_reserved',
+            'status' => $status,
+            'left_image_path' => 'gallery/home/left-'.$user->id.'.jpg',
+            'right_image_path' => 'gallery/home/right-'.$user->id.'.jpg',
+            'stereo_pair_path' => 'gallery/home/stereo-'.$user->id.'.jpg',
+            'left_width' => 800,
+            'left_height' => 600,
+            'right_width' => 800,
+            'right_height' => 600,
+            'rights_confirmed_at' => now(),
+            'published_at' => $status === GalleryStatus::Published
+                    ? now()
+                    : null,
+        ]);
     }
 }
