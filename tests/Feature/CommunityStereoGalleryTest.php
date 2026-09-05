@@ -76,6 +76,155 @@ class CommunityStereoGalleryTest extends TestCase
             );
     }
 
+    public function test_authenticated_user_can_submit_single_stereo_pair_file(): void
+    {
+        $user = User::factory()->create();
+
+        $sideBySide = $this->createStereoPairUpload(
+            'stereo-pair.jpg',
+            800,
+            600
+        );
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Most z pojedynczego pliku',
+                'description' => 'Stereopara z jednego pliku.',
+                'author_name' => 'Anna 3D',
+                'license' => 'cc_by_sa',
+                'submission_type' => 'stereo_pair',
+                'source_image' => $sideBySide,
+                'rights_confirmation' => '1',
+            ])
+            ->assertRedirect('/pl/account/gallery');
+
+        $item = StereoGalleryItem::query()
+            ->firstOrFail();
+
+        $this->assertNotNull(
+            $item->stereo_pair_path
+        );
+
+        Storage::disk('public')
+            ->assertExists(
+                $item->stereo_pair_path
+            );
+
+        Storage::disk('public')
+            ->assertExists(
+                $item->left_image_path
+            );
+
+        Storage::disk('public')
+            ->assertExists(
+                $item->right_image_path
+            );
+    }
+
+    public function test_stereo_pair_with_embedded_jpeg_metadata_is_not_treated_as_mpo(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Stereopara z miniaturą EXIF',
+                'description' => 'Poprawny JPG z dodatkowymi markerami JPEG w metadanych.',
+                'author_name' => 'Anna 3D',
+                'license' => 'cc_by',
+                'submission_type' => 'stereo_pair',
+                'source_image' => $this->createStereoPairWithEmbeddedJpegMarkers(
+                    'stereo-pair-with-exif.jpg',
+                    800,
+                    600
+                ),
+                'rights_confirmation' => '1',
+            ])
+            ->assertRedirect('/pl/account/gallery');
+
+        $this->assertDatabaseHas(
+            'stereo_gallery_items',
+            [
+                'title' => 'Stereopara z miniaturą EXIF',
+                'status' => GalleryStatus::Pending->value,
+                'user_id' => $user->id,
+            ]
+        );
+    }
+
+    public function test_authenticated_user_can_submit_mpo_file_for_moderation(): void
+    {
+        $user = User::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_EDITOR,
+        ]);
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'MPO do moderacji',
+                'description' => 'Para stereo w pliku MPO.',
+                'author_name' => 'Anna MPO',
+                'license' => 'cc_by',
+                'submission_type' => 'mpo',
+                'source_image' => $this->createMpoUpload(
+                    'stereo.mpo',
+                    800,
+                    600
+                ),
+                'rights_confirmation' => '1',
+            ])
+            ->assertRedirect('/pl/account/gallery');
+
+        $this->assertDatabaseHas(
+            'stereo_gallery_items',
+            [
+                'title' => 'MPO do moderacji',
+                'status' => GalleryStatus::Pending->value,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $this->actingAs($admin)
+            ->get('/admin/gallery')
+            ->assertOk()
+            ->assertSee('MPO do moderacji')
+            ->assertSee('Oczekuje na moderację');
+    }
+
+    public function test_corrupt_jpeg_upload_is_rejected_without_crashing(): void
+    {
+        $user = User::factory()->create();
+
+        $temp = tempnam(
+            sys_get_temp_dir(),
+            'broken-jpeg-'
+        );
+
+        file_put_contents(
+            $temp,
+            'not-a-real-jpeg-data'
+        );
+
+        $upload = new UploadedFile(
+            $temp,
+            'broken.jpg',
+            'image/jpeg',
+            null,
+            true
+        );
+
+        $this->actingAs($user)
+            ->post('/pl/gallery', [
+                'title' => 'Uszkodzony plik',
+                'description' => 'Próba wysłania uszkodzonego JPG.',
+                'author_name' => 'Jan Test',
+                'license' => 'cc_by',
+                'submission_type' => 'stereo_pair',
+                'source_image' => $upload,
+                'rights_confirmation' => '1',
+            ])
+            ->assertSessionHasErrors('source_image');
+    }
+
     public function test_pending_submission_is_not_public(): void
     {
         $item = $this->galleryItem(
@@ -86,7 +235,7 @@ class CommunityStereoGalleryTest extends TestCase
             ->assertDontSee($item->title);
 
         $this->get(
-            '/pl/gallery/' . $item->slug
+            '/pl/gallery/'.$item->slug
         )->assertNotFound();
     }
 
@@ -102,16 +251,14 @@ class CommunityStereoGalleryTest extends TestCase
 
         $this->actingAs($editor)
             ->patch(
-                '/admin/gallery/' . $item->slug,
+                '/admin/gallery/'.$item->slug,
                 [
-                    'status' =>
-                        GalleryStatus::Published->value,
-                    'moderation_note' =>
-                        'Materiał zaakceptowany.',
+                    'status' => GalleryStatus::Published->value,
+                    'moderation_note' => 'Materiał zaakceptowany.',
                 ]
             )
             ->assertRedirect(
-                '/admin/gallery/' . $item->slug
+                '/admin/gallery/'.$item->slug
             );
 
         $item->refresh();
@@ -131,7 +278,7 @@ class CommunityStereoGalleryTest extends TestCase
         );
 
         $this->get(
-            '/pl/gallery/' . $item->slug
+            '/pl/gallery/'.$item->slug
         )
             ->assertOk()
             ->assertSee($item->title)
@@ -169,7 +316,7 @@ class CommunityStereoGalleryTest extends TestCase
         $this->actingAs($user)
             ->delete(
                 '/pl/account/gallery/'
-                . $item->slug
+                .$item->slug
             )
             ->assertRedirect();
 
@@ -201,7 +348,7 @@ class CommunityStereoGalleryTest extends TestCase
         $this->actingAs($user)
             ->delete(
                 '/pl/account/gallery/'
-                . $item->slug
+                .$item->slug
             )
             ->assertForbidden();
 
@@ -219,6 +366,166 @@ class CommunityStereoGalleryTest extends TestCase
             ->assertSee('Otwórz galerię');
     }
 
+    private function createStereoPairUpload(
+        string $filename,
+        int $width,
+        int $height
+    ): UploadedFile {
+        $source = tempnam(
+            sys_get_temp_dir(),
+            'gallery-pair-'
+        );
+
+        $left = imagecreatetruecolor(
+            $width / 2,
+            $height
+        );
+        $right = imagecreatetruecolor(
+            $width / 2,
+            $height
+        );
+
+        imagefilledrectangle(
+            $left,
+            0,
+            0,
+            $width / 2,
+            $height,
+            imagecolorallocate($left, 0, 0, 255)
+        );
+
+        imagefilledrectangle(
+            $right,
+            0,
+            0,
+            $width / 2,
+            $height,
+            imagecolorallocate($right, 255, 0, 0)
+        );
+
+        $combined = imagecreatetruecolor(
+            $width,
+            $height
+        );
+        imagecopy($combined, $left, 0, 0, 0, 0, $width / 2, $height);
+        imagecopy($combined, $right, $width / 2, 0, 0, 0, $width / 2, $height);
+        imagejpeg($combined, $source);
+
+        return new UploadedFile(
+            $source,
+            $filename,
+            'image/jpeg',
+            null,
+            true
+        );
+    }
+
+    private function createMpoUpload(
+        string $filename,
+        int $width,
+        int $height
+    ): UploadedFile {
+        $source = tempnam(
+            sys_get_temp_dir(),
+            'gallery-mpo-'
+        );
+
+        $left = imagecreatetruecolor(
+            $width,
+            $height
+        );
+        $right = imagecreatetruecolor(
+            $width,
+            $height
+        );
+
+        imagefilledrectangle(
+            $left,
+            0,
+            0,
+            $width,
+            $height,
+            imagecolorallocate($left, 0, 0, 255)
+        );
+
+        imagefilledrectangle(
+            $right,
+            0,
+            0,
+            $width,
+            $height,
+            imagecolorallocate($right, 255, 0, 0)
+        );
+
+        ob_start();
+        imagejpeg($left);
+        $leftJpeg = ob_get_clean();
+
+        ob_start();
+        imagejpeg($right);
+        $rightJpeg = ob_get_clean();
+
+        file_put_contents(
+            $source,
+            $leftJpeg.$rightJpeg
+        );
+
+        imagedestroy($left);
+        imagedestroy($right);
+
+        return new UploadedFile(
+            $source,
+            $filename,
+            'image/jpeg',
+            null,
+            true
+        );
+    }
+
+    private function createStereoPairWithEmbeddedJpegMarkers(
+        string $filename,
+        int $width,
+        int $height
+    ): UploadedFile {
+        $baseUpload = $this->createStereoPairUpload(
+            $filename,
+            $width,
+            $height
+        );
+        $source = tempnam(
+            sys_get_temp_dir(),
+            'gallery-pair-exif-'
+        );
+        $jpeg = file_get_contents(
+            $baseUpload->getRealPath()
+        );
+        $payload = 'Exif'.chr(0).chr(0)
+            .chr(255).chr(216)
+            .'embedded-thumbnail-marker'
+            .chr(255).chr(217)
+            .chr(255).chr(216)
+            .'second-embedded-thumbnail-marker'
+            .chr(255).chr(217);
+        $segment = chr(255).chr(225)
+            .pack('n', strlen($payload) + 2)
+            .$payload;
+
+        file_put_contents(
+            $source,
+            substr($jpeg, 0, 2)
+            .$segment
+            .substr($jpeg, 2)
+        );
+
+        return new UploadedFile(
+            $source,
+            $filename,
+            'image/jpeg',
+            null,
+            true
+        );
+    }
+
     private function galleryItem(
         GalleryStatus $status,
         ?User $user = null
@@ -227,23 +534,20 @@ class CommunityStereoGalleryTest extends TestCase
 
         return StereoGalleryItem::create([
             'user_id' => $user->id,
-            'slug' => 'test-stereo-' . uniqid(),
+            'slug' => 'test-stereo-'.uniqid(),
             'title' => 'Testowa praca stereo',
             'description' => 'Opis pracy.',
             'author_name' => 'Autor Testowy',
             'license' => 'all_rights_reserved',
             'status' => $status,
-            'left_image_path' =>
-                'gallery/test/left.jpg',
-            'right_image_path' =>
-                'gallery/test/right.jpg',
+            'left_image_path' => 'gallery/test/left.jpg',
+            'right_image_path' => 'gallery/test/right.jpg',
             'left_width' => 800,
             'left_height' => 600,
             'right_width' => 800,
             'right_height' => 600,
             'rights_confirmed_at' => now(),
-            'published_at' =>
-                $status === GalleryStatus::Published
+            'published_at' => $status === GalleryStatus::Published
                     ? now()
                     : null,
         ]);

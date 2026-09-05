@@ -70,8 +70,16 @@ return [
         'kicker' => 'Your 3D photography',
         'title' => 'Submit work to the gallery',
         'description' => 'Upload left and right images of the same scene. The submission goes to moderation and remains private until approved.',
+        'errors_title' => 'The work could not be submitted:',
         'images_title' => 'Stereoscopic pair L / R',
-        'images_help' => 'Supported formats: JPG, PNG, WEBP. Maximum 10 MB per image.',
+        'images_help' => 'Supported formats: JPG, PNG, WEBP, MPO. Maximum 10 MB per file.',
+        'file_type_question' => 'Which file do you want to upload?',
+        'file_type' => [
+            'stereo_pair' => 'Stereo pair (combined L/R image)',
+            'mpo' => 'MPO file',
+            'left_right' => 'Left / right separately',
+        ],
+        'source_image' => 'Stereo pair image',
         'left_image' => 'Left image',
         'right_image' => 'Right image',
         'choose_image' => 'Click and choose a file',
@@ -104,6 +112,10 @@ return [
     'messages' => [
         'submitted' => 'Your work was submitted and is awaiting moderation.',
         'deleted' => 'The submission was deleted.',
+    ],
+
+    'validation' => [
+        'invalid_image' => 'The uploaded file is not a valid JPEG, PNG, or WEBP image.',
     ],
 
     'admin' => [

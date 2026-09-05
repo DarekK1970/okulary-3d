@@ -20,6 +20,7 @@ class StereoGalleryItem extends Model
         'status',
         'left_image_path',
         'right_image_path',
+        'stereo_pair_path',
         'left_width',
         'left_height',
         'right_width',
@@ -77,6 +78,12 @@ class StereoGalleryItem extends Model
     {
         return Storage::disk('public')
             ->url($this->right_image_path);
+    }
+
+    public function stereoPairUrl(): string
+    {
+        return Storage::disk('public')
+            ->url($this->stereo_pair_path ?? $this->left_image_path);
     }
 
     public function canBeDeletedBy(

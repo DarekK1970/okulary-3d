@@ -405,6 +405,27 @@
     gap: 13px;
 }
 
+.gallery-form-errors {
+    padding: 14px 16px;
+    border: 1px solid #f0bcc5;
+    border-radius: 12px;
+    background: #fff5f7;
+    color: #8d3343;
+}
+
+.gallery-form-errors strong {
+    display: block;
+    margin-bottom: 7px;
+    font-size: .59rem;
+}
+
+.gallery-form-errors ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: .54rem;
+    line-height: 1.55;
+}
+
 .gallery-form-panel {
     padding: 18px;
     border: 1px solid #e0e6ed;
@@ -424,10 +445,46 @@
     font-size: .53rem;
 }
 
+.gallery-file-type-field {
+    display: grid;
+    gap: 7px;
+    max-width: 480px;
+    margin: 0 0 16px;
+}
+
+.gallery-file-type-field > span {
+    color: #53657b;
+    font-size: .56rem;
+    font-weight: 900;
+    letter-spacing: .01em;
+}
+
+.gallery-file-type-field select {
+    min-height: 42px;
+    border: 1px solid #d5dde8;
+    border-radius: 10px;
+    background: #fff;
+    color: #344158;
+    font: inherit;
+    font-size: .59rem;
+    font-weight: 700;
+    padding: 0 12px;
+    box-shadow: inset 0 1px 2px rgba(17, 24, 39, .02);
+}
+
+.gallery-file-type-field select:focus {
+    outline: 2px solid rgba(10, 167, 223, .18);
+    border-color: #7acbe9;
+}
+
 .gallery-upload-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+}
+
+.gallery-upload-grid[hidden] {
+    display: none !important;
 }
 
 .gallery-upload-box {
@@ -439,10 +496,24 @@
     overflow: hidden;
     padding: 16px;
     border: 1px dashed #c9d3de;
-    border-radius: 11px;
-    background: #fbfcfd;
+    border-radius: 12px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.8), rgba(244,249,252,.96));
     cursor: pointer;
     text-align: center;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.gallery-upload-box:hover {
+    border-color: #8ecfe8;
+    box-shadow: 0 12px 24px rgba(15, 48, 74, .04);
+    transform: translateY(-1px);
+}
+
+.gallery-upload-box.is-dragover {
+    border-color: #11a6db;
+    background: linear-gradient(180deg, rgba(233, 247, 255, .96), rgba(242, 250, 255, .96));
+    box-shadow: 0 0 0 3px rgba(17, 166, 219, .12);
 }
 
 .gallery-upload-box input {

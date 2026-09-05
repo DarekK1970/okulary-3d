@@ -49,6 +49,11 @@ return new class extends Migration
                     500
                 );
 
+                $table->string(
+                    'stereo_pair_path',
+                    500
+                )->nullable();
+
                 $table->unsignedInteger(
                     'left_width'
                 )->nullable();

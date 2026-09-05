@@ -36,18 +36,70 @@
         >
             @csrf
 
+            @if ($errors->any())
+                <div class="gallery-form-errors" role="alert">
+                    <strong>{{ __('gallery.create.errors_title') }}</strong>
+
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <section class="gallery-form-panel">
                 <h2>{{ __('gallery.create.images_title') }}</h2>
                 <p>{{ __('gallery.create.images_help') }}</p>
 
-                <div class="gallery-upload-grid">
+                <label class="gallery-file-type-field">
+                    <span>{{ __('gallery.create.file_type_question') }}</span>
+                    <select name="submission_type" data-gallery-upload-type>
+                        <option value="stereo_pair" @selected(old('submission_type', 'stereo_pair') === 'stereo_pair')>
+                            {{ __('gallery.create.file_type.stereo_pair') }}
+                        </option>
+                        <option value="mpo" @selected(old('submission_type') === 'mpo')>
+                            {{ __('gallery.create.file_type.mpo') }}
+                        </option>
+                        <option value="left_right" @selected(old('submission_type') === 'left_right')>
+                            {{ __('gallery.create.file_type.left_right') }}
+                        </option>
+                    </select>
+                </label>
+
+                <div class="gallery-upload-grid" data-gallery-single-upload>
+                    <label class="gallery-upload-box">
+                        <input
+                            type="file"
+                            name="source_image"
+                            accept="image/jpeg,image/png,image/webp,.mpo"
+                            data-gallery-upload-source
+                        >
+
+                        <span class="gallery-upload-side">S</span>
+
+                        <strong>{{ __('gallery.create.source_image') }}</strong>
+                        <span>{{ __('gallery.create.choose_image') }}</span>
+
+                        <img
+                            src=""
+                            alt=""
+                            data-gallery-preview="source"
+                        >
+
+                        <small data-gallery-filename="source">
+                            {{ __('gallery.create.no_file') }}
+                        </small>
+                    </label>
+                </div>
+
+                <div class="gallery-upload-grid" data-gallery-split-upload hidden>
                     @foreach (['left', 'right'] as $side)
                         <label class="gallery-upload-box">
                             <input
                                 type="file"
                                 name="{{ $side }}_image"
                                 accept="image/jpeg,image/png,image/webp"
-                                required
                                 data-gallery-upload="{{ $side }}"
                             >
 

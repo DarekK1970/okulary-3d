@@ -70,8 +70,16 @@ return [
         'kicker' => 'Twoja fotografia 3D',
         'title' => 'Dodaj pracę do galerii',
         'description' => 'Prześlij lewy i prawy obraz tej samej sceny. Po zapisaniu zgłoszenie trafi do moderacji i nie będzie publiczne do czasu akceptacji.',
+        'errors_title' => 'Nie udało się wysłać pracy:',
         'images_title' => 'Para stereoskopowa L / R',
-        'images_help' => 'Obsługiwane formaty: JPG, PNG, WEBP. Maksymalnie 10 MB na każdy obraz.',
+        'images_help' => 'Obsługiwane formaty: JPG, PNG, WEBP, MPO. Maksymalnie 10 MB na plik.',
+        'file_type_question' => 'Jaki plik chcesz przesłać:',
+        'file_type' => [
+            'stereo_pair' => 'Stereopara (połączone zdjęcie L/R)',
+            'mpo' => 'Plik MPO',
+            'left_right' => 'Lewy / prawy osobno',
+        ],
+        'source_image' => 'Zdjęcie stereopary',
         'left_image' => 'Lewy obraz',
         'right_image' => 'Prawy obraz',
         'choose_image' => 'Kliknij i wybierz plik',
@@ -104,6 +112,10 @@ return [
     'messages' => [
         'submitted' => 'Praca została przesłana i oczekuje na moderację.',
         'deleted' => 'Zgłoszenie zostało usunięte.',
+    ],
+
+    'validation' => [
+        'invalid_image' => 'Przesłany plik nie jest poprawnym obrazem JPEG, PNG lub WEBP.',
     ],
 
     'admin' => [
