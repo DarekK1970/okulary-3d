@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\GalleryStatus;
 use App\Models\StereoGalleryItem;
+use App\Models\StereoGalleryRating;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -419,6 +420,105 @@ class CommunityStereoGalleryTest extends TestCase
             ->assertSee('Wiggle');
     }
 
+    public function test_authenticated_user_can_rate_published_gallery_item_only_once(): void
+    {
+        $user = User::factory()->create();
+        $item = $this->galleryItem(
+            GalleryStatus::Published
+        );
+
+        $this->actingAs($user)
+            ->postJson(
+                '/pl/gallery/'.$item->slug.'/ratings',
+                ['rating' => 5]
+            )
+            ->assertOk()
+            ->assertJson([
+                'count' => 1,
+                'average' => 5,
+                'summary' => '1 ★ 5.0',
+            ]);
+
+        $this->assertDatabaseHas(
+            'stereo_gallery_ratings',
+            [
+                'stereo_gallery_item_id' => $item->id,
+                'user_id' => $user->id,
+                'rating' => 5,
+            ]
+        );
+
+        $this->actingAs($user)
+            ->postJson(
+                '/pl/gallery/'.$item->slug.'/ratings',
+                ['rating' => 4]
+            )
+            ->assertConflict();
+
+        $this->assertDatabaseCount(
+            'stereo_gallery_ratings',
+            1
+        );
+    }
+
+    public function test_gallery_browser_shows_ratings_navigation_thumbnails_and_author_filter(): void
+    {
+        $viewer = User::factory()->create();
+        $first = $this->galleryItem(
+            GalleryStatus::Published,
+            null,
+            'Autor Jeden',
+            'Pierwsza praca'
+        );
+        $second = $this->galleryItem(
+            GalleryStatus::Published,
+            null,
+            'Autor Dwa',
+            'Druga praca'
+        );
+        $third = $this->galleryItem(
+            GalleryStatus::Published,
+            null,
+            'Autor Jeden',
+            'Trzecia praca'
+        );
+
+        $first->update(['published_at' => now()->subMinutes(3)]);
+        $second->update(['published_at' => now()->subMinutes(2)]);
+        $third->update(['published_at' => now()->subMinute()]);
+
+        StereoGalleryRating::create([
+            'stereo_gallery_item_id' => $second->id,
+            'user_id' => User::factory()->create()->id,
+            'rating' => 5,
+        ]);
+        StereoGalleryRating::create([
+            'stereo_gallery_item_id' => $second->id,
+            'user_id' => User::factory()->create()->id,
+            'rating' => 4,
+        ]);
+
+        $this->actingAs($viewer)
+            ->get('/pl/gallery/'.$second->slug)
+            ->assertOk()
+            ->assertSee('data-community-viewer', false)
+            ->assertSee('community-gallery-nav-prev', false)
+            ->assertSee('community-gallery-nav-next', false)
+            ->assertSee('community-gallery-strip', false)
+            ->assertSee('4.5')
+            ->assertSee('Oceń obraz:', false)
+            ->assertSee('Druga praca')
+            ->assertSee('Autor Dwa')
+            ->assertSee('Wyświetl wszystkie prace tego autora.');
+
+        $this->get('/pl/gallery?author=Autor%20Jeden')
+            ->assertOk()
+            ->assertSee('Pierwsza praca')
+            ->assertSee('Trzecia praca')
+            ->assertSee('/pl/gallery?author=Autor%20Jeden&amp;photo=', false)
+            ->assertDontSee('Druga praca');
+    }
+
     public function test_user_can_delete_own_unpublished_submission(): void
     {
         $user = User::factory()->create();
@@ -668,16 +768,18 @@ class CommunityStereoGalleryTest extends TestCase
 
     private function galleryItem(
         GalleryStatus $status,
-        ?User $user = null
+        ?User $user = null,
+        string $authorName = 'Autor Testowy',
+        string $title = 'Testowa praca stereo'
     ): StereoGalleryItem {
         $user ??= User::factory()->create();
 
         return StereoGalleryItem::create([
             'user_id' => $user->id,
             'slug' => 'test-stereo-'.uniqid(),
-            'title' => 'Testowa praca stereo',
+            'title' => $title,
             'description' => 'Opis pracy.',
-            'author_name' => 'Autor Testowy',
+            'author_name' => $authorName,
             'license' => 'all_rights_reserved',
             'status' => $status,
             'left_image_path' => 'gallery/test/left.jpg',

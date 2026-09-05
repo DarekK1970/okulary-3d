@@ -948,7 +948,7 @@ svg {
 
 .gallery-card-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
     padding: 11px 13px;
@@ -975,6 +975,70 @@ svg {
 .gallery-user {
     color: #435069;
     font-weight: 700;
+}
+
+.gallery-card-title {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.gallery-author-link {
+    color: #7d899a;
+    font-size: .56rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.gallery-author-link:hover {
+    color: var(--color-cyan-dark);
+}
+
+.gallery-rating-panel {
+    display: grid;
+    gap: 4px;
+    justify-items: end;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.gallery-rating-summary {
+    color: #445168;
+    font-size: .55rem;
+    font-weight: 900;
+}
+
+.gallery-rating-form,
+.gallery-rating-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: #667386;
+    font-size: .54rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.gallery-rating-star {
+    padding: 0 1px;
+    border: 0;
+    background: transparent;
+    color: #f2b600;
+    cursor: pointer;
+    font-size: .78rem;
+    line-height: 1;
+}
+
+.gallery-rating-star.is-muted,
+.gallery-rating-star:disabled {
+    color: #c6ced9;
+    cursor: default;
+}
+
+.gallery-mode[data-gallery-status] {
+    right: 10px;
+    left: auto;
+    color: #ffd95a;
 }
 
 .gallery-likes {

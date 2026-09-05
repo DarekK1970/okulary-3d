@@ -65,7 +65,7 @@ class CommunityStereoViewer {
             )?.classList.add('is-hidden');
 
             this.setStatus(
-                this.root.dataset.ready || 'Ready'
+                this.root.dataset.ratingSummary || ''
             );
 
             this.updateWiggle();
@@ -343,6 +343,59 @@ const initializeCommunityGallery = () => {
         '[data-community-viewer]'
     ).forEach((root) => {
         new CommunityStereoViewer(root);
+    });
+
+    document.querySelectorAll(
+        '[data-gallery-rating]'
+    ).forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const button = event.submitter;
+
+            if (!button || form.dataset.rated === 'true') {
+                return;
+            }
+
+            const body = new FormData(form);
+            body.set('rating', button.value);
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.content || '',
+                },
+                body,
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const panel = form.closest(
+                '[data-gallery-rating-panel]'
+            );
+
+            form.dataset.rated = 'true';
+            form.querySelectorAll('button').forEach((star) => {
+                star.disabled = true;
+                star.classList.add('is-muted');
+            });
+
+            panel?.querySelectorAll(
+                '[data-gallery-rating-summary]'
+            ).forEach((summary) => {
+                summary.textContent = data.summary;
+            });
+
+            panel?.closest('[data-community-viewer]')
+                ?.querySelector('[data-gallery-status]')
+                ?.replaceChildren(data.summary);
+        });
     });
 };
 

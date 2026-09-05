@@ -262,13 +262,13 @@
                         data-left-url="{{ $item->leftImageUrl() }}"
                         data-right-url="{{ $item->rightImageUrl() }}"
                         data-loading="{{ __('gallery.viewer.loading') }}"
-                        data-ready="{{ __('gallery.viewer.ready') }}"
+                        data-rating-summary="{{ $item->ratingSummary() }}"
                         data-error="{{ __('gallery.viewer.error') }}"
                     >
                         <div class="gallery-image">
                             <canvas data-gallery-canvas></canvas>
                             <span class="gallery-mode" data-gallery-status>
-                                {{ __('gallery.viewer.loading') }}
+                                {{ $item->ratingSummary() }}
                             </span>
                         </div>
 
@@ -283,15 +283,27 @@
                         </div>
 
                         <div class="gallery-card-footer">
-                            <a
-                                class="gallery-user"
-                                href="{{ route('gallery.show', [
-                                    'locale' => app()->getLocale(),
-                                    'galleryItem' => $item,
-                                ]) }}"
-                            >
-                                {{ $item->title }}
-                            </a>
+                            <div class="gallery-card-title">
+                                <a
+                                    class="gallery-user"
+                                    href="{{ route('gallery.show', [
+                                        'locale' => app()->getLocale(),
+                                        'galleryItem' => $item,
+                                    ]) }}"
+                                >
+                                    {{ $item->title }}
+                                </a>
+                                <a
+                                    class="gallery-author-link"
+                                    href="{{ route('gallery.index', [
+                                        'locale' => app()->getLocale(),
+                                        'author' => $item->author_name,
+                                    ]) }}"
+                                    title="{{ __('gallery.viewer.author_tooltip') }}"
+                                >{{ $item->author_name }}</a>
+                            </div>
+
+                            @include('gallery.partials.rating', ['item' => $item])
                         </div>
                     </article>
                 @empty

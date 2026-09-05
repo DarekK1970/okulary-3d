@@ -44,50 +44,10 @@
             </a>
         </div>
 
-        <div
-            class="community-stereo-viewer"
-            data-community-viewer
-            data-left-url="{{ $galleryItem->leftImageUrl() }}"
-            data-right-url="{{ $galleryItem->rightImageUrl() }}"
-            data-loading="{{ __('gallery.viewer.loading') }}"
-            data-ready="{{ __('gallery.viewer.ready') }}"
-            data-error="{{ __('gallery.viewer.error') }}"
-        >
-            <div class="community-viewer-toolbar">
-                <div class="community-viewer-mode">
-                    <label for="gallery-mode">{{ __('gallery.viewer.mode') }}</label>
-                    <select id="gallery-mode" data-gallery-mode>
-                        <option value="parallel">{{ __('gallery.viewer.parallel') }}</option>
-                        <option value="cross">{{ __('gallery.viewer.cross') }}</option>
-                        <option value="anaglyph">{{ __('gallery.viewer.anaglyph') }}</option>
-                        <option value="wiggle">{{ __('gallery.viewer.wiggle') }}</option>
-                    </select>
-                </div>
-
-                <button
-                    class="gallery-secondary-button"
-                    type="button"
-                    data-gallery-action="swap"
-                >
-                    ⇄ {{ __('gallery.viewer.swap') }}
-                </button>
-
-                <span data-gallery-status>{{ __('gallery.viewer.loading') }}</span>
-            </div>
-
-            <div class="community-viewer-stage">
-                <canvas data-gallery-canvas></canvas>
-
-                <div class="community-viewer-loading" data-gallery-empty>
-                    <strong>{{ __('gallery.viewer.loading') }}</strong>
-                </div>
-            </div>
-
-            <div class="community-viewer-footer">
-                <span data-gallery-size>—</span>
-                <span>{{ __('gallery.viewer.tip') }}</span>
-            </div>
-        </div>
+        @include('gallery.partials.browser', [
+            'items' => $items,
+            'currentGalleryItem' => $currentGalleryItem,
+        ])
 
         <div class="gallery-detail-info">
             <article>

@@ -4,7 +4,10 @@
 @section('meta_description', __('gallery.index.meta_description'))
 
 @push('head')
-    @vite('resources/css/gallery.css')
+    @vite([
+        'resources/css/gallery.css',
+        'resources/js/community-gallery.js'
+    ])
 @endpush
 
 @section('content')
@@ -51,45 +54,13 @@
             </div>
         </div>
 
-        <div class="community-gallery-grid">
-            @forelse ($items as $item)
-                <a
-                    class="community-gallery-card"
-                    href="{{ route('gallery.show', [
-                        'locale' => app()->getLocale(),
-                        'galleryItem' => $item
-                    ]) }}"
-                >
-                    <div class="community-gallery-thumb">
-                        <img
-                            class="community-gallery-thumb-left"
-                            src="{{ $item->leftImageUrl() }}"
-                            alt="{{ $item->title }}"
-                            loading="lazy"
-                        >
-                        <img
-                            class="community-gallery-thumb-right"
-                            src="{{ $item->rightImageUrl() }}"
-                            alt=""
-                            loading="lazy"
-                        >
-                        <span>STEREO</span>
-                    </div>
-
-                    <div class="community-gallery-card-copy">
-                        <h2>{{ $item->title }}</h2>
-
-                        <div class="community-gallery-meta">
-                            <span>{{ $item->author_name }}</span>
-                            <span>{{ $item->published_at?->format('d.m.Y') }}</span>
-                        </div>
-
-                        @if ($item->description)
-                            <p>{{ \Illuminate\Support\Str::limit($item->description, 120) }}</p>
-                        @endif
-                    </div>
-                </a>
-            @empty
+        @if ($currentGalleryItem)
+            @include('gallery.partials.browser', [
+                'items' => $items,
+                'currentGalleryItem' => $currentGalleryItem,
+            ])
+        @else
+            <div class="community-gallery-grid">
                 <div class="community-gallery-empty">
                     <strong>{{ __('gallery.index.empty_title') }}</strong>
                     <p>{{ __('gallery.index.empty_text') }}</p>
@@ -103,12 +74,6 @@
                         </a>
                     @endauth
                 </div>
-            @endforelse
-        </div>
-
-        @if ($items->hasPages())
-            <div class="community-gallery-pagination">
-                {{ $items->links() }}
             </div>
         @endif
     </div>

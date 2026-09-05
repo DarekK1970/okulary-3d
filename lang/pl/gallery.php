@@ -62,6 +62,18 @@ return [
         'ready' => 'Gotowe',
         'error' => 'Nie udało się wczytać obrazów.',
         'tip' => 'Tryb oglądania działa lokalnie w przeglądarce.',
+        'previous' => 'Poprzednia praca',
+        'next' => 'Następna praca',
+        'thumbnails' => 'Miniatury prac w galerii',
+        'author_tooltip' => 'Wyświetl wszystkie prace tego autora.',
+    ],
+
+    'rating' => [
+        'rate' => 'Oceń:',
+        'rate_image' => 'Oceń obraz:',
+        'rate_value' => 'Oceń na :rating z 5 gwiazdek',
+        'already_rated' => 'Ten obraz został już oceniony z Twojego konta.',
+        'login_to_rate' => 'Zaloguj się, aby ocenić:',
     ],
 
     'create' => [

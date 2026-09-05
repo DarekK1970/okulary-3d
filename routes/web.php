@@ -19,13 +19,13 @@ use App\Http\Controllers\Admin\MaintenanceSettingsController;
 use App\Http\Controllers\Admin\MarketplaceCategoryController;
 use App\Http\Controllers\Admin\MarketplaceProductController;
 use App\Http\Controllers\Admin\MarketplaceShippingProviderController;
-use App\Http\Controllers\Admin\PlanSettingsController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\NewsletterController as AdminNewsletterController;
 use App\Http\Controllers\Admin\OrchestratorController;
 use App\Http\Controllers\Admin\OrchestratorSettingsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PlanSettingsController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StaticPageController as AdminStaticPageController;
@@ -50,8 +50,8 @@ use App\Http\Controllers\LenticularProjectController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PayNowNotificationController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\SalesDocumentController;
 use App\Http\Controllers\SeoController;
@@ -210,6 +210,9 @@ Route::prefix('{locale}')
         Route::post('/gallery', [StereoGalleryController::class, 'store'])
             ->middleware('auth')
             ->name('gallery.store');
+        Route::post('/gallery/{galleryItem}/ratings', [StereoGalleryController::class, 'rate'])
+            ->middleware('auth')
+            ->name('gallery.ratings.store');
         Route::get('/gallery/{galleryItem}', [StereoGalleryController::class, 'show'])
             ->name('gallery.show');
 

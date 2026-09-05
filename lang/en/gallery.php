@@ -62,6 +62,18 @@ return [
         'ready' => 'Ready',
         'error' => 'The images could not be loaded.',
         'tip' => 'Viewing modes run locally in your browser.',
+        'previous' => 'Previous work',
+        'next' => 'Next work',
+        'thumbnails' => 'Gallery work thumbnails',
+        'author_tooltip' => 'Show all works by this author.',
+    ],
+
+    'rating' => [
+        'rate' => 'Rate:',
+        'rate_image' => 'Rate image:',
+        'rate_value' => 'Rate :rating out of 5 stars',
+        'already_rated' => 'This image has already been rated from your account.',
+        'login_to_rate' => 'Log in to rate:',
     ],
 
     'create' => [

@@ -6,6 +6,7 @@ use App\Enums\GalleryStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class StereoGalleryItem extends Model
@@ -60,6 +61,11 @@ class StereoGalleryItem extends Model
         );
     }
 
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(StereoGalleryRating::class);
+    }
+
     public function scopePublished(
         Builder $query
     ): Builder {
@@ -84,6 +90,35 @@ class StereoGalleryItem extends Model
     {
         return Storage::disk('public')
             ->url($this->stereo_pair_path ?? $this->left_image_path);
+    }
+
+    public function ratingCount(): int
+    {
+        return (int) ($this->ratings_count ?? 0);
+    }
+
+    public function ratingAverage(): ?float
+    {
+        if ($this->ratings_avg_rating === null) {
+            return null;
+        }
+
+        return round((float) $this->ratings_avg_rating, 1);
+    }
+
+    public function ratingSummary(): string
+    {
+        return sprintf(
+            '%d ★ %s',
+            $this->ratingCount(),
+            number_format($this->ratingAverage() ?? 0, 1)
+        );
+    }
+
+    public function ratedByCurrentUser(): bool
+    {
+        return $this->relationLoaded('ratings')
+            && $this->ratings->isNotEmpty();
     }
 
     public function canBeDeletedBy(

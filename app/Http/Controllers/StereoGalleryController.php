@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\GalleryStatus;
 use App\Models\StereoGalleryItem;
+use App\Models\StereoGalleryRating;
 use App\Services\SeoService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -23,20 +27,26 @@ class StereoGalleryController extends Controller
     private const JPEG_QUALITY = 88;
 
     public function index(
+        Request $request,
         string $locale
     ): View {
-        $items = StereoGalleryItem::query()
-            ->published()
-            ->latest('published_at')
-            ->paginate(18);
+        $items = $this->publishedGalleryQuery($request)
+            ->get();
+        $requestedPhoto = $request->string('photo')->toString();
 
         return view(
             'gallery.index',
-            compact('items')
+            [
+                'items' => $items,
+                'currentGalleryItem' => $items->first(
+                    fn (StereoGalleryItem $item): bool => $item->slug === $requestedPhoto
+                ) ?? $items->first(),
+            ]
         );
     }
 
     public function show(
+        Request $request,
         string $locale,
         StereoGalleryItem $galleryItem,
         SeoService $seo
@@ -48,16 +58,83 @@ class StereoGalleryController extends Controller
             404
         );
 
+        $items = $this->publishedGalleryQuery($request)
+            ->get();
+        $currentGalleryItem = $items->first(
+            fn (StereoGalleryItem $item): bool => $item->is($galleryItem)
+        ) ?? $galleryItem
+            ->loadCount('ratings')
+            ->loadAvg('ratings', 'rating');
+
         return view(
             'gallery.show',
             [
-                'galleryItem' => $galleryItem,
+                'galleryItem' => $currentGalleryItem,
+                'items' => $items,
+                'currentGalleryItem' => $currentGalleryItem,
                 'pageSeo' => $seo->gallery(
                     $galleryItem,
                     $locale
                 ),
             ]
         );
+    }
+
+    public function rate(
+        Request $request,
+        string $locale,
+        StereoGalleryItem $galleryItem
+    ): JsonResponse|RedirectResponse {
+        abort_unless(
+            $galleryItem->status === GalleryStatus::Published
+            && $galleryItem->published_at,
+            404
+        );
+
+        $validated = $request->validate([
+            'rating' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:5',
+            ],
+        ]);
+
+        $alreadyRated = StereoGalleryRating::query()
+            ->where('stereo_gallery_item_id', $galleryItem->id)
+            ->where('user_id', $request->user()->id)
+            ->exists();
+
+        if ($alreadyRated) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => __('gallery.rating.already_rated'),
+                ], 409);
+            }
+
+            return back()->withErrors([
+                'rating' => __('gallery.rating.already_rated'),
+            ]);
+        }
+
+        StereoGalleryRating::create([
+            'stereo_gallery_item_id' => $galleryItem->id,
+            'user_id' => $request->user()->id,
+            'rating' => (int) $validated['rating'],
+        ]);
+
+        $galleryItem->loadCount('ratings')
+            ->loadAvg('ratings', 'rating');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'count' => $galleryItem->ratingCount(),
+                'average' => $galleryItem->ratingAverage(),
+                'summary' => $galleryItem->ratingSummary(),
+            ]);
+        }
+
+        return back();
     }
 
     public function create(
@@ -799,6 +876,36 @@ class StereoGalleryController extends Controller
             (int) $size[0],
             (int) $size[1],
         ];
+    }
+
+    private function publishedGalleryQuery(Request $request): Builder
+    {
+        $query = StereoGalleryItem::query()
+            ->published()
+            ->latest('published_at')
+            ->latest('id');
+
+        if (Schema::hasTable('stereo_gallery_ratings')) {
+            $query
+                ->withCount('ratings')
+                ->withAvg('ratings', 'rating');
+        }
+
+        if ($request->user() && Schema::hasTable('stereo_gallery_ratings')) {
+            $query->with([
+                'ratings' => fn ($ratings) => $ratings
+                    ->where('user_id', $request->user()->id),
+            ]);
+        }
+
+        if ($request->filled('author')) {
+            $query->where(
+                'author_name',
+                $request->string('author')->toString()
+            );
+        }
+
+        return $query;
     }
 
     private function uniqueSlug(

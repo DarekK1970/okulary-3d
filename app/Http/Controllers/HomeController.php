@@ -9,6 +9,7 @@ use App\Models\ArchiveItem;
 use App\Models\Article;
 use App\Models\StereoGalleryItem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -163,9 +164,24 @@ class HomeController extends Controller
             return collect();
         }
 
-        return StereoGalleryItem::query()
+        $query = StereoGalleryItem::query()
             ->published()
-            ->inRandomOrder()
+            ->inRandomOrder();
+
+        if (Schema::hasTable('stereo_gallery_ratings')) {
+            $query
+                ->withCount('ratings')
+                ->withAvg('ratings', 'rating');
+        }
+
+        if (Auth::check() && Schema::hasTable('stereo_gallery_ratings')) {
+            $query->with([
+                'ratings' => fn ($ratings) => $ratings
+                    ->where('user_id', Auth::id()),
+            ]);
+        }
+
+        return $query
             ->limit(6)
             ->get();
     }
