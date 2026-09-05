@@ -347,6 +347,8 @@ Route::prefix('admin')
 
         Route::get('/gallery', [AdminStereoGalleryController::class, 'index'])
             ->name('gallery.index');
+        Route::post('/gallery/bulk-publish', [AdminStereoGalleryController::class, 'bulkPublish'])
+            ->name('gallery.bulk-publish');
         Route::get('/gallery/{galleryItem}', [AdminStereoGalleryController::class, 'show'])
             ->name('gallery.show');
 

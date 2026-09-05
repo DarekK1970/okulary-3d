@@ -38,12 +38,12 @@ class StereoGalleryController extends Controller
                         ->where(
                             'title',
                             'like',
-                            '%' . $search . '%'
+                            '%'.$search.'%'
                         )
                         ->orWhere(
                             'author_name',
                             'like',
-                            '%' . $search . '%'
+                            '%'.$search.'%'
                         );
                 }
             );
@@ -52,11 +52,9 @@ class StereoGalleryController extends Controller
         return view(
             'admin.gallery.index',
             [
-                'items' =>
-                    $query->paginate(25)
-                        ->withQueryString(),
-                'statuses' =>
-                    GalleryStatus::cases(),
+                'items' => $query->paginate(25)
+                    ->withQueryString(),
+                'statuses' => GalleryStatus::cases(),
             ]
         );
     }
@@ -72,6 +70,42 @@ class StereoGalleryController extends Controller
         return view(
             'admin.gallery.show',
             compact('galleryItem')
+        );
+    }
+
+    public function bulkPublish(
+        Request $request
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'gallery_items' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+            'gallery_items.*' => [
+                'integer',
+                'exists:stereo_gallery_items,id',
+            ],
+        ]);
+
+        $publishedCount = StereoGalleryItem::query()
+            ->whereIn('id', $validated['gallery_items'])
+            ->where('status', GalleryStatus::Pending)
+            ->update([
+                'status' => GalleryStatus::Published,
+                'published_at' => now(),
+                'moderated_by' => $request->user()->id,
+                'moderated_at' => now(),
+                'moderation_note' => null,
+            ]);
+
+        return back()->with(
+            'status',
+            trans_choice(
+                'gallery.admin.bulk_published',
+                $publishedCount,
+                ['count' => $publishedCount]
+            )
         );
     }
 
@@ -99,8 +133,7 @@ class StereoGalleryController extends Controller
 
         $galleryItem->update([
             'status' => $status,
-            'published_at' =>
-                $status
+            'published_at' => $status
                     === GalleryStatus::Published
                         ? (
                             $galleryItem
@@ -108,12 +141,9 @@ class StereoGalleryController extends Controller
                             ?? now()
                         )
                         : null,
-            'moderated_by' =>
-                $request->user()->id,
-            'moderated_at' =>
-                now(),
-            'moderation_note' =>
-                $validated['moderation_note']
+            'moderated_by' => $request->user()->id,
+            'moderated_at' => now(),
+            'moderation_note' => $validated['moderation_note']
                 ?? null,
         ]);
 

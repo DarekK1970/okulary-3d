@@ -13,6 +13,24 @@
     vertical-align: middle;
 }
 
+.admin-gallery-bulk-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 10px;
+}
+
+.admin-gallery-select-column {
+    width: 44px;
+    text-align: center;
+}
+
+.admin-gallery-select-column input {
+    width: 17px;
+    height: 17px;
+    accent-color: #0aa7df;
+    cursor: pointer;
+}
+
 .admin-gallery-review-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 315px;

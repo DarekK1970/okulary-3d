@@ -420,6 +420,66 @@ class CommunityStereoGalleryTest extends TestCase
             ->assertSee('Wiggle');
     }
 
+    public function test_editor_can_bulk_publish_selected_pending_submissions(): void
+    {
+        $editor = User::factory()->create([
+            'role' => User::ROLE_EDITOR,
+        ]);
+
+        $firstPending = $this->galleryItem(
+            GalleryStatus::Pending
+        );
+        $secondPending = $this->galleryItem(
+            GalleryStatus::Pending
+        );
+        $rejected = $this->galleryItem(
+            GalleryStatus::Rejected
+        );
+
+        $this->actingAs($editor)
+            ->get('/admin/gallery')
+            ->assertOk()
+            ->assertSee('ZATWIERDŹ ZAZNACZONE')
+            ->assertSee('name="gallery_items[]"', false)
+            ->assertSee('value="'.$firstPending->id.'"', false)
+            ->assertSee('value="'.$secondPending->id.'"', false)
+            ->assertDontSee('value="'.$rejected->id.'"', false);
+
+        $this->actingAs($editor)
+            ->post('/admin/gallery/bulk-publish', [
+                'gallery_items' => [
+                    $firstPending->id,
+                    $secondPending->id,
+                    $rejected->id,
+                ],
+            ])
+            ->assertRedirect();
+
+        $firstPending->refresh();
+        $secondPending->refresh();
+        $rejected->refresh();
+
+        $this->assertSame(
+            GalleryStatus::Published,
+            $firstPending->status
+        );
+        $this->assertNotNull($firstPending->published_at);
+        $this->assertSame($editor->id, $firstPending->moderated_by);
+
+        $this->assertSame(
+            GalleryStatus::Published,
+            $secondPending->status
+        );
+        $this->assertNotNull($secondPending->published_at);
+        $this->assertSame($editor->id, $secondPending->moderated_by);
+
+        $this->assertSame(
+            GalleryStatus::Rejected,
+            $rejected->status
+        );
+        $this->assertNull($rejected->published_at);
+    }
+
     public function test_authenticated_user_can_rate_published_gallery_item_only_once(): void
     {
         $user = User::factory()->create();

@@ -47,66 +47,93 @@
         @endif
     </form>
 
-    <div class="cms-table-wrap">
-        <table class="cms-table admin-gallery-table">
-            <thead>
-                <tr>
-                    <th>{{ __('gallery.admin.preview') }}</th>
-                    <th>{{ __('gallery.admin.item') }}</th>
-                    <th>{{ __('gallery.admin.user') }}</th>
-                    <th>{{ __('gallery.admin.date') }}</th>
-                    <th>{{ __('gallery.admin.status') }}</th>
-                    <th class="cms-actions-cell">{{ __('gallery.admin.actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($items as $item)
+    <form
+        method="post"
+        action="{{ route('admin.gallery.bulk-publish') }}"
+    >
+        @csrf
+
+        <div class="admin-gallery-bulk-actions">
+            <button class="cms-action-button" type="submit">
+                {{ __('gallery.admin.bulk_publish_selected') }}
+            </button>
+        </div>
+
+        <div class="cms-table-wrap">
+            <table class="cms-table admin-gallery-table">
+                <thead>
                     <tr>
-                        <td>
-                            <img
-                                class="admin-gallery-thumb"
-                                src="{{ $item->leftImageUrl() }}"
-                                alt=""
-                            >
-                        </td>
-
-                        <td>
-                            <strong>{{ $item->title }}</strong>
-                            <div class="catalog-muted">{{ $item->author_name }}</div>
-                        </td>
-
-                        <td>
-                            <strong>{{ $item->user?->name }}</strong>
-                            <div class="catalog-muted">{{ $item->user?->email }}</div>
-                        </td>
-
-                        <td>{{ $item->created_at->format('d.m.Y H:i') }}</td>
-
-                        <td>
-                            <span class="gallery-status gallery-status-{{ $item->status->value }}">
-                                {{ __('gallery.statuses.' . $item->status->value) }}
-                            </span>
-                        </td>
-
-                        <td class="cms-actions-cell">
-                            <a
-                                class="cms-action-button"
-                                href="{{ route('admin.gallery.show', $item) }}"
-                            >
-                                {{ __('gallery.admin.open') }}
-                            </a>
-                        </td>
+                        <th>{{ __('gallery.admin.preview') }}</th>
+                        <th class="admin-gallery-select-column">
+                            <span class="sr-only">{{ __('gallery.admin.select_for_bulk') }}</span>
+                        </th>
+                        <th>{{ __('gallery.admin.item') }}</th>
+                        <th>{{ __('gallery.admin.user') }}</th>
+                        <th>{{ __('gallery.admin.date') }}</th>
+                        <th>{{ __('gallery.admin.status') }}</th>
+                        <th class="cms-actions-cell">{{ __('gallery.admin.actions') }}</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="cms-empty">
-                            {{ __('gallery.admin.empty') }}
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @forelse ($items as $item)
+                        <tr>
+                            <td>
+                                <img
+                                    class="admin-gallery-thumb"
+                                    src="{{ $item->leftImageUrl() }}"
+                                    alt=""
+                                >
+                            </td>
+
+                            <td class="admin-gallery-select-column">
+                                @if ($item->status === \App\Enums\GalleryStatus::Pending)
+                                    <input
+                                        type="checkbox"
+                                        name="gallery_items[]"
+                                        value="{{ $item->id }}"
+                                        aria-label="{{ __('gallery.admin.select_item', ['title' => $item->title]) }}"
+                                    >
+                                @endif
+                            </td>
+
+                            <td>
+                                <strong>{{ $item->title }}</strong>
+                                <div class="catalog-muted">{{ $item->author_name }}</div>
+                            </td>
+
+                            <td>
+                                <strong>{{ $item->user?->name }}</strong>
+                                <div class="catalog-muted">{{ $item->user?->email }}</div>
+                            </td>
+
+                            <td>{{ $item->created_at->format('d.m.Y H:i') }}</td>
+
+                            <td>
+                                <span class="gallery-status gallery-status-{{ $item->status->value }}">
+                                    {{ __('gallery.statuses.' . $item->status->value) }}
+                                </span>
+                            </td>
+
+                            <td class="cms-actions-cell">
+                                <a
+                                    class="cms-action-button"
+                                    href="{{ route('admin.gallery.show', $item) }}"
+                                >
+                                    {{ __('gallery.admin.open') }}
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="cms-empty">
+                                {{ __('gallery.admin.empty') }}
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </form>
 
     @if ($items->hasPages())
         <div class="cms-pagination">
