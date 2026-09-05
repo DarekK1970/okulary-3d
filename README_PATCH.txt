@@ -1,219 +1,132 @@
-OKULARY 3D — K92
-ARTICLE LIST AI ACTIONS + ICONS
+OKULARY 3D — K93
+COMPACT HOMEPAGE ARTICLE CARDS
 
 CEL:
-Ujednolicić kolumnę AKCJE na liście artykułów z listą produktów
-oraz dodać szybkie operacje AI bez otwierania edytora publikacji.
+Zmienić prezentację najnowszych publikacji na stronie głównej.
+Zamiast dużych dominujących zdjęć karta ma wyglądać podobnie
+do modułu "Warto wiedzieć więcej" z portalu powiedznie.org:
+
+[ pionowa miniatura ] [ tytuł
+                        krótki wstęp
+                        Czytaj dalej -> ]
+
+Na desktopie dokładnie 3 publikacje w jednym rzędzie.
 
 ============================================================
-NOWA KOLEJNOŚĆ AKCJI
+ZMIANA WIZUALNA
 ============================================================
 
-W Backend -> Artykuły:
+PRZED:
+- karta pionowa,
+- ogromny obraz 16:9 zajmujący większość ekranu,
+- treść pod zdjęciem,
+- przy małej liczbie publikacji sekcja wygląda jak galeria zdjęć.
 
-1. [ikona ołówka]
-   EDYTUJ
-
-2. [ikona globu]
-   AUTOMATYCZNA TRANSLACJA
-
-3. [ikona obrazu + sparkle]
-   WYGENERUJ OBRAZ
-
-   Ta ikona pojawia się TYLKO wtedy, gdy publikacja nie ma:
-   - hero_media_id
-   ORAZ
-   - hero_image_path
-
-4. [ikona oka]
-   PODGLĄD
-
-5. [ikona kosza]
-   USUŃ
-
-Przyciski nie zawierają tekstowych etykiet.
-Nazwy funkcji są dostępne jako:
-- title
-- aria-label
-
-czyli są widoczne jako tooltip po najechaniu i dostępne dla
-czytników ekranu.
+PO:
+- kompaktowa karta pozioma,
+- pionowa miniatura po lewej,
+- treść po prawej,
+- tytuł jest głównym elementem karty,
+- pod tytułem krótki lead,
+- CTA "Czytaj dalej ->",
+- kategoria + data są niewielkimi informacjami pomocniczymi.
 
 ============================================================
-AUTOMATYCZNA TRANSLACJA
+DESKTOP
 ============================================================
 
-Nie powielamy translatora.
+home-publications-grid:
+3 kolumny
 
-K92 wykorzystuje istniejący:
-AiTranslationService::TYPE_ARTICLE
+Każda karta:
+grid-template-columns:
+132px + pozostała szerokość
 
-oraz istniejący endpoint:
-admin.translations.translate
-
-Czyli translacja artykułu korzysta z tej samej konfiguracji
-OpenAI/Gemini i tego samego rejestru ai_translation_runs.
-
-Dla obecnej konfiguracji PL/EN:
-- PL -> EN
-lub
-- EN -> PL
-
-Jeżeli docelowa translacja ma status publicznie gotowy:
-przycisk jest disabled, identycznie jak w produktach.
-
-Draft można wygenerować ponownie.
+Zdjęcie:
+- zajmuje całą lewą część karty,
+- wysokość min. 220 px,
+- object-fit: cover,
+- dzięki wąskiej kolumnie wizualnie działa jako pionowa miniatura,
+  nawet jeżeli źródłowy hero image jest poziomy.
 
 ============================================================
-GENEROWANIE OBRAZU
+TABLET
 ============================================================
 
-Nowy endpoint:
-
-POST /admin/articles/{article}/generate-image
-
-Nowy serwis:
-ArticleAiImageService
-
-Generator wykorzystuje istniejący klucz:
-ai_translation / openai.api_key
-
-Domyślny model:
-gpt-image-2
-
-Można go później zmienić ustawieniem:
-ai_translation / openai.image_model
-
-bez zmiany kodu.
-
-Parametry obrazu:
-- size: 1536x1024
-- quality: medium
-- 1 obraz
-- wynik base64 z Image API
-
-Endpoint OpenAI:
-POST https://api.openai.com/v1/images/generations
+Poniżej 1120 px:
+2 publikacje w rzędzie.
 
 ============================================================
-PROMPT OBRAZU
+MOBILE
 ============================================================
 
-Prompt powstaje automatycznie z:
-- tytułu źródłowego,
-- excerpt,
-- treści artykułu po usunięciu HTML.
+Poniżej 760 px:
+1 publikacja w rzędzie.
 
-Instrukcja wymusza:
-- poziomy hero image,
-- profesjonalny charakter redakcyjny,
-- zgodność z tematyką stereoskopii / 3D / optyki,
-- brak tekstu,
-- brak logo,
-- brak watermarków,
-- brak przypadkowych dekoracyjnych okularów 3D,
-- historyczną wiarygodność przy tematach historycznych.
+Nadal pozostaje układ:
+miniatura po lewej + treść po prawej.
+
+Dopiero na bardzo wąskich ekranach miniatura zwęża się do 112 px.
 
 ============================================================
-MEDIA LIBRARY
+TREŚĆ
 ============================================================
 
-Wygenerowany obraz:
-1. jest walidowany jako prawdziwy plik graficzny,
-2. trafia do Storage public,
-3. otrzymuje rekord MediaAsset,
-4. folder:
-   article-heroes-ai
-5. zostaje przypisany:
-   article.hero_media_id
-   article.hero_image_path
+Karta pokazuje:
 
-Czyli jest od razu:
-- obrazem głównym artykułu,
-- widoczny w Bibliotece mediów,
-- używany na stronie głównej,
-- używany na liście artykułów,
-- używany na szczególe publikacji.
+1. kategorię,
+2. datę publikacji,
+3. tytuł,
+4. excerpt,
+5. CTA "Czytaj dalej".
+
+Jeżeli excerpt jest pusty:
+automatycznie pobierane jest pierwsze 165 znaków z body_html
+po usunięciu HTML.
+
+Lead jest ograniczony CSS-em do maksymalnie 4 linii,
+aby wszystkie trzy karty zachowywały podobną wysokość.
 
 ============================================================
-OCHRONA PRZED NADPISANIEM
+LINKOWANIE
 ============================================================
 
-Warunek jest kontrolowany DWUKROTNIE:
+Klikalne są:
+- zdjęcie,
+- tytuł,
+- CTA,
+- kategoria.
 
-1. GUI:
-   przycisk "Wygeneruj obraz" nie istnieje, jeżeli artykuł ma obraz.
-
-2. Backend:
-   serwis odrzuca próbę generowania, gdy istnieje:
-   hero_media_id
-   lub hero_image_path.
-
-Po zakończeniu długiego requestu OpenAI serwis sprawdza artykuł
-ponownie przed przypisaniem grafiki.
-
-Jeśli drugi administrator w międzyczasie ręcznie doda obraz:
-wygenerowany plik jest usuwany i istniejący obraz NIE jest
-nadpisywany.
+Wszystkie prowadzą do rzeczywistych route:
+articles.show
+lub:
+articles.index?category=...
 
 ============================================================
-KOSZTY / REJESTR AI
+BAZA / BACKEND
 ============================================================
 
-Generowanie obrazu zapisuje rekord w:
-ai_translation_runs
+BRAK migracji.
+BRAK zmian backendowych.
 
-content_type:
-article_image
-
-provider:
-openai
-
-model:
-gpt-image-2
-
-Zapisywane są również tokeny usage, jeżeli OpenAI je zwróci.
-
-Nie zapisujemy ogromnego base64 obrazu do bazy.
-
-============================================================
-OPENAI IMAGE API
-============================================================
-
-Implementacja jest zgodna z aktualną dokumentacją OpenAI Image API:
-- pojedynczy prompt -> Image API / generations,
-- gpt-image-2,
-- odpowiedź data[0].b64_json,
-- landscape 1536x1024,
-- medium quality.
+HomeController z K91 nadal pobiera dokładnie 3 najnowsze
+opublikowane artykuły.
 
 ============================================================
 PLIKI
 ============================================================
 
-NEW:
-- app/Services/ArticleAiImageService.php
-- app/Http/Controllers/Admin/ArticleAiController.php
-- lang/pl/article_ai.php
-- lang/en/article_ai.php
-- tests/Feature/ArticleAiActionsTest.php
-
 CHANGED:
-- routes/web.php
-- app/Services/MediaAssetService.php
-- resources/views/admin/articles/index.blade.php
-- resources/css/admin-cms.css
+- resources/views/home.blade.php
+- resources/css/app.css
+- lang/pl/articles_public.php
+- lang/en/articles_public.php
 
-============================================================
-BAZA
-============================================================
+NEW:
+- tests/Feature/HomepageArticleCardsTest.php
 
-BRAK NOWEJ MIGRACJI.
-
-Korzystamy z istniejących:
-- media_assets
-- articles.hero_media_id
-- ai_translation_runs
+PATCH:
+- README_PATCH.txt
 
 ============================================================
 INSTALACJA LOKALNA
@@ -222,17 +135,12 @@ INSTALACJA LOKALNA
 Rozpakuj z nadpisaniem do:
 C:\laragon\www\okulary-3d
 
-Następnie:
-
 php artisan optimize:clear
 
-TESTY:
-
-php artisan test --filter=ArticleAiActionsTest
-php artisan test --filter=AiTranslationTest
-php artisan test --filter=ArticleCmsTest
-php artisan test --filter=MediaLibraryTest
+php artisan test --filter=HomepageArticleCardsTest
+php artisan test --filter=HomepageTest
 php artisan test --filter=PublicArticleRoutingTest
+php artisan test --filter=ProductionReadinessTest
 
 Jeżeli zielono:
 
@@ -247,43 +155,27 @@ npm run build
 TEST RĘCZNY
 ============================================================
 
-Backend -> Artykuły
+Otwórz /pl.
 
-Sprawdź kolejność ikon:
+Sekcja:
+NAJNOWSZE PUBLIKACJE
+Najnowsze w świecie 3D
 
-[ołówek]
-[translator]
-[obraz AI - tylko bez obrazu]
-[oko]
-[kosz]
+Na monitorze desktop:
+- 3 karty w jednej linii,
+- każda karta znacznie niższa niż poprzednio,
+- pionowa miniatura po lewej,
+- tytuł i lead po prawej,
+- widoczny "Czytaj dalej ->".
 
-Najedź kursorem:
-każda ikona musi mieć właściwy tooltip.
-
-TRANSLATOR:
-kliknięcie globu przy artykule PL powinno stworzyć/odświeżyć
-draft EN.
-
-OBRAZ:
-wybierz artykuł bez hero image.
-Kliknij ikonę obrazu.
-Po generowaniu:
-- obraz pojawia się w wierszu artykułu,
-- ikona generowania obrazu znika,
-- obraz pojawia się w Bibliotece mediów,
-- jest przypisany jako hero.
-
-Artykuł z istniejącym obrazem:
-NIE może mieć ikony generowania obrazu.
-
-PODGLĄD:
-dla publikacji opublikowanej otwiera source locale w nowej karcie.
-Dla draft/scheduled ikona oka jest disabled.
+Sprawdź też szerokości:
+~1000 px -> 2 kolumny
+telefon -> 1 kolumna
 
 ============================================================
 PO TESTACH
 ============================================================
 
 git add .
-git commit -m "Add AI actions to article list"
+git commit -m "Redesign homepage article cards"
 git push origin develop

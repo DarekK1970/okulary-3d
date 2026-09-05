@@ -50,7 +50,7 @@
 
             <div class="hero-visual" aria-hidden="true">
                 <img
-                    src="{{ asset('images/home/hero-3d.svg') }}"
+                    src="{{ asset('images/home/hero-3d.png') }}"
                     alt=""
                     width="760"
                     height="620"
