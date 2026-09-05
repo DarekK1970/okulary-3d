@@ -73,10 +73,10 @@ class LenticularPhotoSequenceTest extends TestCase
     {
         Storage::fake('local');
         $premium = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
-        $images = array_map(fn (int $index) => UploadedFile::fake()->image("{$index}.jpg"), range(1, 7));
+        $images = array_map(fn (int $index) => UploadedFile::fake()->image("{$index}.jpg"), range(1, 11));
 
         $this->actingAs($premium)->post('/pl/lab/lenticular/studio/photo-sequence', [
-            'name' => 'Limit', 'images' => $images, 'print_size' => 'A3', 'printer_dpi' => 300, 'lpi' => 60,
+            'name' => 'Limit', 'images' => $images, 'print_size' => 'A3', 'printer_dpi' => 600, 'lpi' => 60,
         ])->assertUnprocessable();
         $this->assertDatabaseCount('lenticular_projects', 0);
     }

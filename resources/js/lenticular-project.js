@@ -1,19 +1,3 @@
-const setup = document.querySelector('[data-project-setup]');
-
-if (setup) {
-    const dpi = setup.querySelector('[name="printer_dpi"]');
-    const service = setup.querySelector('[name="print_service"]');
-    const output = setup.querySelector('[data-max-frames]');
-    const calculate = () => {
-        dpi.disabled = service.checked;
-        const effectiveDpi = service.checked ? 1440 : Number(dpi.value);
-        const lpi = Number(setup.querySelector('[name="lpi"]:checked')?.value || 60);
-        output.textContent = String(Math.floor(effectiveDpi / lpi));
-    };
-    setup.addEventListener('input', calculate);
-    calculate();
-}
-
 const timelineForm = document.querySelector('[data-frame-timeline]');
 
 if (timelineForm) {

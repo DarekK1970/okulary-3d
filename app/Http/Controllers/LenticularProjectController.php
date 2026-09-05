@@ -8,6 +8,7 @@ use App\Models\LenticularArtifact;
 use App\Models\LenticularJob;
 use App\Models\LenticularProject;
 use App\Models\LenticularProjectFile;
+use App\Services\LenticularAccessService;
 use App\Services\LenticularProjectArchiveService;
 use App\Services\LenticularSequenceService;
 use Illuminate\Http\RedirectResponse;
@@ -19,19 +20,20 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LenticularProjectController extends Controller
 {
-    public function create(string $locale): View
+    public function create(Request $request, string $locale, LenticularAccessService $access): View
     {
-        return view('lab.projects.create');
+        $plan = $access->plan($request->user());
+
+        return view('lab.projects.create', ['printerDpis' => $access->printerDpis($plan)]);
     }
 
     public function store(StoreLenticularProjectRequest $request, string $locale): RedirectResponse
     {
         $validated = $request->validated();
-        $dpi = $request->boolean('print_service') ? 1440 : (int) $validated['printer_dpi'];
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'flip', 'print_size' => $validated['print_size'], 'print_service' => $request->boolean('print_service'), 'dpi' => $dpi, 'lpi' => (int) $validated['lpi'], 'max_frames' => 6, 'lens_orientation' => 'horizontal'],
+            'settings' => ['workflow' => 'flip', 'print_size' => $validated['print_size'], 'dpi' => (int) $validated['printer_dpi'], 'lpi' => (int) $validated['lpi'], 'max_frames' => 6, 'lens_orientation' => 'horizontal'],
         ]);
 
         return redirect()->route('lab.projects.show', ['locale' => $locale, 'project' => $project]);

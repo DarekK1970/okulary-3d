@@ -56,4 +56,14 @@ class LenticularAccessService
             default => 12,
         };
     }
+
+    /** @return list<int> */
+    public function printerDpis(string $plan): array
+    {
+        $basic = [600, 720, 1200, 1440];
+
+        return $plan === self::FREE
+            ? $basic
+            : [...$basic, 2400, 2540, 4000, 4800];
+    }
 }

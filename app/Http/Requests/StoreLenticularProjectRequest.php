@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Services\LenticularAccessService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreLenticularProjectRequest extends FormRequest
 {
@@ -20,13 +22,14 @@ class StoreLenticularProjectRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+    public function rules(LenticularAccessService $access): array
     {
+        $plan = $access->plan($this->user());
+
         return [
             'name' => ['required', 'string', 'max:50'],
             'print_size' => ['required', 'in:A3,A4,A5,15x10'],
-            'print_service' => ['nullable', 'boolean'],
-            'printer_dpi' => ['required_unless:print_service,1', 'nullable', 'integer', 'between:300,4800'],
+            'printer_dpi' => ['required', 'integer', Rule::in($access->printerDpis($plan))],
             'lpi' => ['required', 'integer', 'in:50,60,75'],
         ];
     }

@@ -48,6 +48,7 @@ class AiLenticularPairProjectTest extends TestCase
             'start_image' => UploadedFile::fake()->image('start.jpg', 1280, 720),
             'end_image' => UploadedFile::fake()->image('end.jpg', 1280, 720),
             'print_size' => 'A4',
+            'printer_dpi' => 2540,
             'lpi' => 60,
         ]);
 
@@ -57,6 +58,7 @@ class AiLenticularPairProjectTest extends TestCase
         $this->assertSame($premiumUser->id, $project->user_id);
         $this->assertSame('ai_pair', $project->settings['workflow']);
         $this->assertSame('A4', $project->settings['print_size']);
+        $this->assertSame(2540, $project->settings['dpi']);
         $this->assertSame(2, LenticularProjectFile::query()->count());
         $this->assertSame(FalAiJobStatus::Queued, $job->status);
         $this->assertFalse($job->parameters['generate_audio']);
@@ -80,6 +82,7 @@ class AiLenticularPairProjectTest extends TestCase
             'start_image' => UploadedFile::fake()->image('start.jpg'),
             'end_image' => UploadedFile::fake()->image('end.jpg'),
             'print_size' => 'A4',
+            'printer_dpi' => 1200,
             'lpi' => 60,
         ])->assertRedirect();
 
@@ -103,6 +106,7 @@ class AiLenticularPairProjectTest extends TestCase
             'start_image' => UploadedFile::fake()->image('start.jpg'),
             'end_image' => UploadedFile::fake()->image('end.jpg'),
             'print_size' => 'A4',
+            'printer_dpi' => 1200,
             'lpi' => 60,
         ])->assertTooManyRequests();
 

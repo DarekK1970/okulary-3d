@@ -34,6 +34,7 @@ class AiLenticularSinglePhotoTest extends TestCase
             'name' => 'Jedno zdjęcie',
             'source_image' => UploadedFile::fake()->image('scene.jpg', 1280, 720),
             'print_size' => 'A4',
+            'printer_dpi' => 4000,
             'lpi' => 60,
         ]);
 
@@ -41,6 +42,7 @@ class AiLenticularSinglePhotoTest extends TestCase
         $job = FalAiJob::query()->sole();
         $response->assertRedirect(route('lab.lenticular.ai.jobs.show', ['locale' => 'pl', 'job' => $job]));
         $this->assertSame('ai_single', $project->settings['workflow']);
+        $this->assertSame(4000, $project->settings['dpi']);
         $this->assertSame(1, LenticularProjectFile::query()->count());
         $this->assertArrayNotHasKey('prompt', $job->parameters);
         Queue::assertPushed(PrepareSinglePhotoLenticularJob::class);

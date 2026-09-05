@@ -39,6 +39,39 @@ class LenticularVideoProjectTest extends TestCase
         $this->assertSame(0, LenticularJob::query()->count());
     }
 
+    public function test_printer_dpi_options_follow_the_users_plan(): void
+    {
+        $free = User::factory()->create();
+        $pro = User::factory()->create(['lenticular_plan' => 'pro']);
+
+        $this->actingAs($free)->get('/pl/lab/lenticular/projects/create')
+            ->assertOk()
+            ->assertSee('value="600"', false)
+            ->assertSee('value="1440"', false)
+            ->assertDontSee('value="2400"', false)
+            ->assertDontSee('name="print_service"', false);
+
+        $this->actingAs($pro)->get('/pl/lab/lenticular/projects/create')
+            ->assertOk()
+            ->assertSee('value="2400"', false)
+            ->assertSee('value="2540"', false)
+            ->assertSee('value="4800"', false);
+    }
+
+    public function test_free_plan_rejects_paid_printer_dpi(): void
+    {
+        $free = User::factory()->create();
+
+        $this->actingAs($free)->post('/pl/lab/lenticular/projects', [
+            'name' => 'Za wysokie DPI',
+            'print_size' => 'A4',
+            'printer_dpi' => 2400,
+            'lpi' => 60,
+        ])->assertSessionHasErrors('printer_dpi');
+
+        $this->assertDatabaseCount('lenticular_projects', 0);
+    }
+
     public function test_user_uploads_video_and_analysis_job_is_queued(): void
     {
         Storage::fake('local');

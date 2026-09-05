@@ -28,7 +28,7 @@ class AiLenticularProjectController extends Controller
     {
         $plan = $this->authorizeAgentPlan($request, $access);
 
-        return view('lab.projects.ai-pair', ['settings' => $settings, 'printSizes' => $access->agentPrintSizes($plan)]);
+        return view('lab.projects.ai-pair', ['settings' => $settings, 'printSizes' => $access->agentPrintSizes($plan), 'printerDpis' => $access->printerDpis($plan)]);
     }
 
     public function storePair(Request $request, string $locale, FalAiSettingsService $settings, FalAiJobService $jobs, LenticularAccessService $access): RedirectResponse
@@ -40,6 +40,7 @@ class AiLenticularProjectController extends Controller
             'start_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'end_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'print_size' => ['required', Rule::in($access->agentPrintSizes($plan))],
+            'printer_dpi' => ['required', 'integer', Rule::in($access->printerDpis($plan))],
             'lpi' => ['required', Rule::in([50, 60, 75])],
         ]);
 
@@ -48,7 +49,7 @@ class AiLenticularProjectController extends Controller
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'ai_pair', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
+            'settings' => ['workflow' => 'ai_pair', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => (int) $validated['printer_dpi'], 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
         ]);
         $start = $this->storeImage($project, $request->file('start_image'), 'ai_start_image');
         $end = $this->storeImage($project, $request->file('end_image'), 'ai_end_image');
@@ -79,7 +80,7 @@ class AiLenticularProjectController extends Controller
     {
         $plan = $this->authorizeAgentPlan($request, $access);
 
-        return view('lab.projects.ai-single', ['settings' => $settings, 'agentReady' => $agentSettings->configured('openai'), 'printSizes' => $access->agentPrintSizes($plan)]);
+        return view('lab.projects.ai-single', ['settings' => $settings, 'agentReady' => $agentSettings->configured('openai'), 'printSizes' => $access->agentPrintSizes($plan), 'printerDpis' => $access->printerDpis($plan)]);
     }
 
     public function storeSingle(Request $request, string $locale, FalAiSettingsService $settings, AiTranslationSettingsService $agentSettings, FalAiJobService $jobs, LenticularAccessService $access): RedirectResponse
@@ -90,6 +91,7 @@ class AiLenticularProjectController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'source_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'print_size' => ['required', Rule::in($access->agentPrintSizes($plan))],
+            'printer_dpi' => ['required', 'integer', Rule::in($access->printerDpis($plan))],
             'lpi' => ['required', Rule::in([50, 60, 75])],
         ]);
         $this->ensureBudgetAvailable($settings);
@@ -97,7 +99,7 @@ class AiLenticularProjectController extends Controller
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'ai_single', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => 1440, 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
+            'settings' => ['workflow' => 'ai_single', 'plan' => $plan, 'print_size' => $validated['print_size'], 'dpi' => (int) $validated['printer_dpi'], 'lpi' => (int) $validated['lpi'], 'max_frames' => 25],
         ]);
         $source = $this->storeImage($project, $request->file('source_image'), 'ai_start_image');
         $job = $jobs->create(
@@ -129,7 +131,7 @@ class AiLenticularProjectController extends Controller
     {
         $plan = $access->plan($request->user());
 
-        return view('lab.projects.sequence', ['premium' => $plan === LenticularAccessService::PREMIUM, 'planLimit' => $access->sequenceLimit($plan), 'printSizes' => $access->sequencePrintSizes($plan)]);
+        return view('lab.projects.sequence', ['premium' => $plan === LenticularAccessService::PREMIUM, 'planLimit' => $access->sequenceLimit($plan), 'printSizes' => $access->sequencePrintSizes($plan), 'printerDpis' => $access->printerDpis($plan)]);
     }
 
     public function storeSequence(Request $request, string $locale, LenticularSequenceService $sequences, LenticularAccessService $access): RedirectResponse
@@ -141,7 +143,7 @@ class AiLenticularProjectController extends Controller
             'images' => ['required', 'array', 'between:2,'.$planLimit],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:30720'],
             'print_size' => ['required', Rule::in($access->sequencePrintSizes($plan))],
-            'printer_dpi' => ['required', 'integer', 'between:300,2400'],
+            'printer_dpi' => ['required', 'integer', Rule::in($access->printerDpis($plan))],
             'lpi' => ['required', Rule::in([50, 60, 75])],
             'reverse' => ['nullable', 'boolean'],
         ]);
@@ -156,7 +158,7 @@ class AiLenticularProjectController extends Controller
         $project = LenticularProject::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'settings' => ['workflow' => 'photo_sequence', 'print_size' => $validated['print_size'], 'print_service' => false, 'dpi' => (int) $validated['printer_dpi'], 'lpi' => (int) $validated['lpi'], 'max_frames' => min($planLimit, $technicalLimit)],
+            'settings' => ['workflow' => 'photo_sequence', 'print_size' => $validated['print_size'], 'dpi' => (int) $validated['printer_dpi'], 'lpi' => (int) $validated['lpi'], 'max_frames' => min($planLimit, $technicalLimit)],
         ]);
         try {
             $sequences->store($project, $uploads);
