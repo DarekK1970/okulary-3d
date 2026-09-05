@@ -24,7 +24,7 @@
     };
 @endphp
 
-<div class="community-gallery-browser">
+<div class="community-gallery-browser" data-gallery-browser>
     <div
         class="community-stereo-viewer"
         data-community-viewer
@@ -63,7 +63,16 @@
                 <a
                     class="community-gallery-nav community-gallery-nav-prev"
                     href="{{ $browserUrl($previousItem) }}"
+                    data-gallery-nav="previous"
                     aria-label="{{ __('gallery.viewer.previous') }}"
+                >‹</a>
+            @else
+                <a
+                    class="community-gallery-nav community-gallery-nav-prev"
+                    href="#"
+                    data-gallery-nav="previous"
+                    aria-label="{{ __('gallery.viewer.previous') }}"
+                    hidden
                 >‹</a>
             @endif
 
@@ -79,7 +88,16 @@
                 <a
                     class="community-gallery-nav community-gallery-nav-next"
                     href="{{ $browserUrl($nextItem) }}"
+                    data-gallery-nav="next"
                     aria-label="{{ __('gallery.viewer.next') }}"
+                >›</a>
+            @else
+                <a
+                    class="community-gallery-nav community-gallery-nav-next"
+                    href="#"
+                    data-gallery-nav="next"
+                    aria-label="{{ __('gallery.viewer.next') }}"
+                    hidden
                 >›</a>
             @endif
         </div>
@@ -91,12 +109,13 @@
 
         <div class="gallery-current-meta">
             <div>
-                <h2>{{ $currentGalleryItem->title }}</h2>
+                <h2 data-gallery-current-title>{{ $currentGalleryItem->title }}</h2>
                 <a
                     href="{{ route('gallery.index', [
                         'locale' => app()->getLocale(),
                         'author' => $currentGalleryItem->author_name,
                     ]) }}"
+                    data-gallery-current-author
                     title="{{ __('gallery.viewer.author_tooltip') }}"
                 >{{ $currentGalleryItem->author_name }}</a>
             </div>
@@ -113,6 +132,23 @@
             <a
                 class="community-gallery-strip-item @if ($item->is($currentGalleryItem)) is-active @endif"
                 href="{{ $browserUrl($item) }}"
+                data-gallery-browser-item
+                data-title="{{ $item->title }}"
+                data-left-url="{{ $item->leftImageUrl() }}"
+                data-right-url="{{ $item->rightImageUrl() }}"
+                data-author="{{ $item->author_name }}"
+                data-author-url="{{ route('gallery.index', [
+                    'locale' => app()->getLocale(),
+                    'author' => $item->author_name,
+                ]) }}"
+                data-rating-summary="{{ $item->ratingSummary() }}"
+                data-rated="{{ auth()->check() && $item->ratedByCurrentUser() ? 'true' : 'false' }}"
+                @auth
+                    data-rating-url="{{ route('gallery.ratings.store', [
+                        'locale' => app()->getLocale(),
+                        'galleryItem' => $item,
+                    ]) }}"
+                @endauth
             >
                 <img
                     src="{{ $item->leftImageUrl() }}"

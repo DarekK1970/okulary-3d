@@ -16,6 +16,7 @@ class CommunityStereoViewer {
 
         this.bind();
         this.load();
+        this.root.communityViewer = this;
     }
 
     bind() {
@@ -76,6 +77,41 @@ class CommunityStereoViewer {
             this.setStatus(
                 this.root.dataset.error
                 || 'Image loading failed.'
+            );
+        }
+    }
+
+    async updateImages(leftUrl, rightUrl, ratingSummary) {
+        this.root.classList.add('is-switching');
+        this.setStatus(
+            this.root.dataset.loading || 'Loading…'
+        );
+
+        this.root.dataset.leftUrl = leftUrl;
+        this.root.dataset.rightUrl = rightUrl;
+        this.root.dataset.ratingSummary = ratingSummary || '';
+
+        try {
+            [this.left, this.right] =
+                await Promise.all([
+                    this.loadImage(leftUrl),
+                    this.loadImage(rightUrl),
+                ]);
+
+            this.setStatus(this.root.dataset.ratingSummary);
+            this.updateWiggle();
+            this.render();
+        } catch (error) {
+            console.error(error);
+
+            this.setStatus(
+                this.root.dataset.error
+                || 'Image loading failed.'
+            );
+        } finally {
+            window.setTimeout(
+                () => this.root.classList.remove('is-switching'),
+                180
             );
         }
     }
@@ -395,7 +431,145 @@ const initializeCommunityGallery = () => {
             panel?.closest('[data-community-viewer]')
                 ?.querySelector('[data-gallery-status]')
                 ?.replaceChildren(data.summary);
+
+            const activeItem = form.closest('[data-gallery-browser]')
+                ?.querySelector(
+                    '.community-gallery-strip-item.is-active'
+                );
+
+            activeItem?.setAttribute(
+                'data-rating-summary',
+                data.summary
+            );
+            activeItem?.setAttribute('data-rated', 'true');
         });
+    });
+
+    document.querySelectorAll(
+        '[data-gallery-browser]'
+    ).forEach((browser) => {
+        const viewerRoot = browser.querySelector(
+            '[data-community-viewer]'
+        );
+        const viewer = viewerRoot?.communityViewer;
+        const items = Array.from(
+            browser.querySelectorAll('[data-gallery-browser-item]')
+        );
+        const previous = browser.querySelector(
+            '[data-gallery-nav="previous"]'
+        );
+        const next = browser.querySelector(
+            '[data-gallery-nav="next"]'
+        );
+        let activeIndex = Math.max(
+            0,
+            items.findIndex((item) =>
+                item.classList.contains('is-active')
+            )
+        );
+
+        const updateRatingForm = (item) => {
+            const form = browser.querySelector(
+                '[data-gallery-rating]'
+            );
+
+            if (!form) {
+                return;
+            }
+
+            const rated = item.dataset.rated === 'true';
+
+            form.action = item.dataset.ratingUrl || form.action;
+            form.dataset.rated = rated ? 'true' : 'false';
+            form.querySelectorAll('button').forEach((star) => {
+                star.disabled = rated;
+                star.classList.toggle('is-muted', rated);
+            });
+        };
+
+        const updateNavigation = () => {
+            if (previous) {
+                previous.hidden = activeIndex === 0;
+                previous.href = items[activeIndex - 1]?.href || '#';
+            }
+
+            if (next) {
+                next.hidden = activeIndex >= items.length - 1;
+                next.href = items[activeIndex + 1]?.href || '#';
+            }
+        };
+
+        const activate = async (index, pushHistory = true) => {
+            const item = items[index];
+
+            if (!item || index === activeIndex) {
+                return;
+            }
+
+            activeIndex = index;
+
+            items.forEach((thumbnail) => {
+                thumbnail.classList.toggle(
+                    'is-active',
+                    thumbnail === item
+                );
+            });
+
+            browser.querySelector(
+                '[data-gallery-current-title]'
+            ).textContent = item.dataset.title || '';
+
+            const author = browser.querySelector(
+                '[data-gallery-current-author]'
+            );
+
+            if (author) {
+                author.textContent = item.dataset.author || '';
+                author.href = item.dataset.authorUrl || '#';
+            }
+
+            browser.querySelectorAll(
+                '[data-gallery-rating-summary]'
+            ).forEach((summary) => {
+                summary.textContent = item.dataset.ratingSummary || '0 ★ 0.0';
+            });
+
+            updateRatingForm(item);
+            updateNavigation();
+
+            if (pushHistory) {
+                window.history.pushState(
+                    {},
+                    '',
+                    item.href
+                );
+            }
+
+            await viewer?.updateImages(
+                item.dataset.leftUrl,
+                item.dataset.rightUrl,
+                item.dataset.ratingSummary || ''
+            );
+        };
+
+        items.forEach((item, index) => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
+                activate(index);
+            });
+        });
+
+        previous?.addEventListener('click', (event) => {
+            event.preventDefault();
+            activate(activeIndex - 1);
+        });
+
+        next?.addEventListener('click', (event) => {
+            event.preventDefault();
+            activate(activeIndex + 1);
+        });
+
+        updateNavigation();
     });
 };
 
