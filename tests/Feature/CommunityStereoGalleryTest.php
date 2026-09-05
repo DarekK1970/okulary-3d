@@ -562,6 +562,9 @@ class CommunityStereoGalleryTest extends TestCase
             ->get('/pl/gallery/'.$second->slug)
             ->assertOk()
             ->assertSee('data-community-viewer', false)
+            ->assertSee('data-gallery-current-title', false)
+            ->assertSee('data-gallery-current-description', false)
+            ->assertSee('data-gallery-current-license', false)
             ->assertSee('data-gallery-browser', false)
             ->assertSee('data-gallery-browser-item', false)
             ->assertSee('data-gallery-nav="previous"', false)
@@ -572,7 +575,9 @@ class CommunityStereoGalleryTest extends TestCase
             ->assertSee('4.5')
             ->assertSee('Oceń obraz:', false)
             ->assertSee('Druga praca')
+            ->assertSee('Opis pracy.')
             ->assertSee('Autor Dwa')
+            ->assertSee('Wszelkie prawa zastrzeżone')
             ->assertSee('Wyświetl wszystkie prace tego autora.');
 
         $this->get('/pl/gallery?author=Autor%20Jeden')

@@ -918,6 +918,8 @@ svg {
     place-items: center;
     overflow: hidden;
     background: #edf2f6;
+    color: inherit;
+    text-decoration: none;
 }
 
 .gallery-image img,

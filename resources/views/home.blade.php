@@ -265,12 +265,19 @@
                         data-rating-summary="{{ $item->ratingSummary() }}"
                         data-error="{{ __('gallery.viewer.error') }}"
                     >
-                        <div class="gallery-image">
+                        <a
+                            class="gallery-image"
+                            href="{{ route('gallery.index', [
+                                'locale' => app()->getLocale(),
+                                'photo' => $item->slug,
+                            ]) }}"
+                            aria-label="{{ $item->title }}"
+                        >
                             <canvas data-gallery-canvas></canvas>
                             <span class="gallery-mode" data-gallery-status>
                                 {{ $item->ratingSummary() }}
                             </span>
-                        </div>
+                        </a>
 
                         <div class="gallery-view-switch">
                             <label>
@@ -286,9 +293,9 @@
                             <div class="gallery-card-title">
                                 <a
                                     class="gallery-user"
-                                    href="{{ route('gallery.show', [
+                                    href="{{ route('gallery.index', [
                                         'locale' => app()->getLocale(),
-                                        'galleryItem' => $item,
+                                        'photo' => $item->slug,
                                     ]) }}"
                                 >
                                     {{ $item->title }}

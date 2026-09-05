@@ -519,6 +519,10 @@ const initializeCommunityGallery = () => {
                 '[data-gallery-current-title]'
             ).textContent = item.dataset.title || '';
 
+            browser.querySelector(
+                '[data-gallery-current-description]'
+            ).textContent = item.dataset.description || '';
+
             const author = browser.querySelector(
                 '[data-gallery-current-author]'
             );
@@ -527,6 +531,10 @@ const initializeCommunityGallery = () => {
                 author.textContent = item.dataset.author || '';
                 author.href = item.dataset.authorUrl || '#';
             }
+
+            browser.querySelector(
+                '[data-gallery-current-license]'
+            ).textContent = item.dataset.license || '';
 
             browser.querySelectorAll(
                 '[data-gallery-rating-summary]'

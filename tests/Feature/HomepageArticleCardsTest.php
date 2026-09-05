@@ -146,6 +146,7 @@ class HomepageArticleCardsTest extends TestCase
             ->assertOk()
             ->assertSee('data-community-viewer', false)
             ->assertSee('data-gallery-mode', false)
+            ->assertSee('/pl/gallery?photo=homepage-gallery-', false)
             ->assertSee('Anaglyph czerwono-cyjanowy')
             ->assertSee('Wiggle')
             ->assertDontSee('Galeria oczekująca');

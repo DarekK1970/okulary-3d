@@ -58,6 +58,10 @@
             </span>
         </div>
 
+        <div class="gallery-active-heading">
+            <h2 data-gallery-current-title>{{ $currentGalleryItem->title }}</h2>
+        </div>
+
         <div class="community-viewer-frame">
             @if ($previousItem)
                 <a
@@ -109,7 +113,9 @@
 
         <div class="gallery-current-meta">
             <div>
-                <h2 data-gallery-current-title>{{ $currentGalleryItem->title }}</h2>
+                <p data-gallery-current-description>
+                    {{ $currentGalleryItem->description ?: __('gallery.show.no_description') }}
+                </p>
                 <a
                     href="{{ route('gallery.index', [
                         'locale' => app()->getLocale(),
@@ -118,6 +124,9 @@
                     data-gallery-current-author
                     title="{{ __('gallery.viewer.author_tooltip') }}"
                 >{{ $currentGalleryItem->author_name }}</a>
+                <span data-gallery-current-license>
+                    {{ __('gallery.licenses.' . $currentGalleryItem->license) }}
+                </span>
             </div>
 
             @include('gallery.partials.rating', [
@@ -134,6 +143,7 @@
                 href="{{ $browserUrl($item) }}"
                 data-gallery-browser-item
                 data-title="{{ $item->title }}"
+                data-description="{{ $item->description ?: __('gallery.show.no_description') }}"
                 data-left-url="{{ $item->leftImageUrl() }}"
                 data-right-url="{{ $item->rightImageUrl() }}"
                 data-author="{{ $item->author_name }}"
@@ -141,6 +151,7 @@
                     'locale' => app()->getLocale(),
                     'author' => $item->author_name,
                 ]) }}"
+                data-license="{{ __('gallery.licenses.' . $item->license) }}"
                 data-rating-summary="{{ $item->ratingSummary() }}"
                 data-rated="{{ auth()->check() && $item->ratedByCurrentUser() ? 'true' : 'false' }}"
                 @auth

@@ -49,31 +49,6 @@
             'currentGalleryItem' => $currentGalleryItem,
         ])
 
-        <div class="gallery-detail-info">
-            <article>
-                <span>{{ __('gallery.show.description') }}</span>
-                <p>
-                    {{ $galleryItem->description ?: __('gallery.show.no_description') }}
-                </p>
-            </article>
-
-            <aside>
-                <div>
-                    <span>{{ __('gallery.show.license') }}</span>
-                    <strong>{{ __('gallery.licenses.' . $galleryItem->license) }}</strong>
-                </div>
-
-                <div>
-                    <span>{{ __('gallery.show.source_size') }}</span>
-                    <strong>
-                        {{ $galleryItem->left_width ?: '—' }}
-                        ×
-                        {{ $galleryItem->left_height ?: '—' }}
-                        px
-                    </strong>
-                </div>
-            </aside>
-        </div>
     </div>
 </section>
 @endsection
